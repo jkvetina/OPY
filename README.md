@@ -41,6 +41,9 @@ db.commit();
 ```
 
 #### Fetch query results
+You dont want to access columns by numeric indexes probably, except maybe when you do siple COUNT(\*).
+By default cx_Oracle will return rows as tuples without column names and for large sets of data it is not appropriate to convert these sets to dicts. Thats where cols.column_name trick comes in place. It just converts column_name to proper index. And you can still use indexes if you like.
+
 ```python
 data, cols = db.fetch('SELECT * FROM session_context ORDER BY attribute')
 print(cols, '\n')
@@ -49,7 +52,12 @@ for row in data:
 print()
 ```
 
-#### Limit output lines
+#### Fetch query results with binded variables and limit rows
 ```python
-data, cols = db.fetch('SELECT * FROM session_context ORDER BY attribute', limit = 100)
+data, cols = db.fetch('SELECT * FROM session_context WHERE attribute LIKE :condition', condition = '%_ID', limit = 100)
+print(cols, '\n')
+for row in data:
+  print(row[cols.attribute].ljust(16), row[cols.value])
+print()
 ```
+
