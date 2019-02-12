@@ -3,9 +3,7 @@ import cx_Oracle
 
 
 
-class Oracle_Cols:
-  # we dont do associative arrays due to large overhead
-  # instead we use this object to map names to column positions
+class OracleCols:
 
   def __init__(self, cols):
     self.cols   = cols
@@ -60,11 +58,11 @@ class Oracle:
   def fetch(self, query, limit = 0, **binds):
     curs = self.curs = self.conn.cursor()
     data = curs.execute(query.strip(), **binds).fetchmany(limit)
-    desc = {}
-    cols = [row[0].lower() for row in curs.description]
-    for col_id, col in enumerate(curs.description):
-      desc[col[0].lower()] = col
-    return (data, Oracle_Cols(cols), desc)
+    self.cols = [row[0].lower() for row in curs.description]
+    self.desc = {}
+    for row in curs.description:
+      self.desc[row[0].lower()] = row
+    return (data, OracleCols(self.cols))
 
   def commit(self):
     try: self.conn.commit()
