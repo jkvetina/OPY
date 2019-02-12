@@ -11,8 +11,8 @@ tns = {
     'user'    : '',
     'pwd'     : '',
     'server'  : '',
-    'sid'     : '',
-    'service' : '',
+    'sid'     : None,
+    'service' : None,
   },
 }
 db = Oracle(tns[sys.argv[1]])

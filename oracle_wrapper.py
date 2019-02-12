@@ -25,15 +25,17 @@ class OracleCols:
 class Oracle:
 
   def __init__(self, tns):
-    self.conn = None    # connection
-    self.curs = None    # most recent cursor
+    self.conn = None    # recent connection link
+    self.curs = None    # recent cursor
+    self.cols = []      # recent columns mapping (name to position) to avoid associative arrays
+    self.desc = {}      # recent columns description
     self.tns = {
       'user'    : '',
       'pwd'     : '',
-      'server'  : '',
+      'host'    : '',
       'port'    : 1521,
-      'sid'     : '',
-      'service' : '',
+      'sid'     : None,
+      'service' : None,
       'lang'    : '.AL32UTF8',
     }
     self.tns.update(tns)
@@ -41,15 +43,9 @@ class Oracle:
 
   def connect(self):
     os.environ['NLS_LANG'] = self.tns['lang']
-    self.conn = cx_Oracle.connect(
-      self.tns['user'],
-      self.tns['pwd'],
-      cx_Oracle.makedsn(
-        self.tns['server'], self.tns['port'],
-        self.tns['sid'],
-        service_name = self.tns['service']
-      )
-    )
+    self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service']) \
+      if self.tns['service'] else cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+    self.conn = cx_Oracle.connect(self.tns['user'], self.tns['pwd'], self.tns['dsn'])
 
   def execute(self, query, **binds):
     curs = self.curs = self.conn.cursor()
