@@ -28,7 +28,7 @@ class Oracle:
     self.conn = None    # recent connection link
     self.curs = None    # recent cursor
     self.cols = []      # recent columns mapping (name to position) to avoid associative arrays
-    self.desc = {}      # recent columns description
+    self.desc = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
     self.tns = {
       'user'    : '',
       'pwd'     : '',
@@ -48,15 +48,15 @@ class Oracle:
     self.conn = cx_Oracle.connect(self.tns['user'], self.tns['pwd'], self.tns['dsn'])
 
   def execute(self, query, **binds):
-    curs = self.curs = self.conn.cursor()
-    return curs.execute(query.strip(), **binds)
+    self.curs = self.conn.cursor()
+    return self.curs.execute(query.strip(), **binds)
 
   def fetch(self, query, limit = 0, **binds):
-    curs = self.curs = self.conn.cursor()
-    data = curs.execute(query.strip(), **binds).fetchmany(limit)
-    self.cols = [row[0].lower() for row in curs.description]
+    self.curs = self.conn.cursor()
+    data = self.curs.execute(query.strip(), **binds).fetchmany(limit)
+    self.cols = [row[0].lower() for row in self.curs.description]
     self.desc = {}
-    for row in curs.description:
+    for row in self.curs.description:
       self.desc[row[0].lower()] = row
     return (data, OracleCols(self.cols))
 
