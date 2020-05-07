@@ -1,40 +1,38 @@
-import os, sys, time
+import os, sys
 
 sys.path.append(os.getcwd())
-from oracle_wrapper import *
+from oracle_wrapper import Oracle
+
+
 
 #
 # CONNECT TO DATABASE
 #
-tns = {
-  'DPP' : {
-    'user'    : '',
-    'pwd'     : '',
-    'server'  : '',
-    'sid'     : None,
-    'service' : None,
-  },
-}
-db = Oracle(tns[sys.argv[1]])
+ora = Oracle({
+  'user'    : 'FGK',
+  'pwd'     : 'fgk.',
+  'host'    : '127.0.0.1',
+  #'sid'     : 'orcl',
+  'service' : 'orcl',
+})
 
-#
-# EXECUTE QUERY
-#
-db.execute("ALTER SESSION SET PLSQL_OPTIMIZE_LEVEL = 1");
-db.execute("ALTER SESSION SET PLSQL_CODE_TYPE = 'INTERPRETED'");
-db.execute("ALTER SESSION SET PLSCOPE_SETTINGS = 'IDENTIFIERS:ALL'");
+ora.execute("ALTER SESSION SET PLSQL_OPTIMIZE_LEVEL=1")
+ora.execute("ALTER SESSION SET PLSQL_CODE_TYPE=INTERPRETED")
+ora.execute("ALTER SESSION SET PLSCOPE_SETTINGS='IDENTIFIERS:ALL, STATEMENTS:ALL'")  # this screws recompile
+ora.execute("ALTER SESSION SET PLSCOPE_SETTINGS='IDENTIFIERS:NONE'")  # this fix it
 
-#
-# FETCH QUERY RESULTS
-#
-data, cols = db.fetch('SELECT * FROM error_log ORDER BY msg_id DESC', limit = 10)
-print(cols, '\n')
+data, cols = ora.fetch("SELECT COUNT(*) FROM DUAL")
+print(data[0][0])  # data[row][col]
+
+data = ora.fetch_assoc("""
+SELECT attribute, value
+FROM session_context
+WHERE namespace LIKE :namespace
+ORDER BY attribute
+""",
+  namespace = 'FGK'
+)
 for row in data:
-  print(row[cols.msg_id], row[cols.msg_type], row[cols.loc], row[cols.msg])
-print()
-
-data, cols = db.fetch('SELECT * FROM session_context ORDER BY attribute')
-for row in data:
-  print(row[cols.attribute].ljust(16), row[cols.value])
+  print(row.attribute.ljust(16), row.value)
 print()
 

@@ -1,24 +1,6 @@
-import sys, os
+# coding: utf-8
+import os, collections
 import cx_Oracle
-
-
-
-class OracleCols:
-
-  def __init__(self, cols):
-    self.cols   = cols
-    self.pos    = {}
-    self.length = 0   # maximum column_name length
-    #
-    for pos, name in enumerate(cols):
-      self.pos[name]  = pos
-      self.length     = max(self.length, len(name))
-
-  def __getattr__(self, name):
-    return self.pos[name]
-
-  def __str__(self):
-    return(str(self.cols) + ' ' + str(len(self.cols)))
 
 
 
@@ -41,29 +23,94 @@ class Oracle:
     self.tns.update(tns)
     self.connect()
 
+
+
   def connect(self):
     os.environ['NLS_LANG'] = self.tns['lang']
     self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service']) \
       if self.tns['service'] else cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
     self.conn = cx_Oracle.connect(self.tns['user'], self.tns['pwd'], self.tns['dsn'])
 
-  def execute(self, query, **binds):
+
+
+  def get_binds(self, query, autobind):
+    out = {}
+    try:
+      binds = autobind._asdict()
+    except:
+      binds = autobind
+    #
+    for key in binds:  # convert namedtuple to dict
+      if ':' + key in query:
+         out[key] = binds[key] if key in binds else ''
+    return out
+
+
+
+  def execute(self, query, autobind = None, **binds):
+    if autobind and len(autobind):
+      binds = self.get_binds(query, autobind)
+    #
     self.curs = self.conn.cursor()
     return self.curs.execute(query.strip(), **binds)
 
-  def fetch(self, query, limit = 0, **binds):
+
+
+  def executemany(self, query, binds):
     self.curs = self.conn.cursor()
-    data = self.curs.execute(query.strip(), **binds).fetchmany(limit)
+    return self.curs.executemany(query.strip(), binds)
+
+
+
+  def fetch(self, query, limit = 0, autobind = None, **binds):
+    if autobind and len(autobind):
+      binds = self.get_binds(query, autobind)
+    #
+    self.curs = self.conn.cursor()
+    if limit > 0:
+      self.curs.arraysize = limit
+      data = self.curs.execute(query.strip(), **binds).fetchmany(limit)
+    else:
+      self.curs.arraysize = 5000
+      data = self.curs.execute(query.strip(), **binds).fetchall()
+    #
     self.cols = [row[0].lower() for row in self.curs.description]
     self.desc = {}
     for row in self.curs.description:
       self.desc[row[0].lower()] = row
-    return (data, OracleCols(self.cols))
+    #
+    return data
+
+
+
+  def fetch_assoc(self, query, limit = 0, autobind = None, **binds):
+    if autobind and len(autobind):
+      binds = self.get_binds(query, autobind)
+    #
+    self.curs = self.conn.cursor()
+    h = self.curs.execute(query.strip(), **binds)
+    self.cols = [row[0].lower() for row in self.curs.description]
+    self.desc = {}
+    for row in self.curs.description:
+      self.desc[row[0].lower()] = row
+    #
+    self.curs.rowfactory = collections.namedtuple('ROW', [d[0].lower() for d in self.curs.description])
+    #
+    if limit > 0:
+      self.curs.arraysize = limit
+      return h.fetchmany(limit)
+    #
+    self.curs.arraysize = 5000
+    return h.fetchall()
+
+
 
   def commit(self):
     try: self.conn.commit()
     except:
       return
+
+
 
   def rollback(self):
     try: self.conn.rollback()
