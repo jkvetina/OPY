@@ -1,4 +1,8 @@
 
 .DS_Store
+_IGNORE
 __pycache__
 *.pyc
+TEMP/
+OLD/
+
