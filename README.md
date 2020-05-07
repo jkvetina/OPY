@@ -4,14 +4,13 @@
 
 #### Connect to database with SID or service name
 ```python
-tns = {
+ora = Oracle({
   'user'    : 'USER_NAME',
   'pwd'     : 'PASSWORD',
   'host'    : 'SERVER_NAME',  # default port 1521
   'sid'     : 'SID',
   #'service' : 'SERVICE_NAME',  # use sid or service_name
-}
-ora = Oracle(tns)
+})
 ```
 
 
@@ -32,10 +31,10 @@ ora.commit();
 
 #### Fetch query results
 You dont want to access columns by numeric indexes probably, except maybe when you do siple COUNT(\*).
-By default cx_Oracle will return rows as tuples without column names and for large sets of data it is not appropriate to convert these sets to dicts. Thats where cols.column_name trick comes in place. It just converts column_name to proper index. And you can still use indexes if you like.
+By default cx_Oracle will return rows as tuples without column names and for large sets of data it is not appropriate to convert these sets to namedtuples.
 
 ```python
-data, cols = ora.fetch("""
+data = ora.fetch_assoc("""
 SELECT attribute, value
 FROM session_context
 WHERE namespace LIKE :namespace
@@ -46,7 +45,7 @@ ORDER BY attribute
 )
 for row in data:
   #print(row[0].ljust(16), row[1])  # access columns by their index
-  print(row[cols.attribute].ljust(16), row[cols.value])  # access by column names
+  print(row.attribute.ljust(16), row.value)  # access by column names
 print()
 ```
 
