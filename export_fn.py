@@ -183,3 +183,25 @@ def clean_sequence(lines):
 
 
 
+def clean_trigger(lines):
+  lines[0] = fix_simple_name(lines[0])
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
+
+  # fix enable/disable trigger
+  found_slash = False
+  for (i, line) in enumerate(lines):
+    if line.startswith('ALTER TRIGGER'):
+      lines[i] = replace(line, 'ALTER TRIGGER "[^"]+"."[^"]+" ENABLE', '');
+      if '" DISABLE' in line:
+        lines[i] = fix_simple_name(line.replace(' DISABLE', ' DISABLE;'));
+        lines[i - 1] = '/\n';
+        found_slash = True
+
+  # fix missing slash
+  if not found_slash:
+    lines[len(lines) - 2] = '/';
+  #
+  return lines
+
+
+
