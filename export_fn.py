@@ -205,3 +205,23 @@ def clean_trigger(lines):
 
 
 
+def clean_index(lines):
+  for (i, line) in enumerate(lines):
+    # throw away some distrators
+    if line.startswith('  STORAGE') or\
+      line.startswith('  PCTFREE') or\
+      line.startswith('  PCTINCREASE') or\
+      line.startswith('  BUFFER_POOL'):
+      lines[i] = ''
+    else:
+      lines[i] = lines[i].lstrip()
+      lines[i] = lines[i].replace('TABLESPACE', '    COMPUTE STATISTICS\n    TABLESPACE')
+  #
+  lines[0] = fix_simple_name(lines[0]).replace(' ON ', '\n    ON ')
+  lines = list(filter(None, lines))
+  lines[len(lines) - 1] += ';'
+  #
+  return lines
+
+
+
