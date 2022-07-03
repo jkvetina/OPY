@@ -53,18 +53,25 @@ def clean_table(lines):
       lines[i] = lines[i].replace(' SEGMENT CREATION IMMEDIATE', '')
       lines[i] = lines[i].replace('(PARTITION', '(\n    PARTITION')
       lines[i] = lines[i].replace('" )', '"\n)')
+      lines[i] = lines[i].replace('TIMESTAMP\' ', 'TIMESTAMP \'')
 
   # fix column alignment
   lines = '\n'.join(lines).split('\n')
   for (i, line) in enumerate(lines):
     # fic column name
     if line.startswith('"'):
-      columns = lines[i].strip().split(' ', 3)
+      columns = lines[i].replace(' (', '(').strip().split(' ', 3)
       lines[i] = '    {:<30}  {:<16}{}'.format(
         fix_simple_name(columns[0]),
         columns[1].replace('NUMBER(*,0)', 'INTEGER') if len(columns) > 1 else '',
         fix_simple_name(' '.join(columns[2:])) if len(columns) > 2 else ''
       ).rstrip()
+    #
+    if line.startswith('PARTITION'):
+      lines[i] = fix_simple_name(lines[i])
+    #
+    if line.startswith(')  PCTFREE'):
+      lines[i] = ')'
     #
     if line.startswith(')  DEFAULT COLLATION "USING_NLS_COMP" PCTFREE'):
       lines[i] = ')'
@@ -83,6 +90,8 @@ def clean_table(lines):
     #
     if line.startswith('REFERENCES'):
       lines[i] = '        ' + fix_simple_name(lines[i])
+    #
+    lines[i] = lines[i].replace(' DEFERRABLE', '\n        DEFERRABLE')
 
   # remove empty lines
   lines = list(filter(None, lines))
