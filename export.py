@@ -166,10 +166,10 @@ if args['csv']:
 #
 # EXPORT APEX APP
 #
+apex_dir = folders['APEX']
+apex_tmp = './export.tmp'
+#
 if 'app' in args and int(args['app'] or 0) > 0:
-  apex_dir = folders['APEX']
-  apex_tmp = './export.tmp'
-  #
   print('EXPORTING APEX APP:')
   print('-------------------')
   print('       APP |', args['app'])
@@ -195,8 +195,9 @@ if 'app' in args and int(args['app'] or 0) > 0:
   process = 'sql /nolog < {}'.format(apex_tmp)
   result  = subprocess.run(process, shell = True, capture_output = True, text = True)
   output  = result.stdout.strip()
-  #
-  os.chdir(root)
+#
+os.chdir(root)
+os.remove(apex_dir + apex_tmp)
 
 
 
