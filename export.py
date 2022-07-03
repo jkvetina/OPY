@@ -3,7 +3,9 @@ import sys, os, argparse, pickle, timeit, glob, csv, subprocess
 from oracle_wrapper import Oracle
 from export_fn import *
 
-# args
+#
+# ARGS
+#
 parser = argparse.ArgumentParser()
 parser.add_argument('target',           help = 'Target folder (Git root)')
 parser.add_argument('-n', '--name',     help = 'Connection name')
@@ -31,7 +33,9 @@ conn_dir = '/conn'
 
 
 
-# connect to database
+#
+# CONNECT TO DATABASE
+#
 start = timeit.default_timer()
 db_conf = args['target'] + 'python/db.conf'
 if args['name']:
@@ -86,6 +90,8 @@ folders = {
   'APEX'              : target + 'apex/',
 }
 
+
+
 #
 # EXPORT OBJECTS
 #
@@ -123,6 +129,8 @@ if args['recent'] == None or int(args['recent']) > 0:
       h.write(obj)
   print()
 
+
+
 #
 # EXPORT DATA
 #
@@ -151,6 +159,9 @@ if args['csv']:
     for row in data:
       writer.writerow(row)
     csv_file.close()
+  print()
+
+
 
 #
 # EXPORT APEX APP
@@ -186,6 +197,8 @@ if 'app' in args and int(args['app'] or 0) > 0:
   output  = result.stdout.strip()
   #
   os.chdir(root)
+
+
 
 #
 # REMOVE TIMESTAMPS FROM ALL APEX FILES
