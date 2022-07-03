@@ -105,3 +105,37 @@ def clean_view(lines):
 
 
 
+def clean_materialized_view(lines):
+  lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
+  lines[0] = fix_simple_name(lines[0])
+
+  # found query start
+  splitter = 0
+  for (i, line) in enumerate(lines):
+    # search for line where real query starts
+    if line.startswith('  AS '):
+      lines[i] = line.replace('  AS ', 'AS\n')
+      splitter = i
+      break
+
+    # throw away some distrators
+    if line.startswith(' NOCOMPRESS') or\
+      line.startswith('  DEFAULT COLLATION') or\
+      line.startswith('  ORGANIZATION') or\
+      line.startswith('  STORAGE') or\
+      line.startswith('  TABLESPACE') or\
+      line.startswith('  PCTINCREASE') or\
+      line.startswith('  BUFFER_POOL') or\
+      line.startswith('  USING'):
+      lines[i] = ''
+    else:
+      lines[i] = lines[i].lstrip()
+
+  # remove empty lines
+  lines[len(lines) - 1] += ';'
+  lines = list(filter(None, lines[0:splitter])) + lines[splitter:]
+  #
+  return lines
+
+
+
