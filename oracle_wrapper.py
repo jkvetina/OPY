@@ -1,35 +1,45 @@
 # coding: utf-8
 import os, collections
-import cx_Oracle
-
-
+import oracledb as cx_Oracle  #import cx_Oracle
 
 class Oracle:
 
-  def __init__(self, tns):
+  def __init__(self, args, debug = False):
     self.conn = None    # recent connection link
     self.curs = None    # recent cursor
     self.cols = []      # recent columns mapping (name to position) to avoid associative arrays
     self.desc = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
     self.tns = {
-      'user'    : '',
-      'pwd'     : '',
-      'host'    : '',
-      'port'    : 1521,
-      'sid'     : None,
-      'service' : None,
       'lang'    : '.AL32UTF8',
     }
-    self.tns.update(tns)
+    self.tns.update(args)
+
+    # check args
+    if debug:
+      print('ARGS:\n--')
+      for (key, value) in self.tns.items():
+        if not (key in ('pwd', 'wallet_pwd')):
+          print('{:>8} = {}'.format(key, value))
+      print('')
+
+    # auto connect
     self.connect()
 
 
 
   def connect(self):
     os.environ['NLS_LANG'] = self.tns['lang']
-    self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service']) \
-      if self.tns['service'] else cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
-    self.conn = cx_Oracle.connect(self.tns['user'], self.tns['pwd'], self.tns['dsn'])
+
+    # try wallet first
+    if self.tns['wallet']:
+      self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'],\
+        wallet_location = self.tns['wallet'], wallet_password = self.tns['wallet_pwd'])
+      #
+      return
+
+    if not self.dsn:
+      self.dsn = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.dsn)
 
 
 
