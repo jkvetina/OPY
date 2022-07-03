@@ -187,6 +187,22 @@ if 'app' in args and int(args['app'] or 0) > 0:
   #
   os.chdir(root)
 
+#
+# REMOVE TIMESTAMPS FROM ALL APEX FILES
+#
+apex_dir = folders['APEX']
+files = glob.glob(apex_dir + '/**/*.sql', recursive = True)
+#
+for file in files:
+  content = ''
+  with open(file, 'r') as h:
+    content = h.read()
+    content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", content)
+    content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", content)
+  #
+  with open(file, 'w') as h:
+    h.write(content)
+
 print('\nTIME:', round(timeit.default_timer() - start, 2))
 print('\n')
 
