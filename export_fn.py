@@ -162,3 +162,24 @@ def clean_function(lines):
 
 
 
+def clean_sequence(lines):
+  lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')
+  lines[0] = lines[0].replace(' INCREMENT BY 1', '')
+  lines[0] = lines[0].replace(' NOORDER', '')
+  lines[0] = lines[0].replace(' NOCYCLE', '')
+  lines[0] = lines[0].replace(' NOKEEP', '')
+  lines[0] = lines[0].replace(' NOSCALE', '')
+  lines[0] = lines[0].replace(' GLOBAL', '')
+  lines[0] = lines[0].replace(' GLOBAL', '')
+  #
+  lines[0] = fix_simple_name(lines[0])
+  lines[0] = replace(lines[0], '\s+', ' ').strip() + ';'
+  #
+  lines[0] = lines[0].replace(' MINVALUE', '\n    MINVALUE')
+  lines[0] = lines[0].replace(' START', '\n    START')
+  lines[0] = lines[0].replace(' CACHE', '\n    CACHE')
+  #
+  return lines
+
+
+
