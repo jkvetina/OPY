@@ -155,7 +155,7 @@ if args['csv']:
 #
 # EXPORT APEX APP
 #
-if int(args['app']) > 0:
+if 'app' in args and int(args['app'] or 0) > 0:
   apex_dir = folders['APEX']
   apex_tmp = './export.tmp'
   #
@@ -184,6 +184,8 @@ if int(args['app']) > 0:
   process = 'sql /nolog < {}'.format(apex_tmp)
   result  = subprocess.run(process, shell = True, capture_output = True, text = True)
   output  = result.stdout.strip()
+  #
+  os.chdir(root)
 
 print('\nTIME:', round(timeit.default_timer() - start, 2))
 print('\n')
