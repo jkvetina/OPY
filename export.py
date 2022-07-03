@@ -44,26 +44,27 @@ with open(db_conf, 'rb') as f:
 
 
 
-# export objects
-print('OBJECTS PREVIEW:\n----------------')
-data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
-summary = {}
-for row in data_objects:
-  if not (row.object_type) in summary:
-    summary[row.object_type] = 0
-  summary[row.object_type] += 1
 #
-all_objects = conn.fetch_assoc(query_all_objects)
-for row in all_objects:
-  print('{:>20} | {:>4} | {:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.count_))
-print('                          ^')
-print('    CONSTRAINTS:\n    ------------')
-data_constraints = conn.fetch_assoc(query_constraints)
-for row in data_constraints:
-  print('{:>8} | {}'.format(row.constraint_type, row.count_))
-print()
-
-
+# PREVIEW OBJECTS
+#
+if args['recent'] == None or int(args['recent']) > 0:
+  print('OBJECTS PREVIEW:\n----------------')
+  data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
+  summary = {}
+  for row in data_objects:
+    if not (row.object_type) in summary:
+      summary[row.object_type] = 0
+    summary[row.object_type] += 1
+  #
+  all_objects = conn.fetch_assoc(query_all_objects)
+  for row in all_objects:
+    print('{:>20} | {:>4} | {:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.count_))
+  print('                          ^')
+  print('    CONSTRAINTS:\n    ------------')
+  data_constraints = conn.fetch_assoc(query_constraints)
+  for row in data_constraints:
+    print('{:>8} | {}'.format(row.constraint_type, row.count_))
+  print()
 
 # target folders by object types
 target = args['target'] + '/database/'
@@ -87,38 +88,39 @@ folders = {
 #
 # EXPORT OBJECTS
 #
-print('EXPORTING:', '\n----------' if args['verbose'] else '')
-for (i, row) in enumerate(data_objects):
-  object_type, object_name = row.object_type, row.object_name
+if args['recent'] == None or int(args['recent']) > 0:
+  print('EXPORTING:', '\n----------' if args['verbose'] else '')
+  for (i, row) in enumerate(data_objects):
+    object_type, object_name = row.object_type, row.object_name
 
-  # make sure we have target folders ready
-  folder = folders[object_type]
-  if not (os.path.isdir(folder)):
-    os.makedirs(folder)
-  #
-  extra = ''
-  if object_type == 'PACKAGE':
-    extra = '.spec'
-  #
-  obj   = get_object(conn, object_type, object_name)
-  file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
-  #
-  if args['verbose']:
-    print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
-  else:
-    perc        = (i + 1) / len(data_objects)
-    dots        = int(70 * perc)
-    sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-    sys.stdout.flush()
-  #
-  lines = get_lines(obj)
-  lines = getattr(sys.modules[__name__], 'clean_' + object_type.replace(' ', '_').lower())(lines)
-  obj   = '\n'.join(lines) + '\n\n'
+    # make sure we have target folders ready
+    folder = folders[object_type]
+    if not (os.path.isdir(folder)):
+      os.makedirs(folder)
+    #
+    extra = ''
+    if object_type == 'PACKAGE':
+      extra = '.spec'
+    #
+    obj   = get_object(conn, object_type, object_name)
+    file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
+    #
+    if args['verbose']:
+      print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
+    else:
+      perc        = (i + 1) / len(data_objects)
+      dots        = int(70 * perc)
+      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+      sys.stdout.flush()
+    #
+    lines = get_lines(obj)
+    lines = getattr(sys.modules[__name__], 'clean_' + object_type.replace(' ', '_').lower())(lines)
+    obj   = '\n'.join(lines) + '\n\n'
 
-  # write object to file
-  with open(file, 'w', encoding = 'utf-8') as h:
-    h.write(obj)
-print()
+    # write object to file
+    with open(file, 'w', encoding = 'utf-8') as h:
+      h.write(obj)
+  print()
 
 #
 # EXPORT DATA
