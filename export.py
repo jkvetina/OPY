@@ -45,7 +45,7 @@ with open(db_conf, 'rb') as f:
 
 
 # export objects
-print('EXPORTING OBJECTS:\n------------------')
+print('OBJECTS PREVIEW:\n----------------')
 data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
 summary = {}
 for row in data_objects:
@@ -56,9 +56,8 @@ for row in data_objects:
 all_objects = conn.fetch_assoc(query_all_objects)
 for row in all_objects:
   print('{:>20} | {:>4} | {:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.count_))
-print()
-#
-print('  CONSTRAINTS:\n  ------------')
+print('                          ^')
+print('    CONSTRAINTS:\n    ------------')
 data_constraints = conn.fetch_assoc(query_constraints)
 for row in data_constraints:
   print('{:>8} | {}'.format(row.constraint_type, row.count_))
@@ -86,8 +85,8 @@ folders = {
 }
 
 # export objects
-print('EXPORTING:\n----------')
-for row in data_objects:
+print('EXPORTING:', '\n----------' if args['verbose'] else '')
+for (i, row) in enumerate(data_objects):
   object_type, object_name = row.object_type, row.object_name
 
   # make sure we have target folders ready
@@ -102,7 +101,13 @@ for row in data_objects:
   obj   = get_object(conn, object_type, object_name)
   file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
   #
-  print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
+  if args['verbose']:
+    print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
+  else:
+    perc        = (i + 1) / len(data_objects)
+    dots        = int(70 * perc)
+    sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+    sys.stdout.flush()
   #
   lines = get_lines(obj)
   lines = getattr(sys.modules[__name__], 'clean_' + object_type.replace(' ', '_').lower())(lines)
