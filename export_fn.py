@@ -28,8 +28,8 @@ def get_lines(obj):
 
 
 def fix_simple_name(obj):
-  obj = replace(obj, '("[A-Z]+")\.', '')
-  obj = re.sub(r'"([A-Z_$#]+)"', lambda x : x.group(1).lower(), obj)
+  obj = replace(obj, '("[A-Z0-9_$#]+")\.', '')
+  obj = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), obj)
   #
   return obj
 
