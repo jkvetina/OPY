@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, glob, csv
+import sys, os, argparse, pickle, timeit, glob, csv, subprocess
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -40,7 +40,8 @@ if args['name']:
 print('CONNECTING:\n-----------\n  {}\n'.format(db_conf))
 conn = None
 with open(db_conf, 'rb') as f:
-  conn = Oracle(pickle.load(f))
+  conn_bak  = pickle.load(f)
+  conn      = Oracle(conn_bak)
 
 
 
@@ -150,6 +151,39 @@ if args['csv']:
     for row in data:
       writer.writerow(row)
     csv_file.close()
+
+#
+# EXPORT APEX APP
+#
+if int(args['app']) > 0:
+  apex_dir = folders['APEX']
+  apex_tmp = './export.tmp'
+  #
+  print('EXPORTING APEX APP:')
+  print('-------------------')
+  print('       APP |', args['app'])
+  print('    FOLDER |', apex_dir)
+  #
+  content = ''
+  content += 'set cloudconfig ../../../conn/Wallet_{}.zip\n'.format(conn_bak['name'])
+  content += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
+  content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(args['app'])
+  content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(args['app'])
+  #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
+  #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
+
+  # change current dir so we have extracts in correct path
+  if not os.path.exists(apex_dir):
+    os.makedirs(apex_dir)
+  os.chdir(apex_dir)
+  #
+  with open(apex_tmp, 'w+') as f:
+    f.write(content)
+    f.close()
+  #
+  process = 'sql /nolog < {}'.format(apex_tmp)
+  result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+  output  = result.stdout.strip()
 
 print('\nTIME:', round(timeit.default_timer() - start, 2))
 print('\n')
