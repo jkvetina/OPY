@@ -14,7 +14,7 @@ WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRI
     AND o.object_type LIKE :object_type || '%'
     AND o.object_name NOT LIKE 'SYS\\_%' ESCAPE '\\'
     AND o.object_name NOT LIKE 'ISEQ$$_%'
-    AND (o.last_ddl_time >= TRUNC(SYSDATE) - :recent OR :recent IS NULL)
+    AND (o.last_ddl_time >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
     AND (o.object_type, o.object_name) NOT IN (
         SELECT
             'INDEX'         AS object_type,
