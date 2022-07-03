@@ -91,3 +91,17 @@ def clean_table(lines):
 
 
 
+def clean_view(lines):
+  lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
+  lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
+  lines[0] = fix_simple_name(lines[0])
+  lines[1] = lines[1].lstrip()
+  lines[len(lines) - 1] += ';'
+  #
+  # @TODO: add comments (view + columns) -> might not execute if view is not valid
+  #
+  return lines
+
+
+
