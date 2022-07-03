@@ -32,6 +32,7 @@ conn_dir = '/conn'
 
 
 # connect to database
+start = timeit.default_timer()
 db_conf = args['target'] + 'python/db.conf'
 if args['name']:
   db_conf = '{}{}/{}.conf'.format(root, conn_dir, args['name'])
@@ -86,7 +87,6 @@ folders = {
 
 # export objects
 print('EXPORTING:\n----------')
-start = timeit.default_timer()
 for row in data_objects:
   object_type, object_name = row.object_type, row.object_name
 
