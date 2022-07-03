@@ -139,3 +139,26 @@ def clean_materialized_view(lines):
 
 
 
+def clean_package(lines):
+  return clean_procedure(lines)
+
+
+
+def clean_package_body(lines):
+  return clean_procedure(lines)
+
+
+
+def clean_procedure(lines):
+  lines[0] = fix_simple_name(lines[0])
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
+  lines[len(lines) - 1] += '\n/'
+  return lines
+
+
+
+def clean_function(lines):
+  return clean_procedure(lines)
+
+
+
