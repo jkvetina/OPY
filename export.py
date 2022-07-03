@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit
+import sys, os, argparse, pickle, timeit, glob, csv
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -84,7 +84,9 @@ folders = {
   'APEX'              : target + 'apex/',
 }
 
-# export objects
+#
+# EXPORT OBJECTS
+#
 print('EXPORTING:', '\n----------' if args['verbose'] else '')
 for (i, row) in enumerate(data_objects):
   object_type, object_name = row.object_type, row.object_name
@@ -117,6 +119,37 @@ for (i, row) in enumerate(data_objects):
   with open(file, 'w', encoding = 'utf-8') as h:
     h.write(obj)
 print()
+
+#
+# EXPORT DATA
+#
+if args['csv']:
+  files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
+  ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
+  #
+  print('\nEXPORT TABLES DATA:', len(files))
+  print('-------------------')
+  #
+  for table_name in sorted(files):
+    try:
+      table_exists = conn.fetch('SELECT 1 FROM {} WHERE ROWNUM = 1'.format(table_name))[0][0]
+    except:
+      continue
+    #
+    file        = '{}{}.csv'.format(folders['DATA'], table_name)
+    csv_file    = open(file, 'w')
+    writer      = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+    columns     = [col for col in conn.cols if not (col in ignore_columns)]
+    order_by    = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
+    data        = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+    #
+    writer.writerow(conn.cols)  # headers
+    print('  {:30} {:>8}'.format(table_name, len(data)))
+    for row in data:
+      writer.writerow(row)
+    csv_file.close()
+
 print('\nTIME:', round(timeit.default_timer() - start, 2))
 print('\n')
+
 
