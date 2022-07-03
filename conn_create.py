@@ -60,6 +60,6 @@ with open(pickle_file, 'rb') as f:
 # check connectivity
 ora = Oracle(args)
 data = ora.fetch("SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') FROM DUAL")
-print('CONNECTED, SERVER TIME =', data[0][0])  # data[row][col]
+print('CONNECTED:\n--\n  SERVER TIME =', data[0][0])  # data[row][col]
 print()
 

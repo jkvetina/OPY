@@ -31,15 +31,15 @@ class Oracle:
     os.environ['NLS_LANG'] = self.tns['lang']
 
     # try wallet first
-    if self.tns['wallet']:
+    if 'wallet' in self.tns and self.tns['wallet']:
       self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'],\
         wallet_location = self.tns['wallet'], wallet_password = self.tns['wallet_pwd'])
       #
       return
 
-    if not self.dsn:
-      self.dsn = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
-    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.dsn)
+    if not 'dsn' in self.tns:
+      self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'])
 
 
 
