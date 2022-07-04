@@ -121,3 +121,28 @@ WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRI
     AND o.object_type = :object_type
     AND o.object_name = :object_name"""
 
+job_template = """DECLARE
+    in_job_name             CONSTANT VARCHAR2(30)   := '{}';
+    in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
+BEGIN
+    BEGIN
+        DBMS_SCHEDULER.DROP_JOB(in_job_name, TRUE);
+    EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+    END;
+    --
+    DBMS_SCHEDULER.CREATE_JOB (
+{}
+    );
+    --
+    COMMIT;
+    --
+    IF in_run_immediatelly THEN
+        DBMS_SCHEDULER.RUN_JOB(in_job_name);
+        COMMIT;
+    END IF;
+END;
+/
+"""
+
