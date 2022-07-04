@@ -146,7 +146,7 @@ if args['csv']:
   #
   for table_name in sorted(files):
     try:
-      table_exists = conn.fetch('SELECT 1 FROM {} WHERE ROWNUM = 1'.format(table_name))[0][0]
+      table_exists = conn.fetch('SELECT * FROM {} WHERE ROWNUM = 1'.format(table_name))[0][0]
     except:
       continue
     #
