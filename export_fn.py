@@ -119,6 +119,7 @@ def clean_view(lines):
 def clean_materialized_view(lines):
   lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
   lines[0] = fix_simple_name(lines[0])
+  lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
 
   # found query start
   splitter = 0
@@ -189,6 +190,9 @@ def clean_sequence(lines):
   lines[0] = lines[0].replace(' MINVALUE', '\n    MINVALUE')
   lines[0] = lines[0].replace(' START', '\n    START')
   lines[0] = lines[0].replace(' CACHE', '\n    CACHE')
+  #
+  lines = '\n'.join(lines).split('\n')
+  lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
   #
   return lines
 
