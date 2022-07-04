@@ -47,6 +47,13 @@ WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRI
             m.mview_name    AS object_name
         FROM user_mviews m
     )
+    AND (o.object_type, o.object_name) NOT IN (
+        SELECT
+            'JOB'           AS object_type,
+            j.job_name      AS object_name
+        FROM user_scheduler_jobs j
+        WHERE j.job_style NOT IN ('REGULAR')
+    )
 UNION ALL
 SELECT 'JOB' AS object_type, j.job_name AS object_name
 FROM user_scheduler_jobs j
