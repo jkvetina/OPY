@@ -152,7 +152,16 @@ def clean_materialized_view(lines):
 
 
 def clean_package(lines):
-  return clean_procedure(lines)
+  lines = clean_procedure(lines)
+
+  # remove body
+  for (i, line) in enumerate(lines):
+    if line.replace(' EDITIONABLE', '').startswith('CREATE OR REPLACE PACKAGE BODY'):
+      lines = lines[0:i]
+      lines[len(lines) - 1] += '\n/'
+      break
+  #
+  return lines
 
 
 
