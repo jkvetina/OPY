@@ -16,6 +16,22 @@ def get_object(conn, object_type, object_name):
 
 
 
+def get_object_comments(conn, object_name):
+  lines = ['\n--']
+  data = conn.fetch_assoc(query_table_comments, table_name = object_name)
+  for row in data:
+    lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), (row.comments or '').replace('\'', '')))
+  #
+  data = conn.fetch_assoc(query_column_comments, table_name = object_name)
+  if len(data) > 0:
+    lines.append('--')
+  for row in data:
+    lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(row.column_name, (row.comments or '').replace('\'', '')))
+  #
+  return '\n'.join(lines)
+
+
+
 def replace(subject, pattern, replacement, flags = 0):
   return re.compile(pattern, flags).sub(replacement, subject)
 

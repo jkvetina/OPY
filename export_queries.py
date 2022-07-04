@@ -55,6 +55,43 @@ WHERE :recent IS NULL
 ORDER BY 1, 2
 """
 
+# get table comments
+query_table_comments = """
+SELECT m.table_name, m.comments
+FROM user_tab_comments m
+WHERE m.table_name = :table_name
+ORDER BY 1"""
+
+# get column comments
+query_column_comments = """
+SELECT
+    RPAD(LOWER(m.table_name || '.' || m.column_name), MAX(FLOOR(LENGTH(m.table_name || '.' || m.column_name) / 4) * 4 + 5) OVER ()) AS column_name,
+    m.comments
+FROM user_col_comments m
+JOIN user_tab_cols c
+    ON c.table_name         = m.table_name
+    AND c.column_name       = m.column_name
+LEFT JOIN user_views v
+    ON v.view_name          = m.table_name
+LEFT JOIN user_mviews z
+    ON z.mview_name         = m.table_name
+WHERE m.table_name          = :table_name
+    AND (
+        (
+            v.view_name         IS NULL
+            AND z.mview_name    IS NULL
+        )
+        OR m.comments           IS NOT NULL
+    )
+    AND m.table_name    NOT LIKE '%\\_E$' ESCAPE '\\'
+    AND (
+        m.column_name   NOT IN (
+            'UPDATED_BY', 'UPDATED_AT', 'CREATED_BY', 'CREATED_AT'
+        )
+        OR m.comments   IS NOT NULL
+    )
+ORDER BY c.column_id"""
+
 # constraints
 query_constraints = """
 SELECT constraint_type, COUNT(*) AS count_

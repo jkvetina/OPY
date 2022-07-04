@@ -115,18 +115,22 @@ if args['recent'] == None or int(args['recent']) > 0:
     if args['verbose']:
       print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
     else:
-      perc        = (i + 1) / len(data_objects)
-      dots        = int(70 * perc)
+      perc = (i + 1) / len(data_objects)
+      dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
     #
     lines = get_lines(obj)
     lines = getattr(sys.modules[__name__], 'clean_' + object_type.replace(' ', '_').lower())(lines)
-    obj   = '\n'.join(lines) + '\n\n'
+    obj   = '\n'.join(lines)
+
+    # append comments
+    if object_type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
+      obj += get_object_comments(conn, object_name)
 
     # write object to file
     with open(file, 'w', encoding = 'utf-8') as h:
-      h.write(obj)
+      h.write(obj + '\n\n')
   #
   if not args['verbose']:
     print()
