@@ -267,3 +267,30 @@ def clean_index(lines):
 
 
 
+def clean_job(lines):
+  args = ''
+  for (i, line) in enumerate(lines):
+    #if line.startswith('sys.dbms_scheduler.set_attribute(') or\
+    #  line.startswith('COMMIT;') or\
+    #  line.startswith('END;'):
+    #  lines[i] = ''
+    if line.startswith('start_date=>'):
+      lines[i] = replace(lines[i], r'start_date=>TO_TIMESTAMP_TZ[^)]*[)]', 'start_date=>SYSDATE')
+    if line.lstrip().startswith('sys.dbms_scheduler.set_attribute(') and 'NLS_ENV' in line:
+      lines[i] = ''
+    if line.startswith(');'):
+      args = lines[i:]
+      lines = replace(' '.join(lines[2:i]), r'\s+', ' ')  # everything to 1 line
+      lines = lines.replace('end_date=>NULL,', '')
+      lines = lines.replace('job_class=>\'"DEFAULT_JOB_CLASS"\',', '')
+      break
+  #
+  lines = ['job_name=>in_job_name,'] + replace(lines, r'\s*,\s*([a-z_]+)\s*=>\s*', r',\n\1=>').split('\n')
+  for (i, line) in enumerate(lines):
+    line = line.split('=>')
+    line = '        {:<20}=> {}'.format(line[0], '=>'.join(line[1:]))
+    lines[i] = line
+  #
+  return lines
+
+
