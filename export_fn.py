@@ -221,6 +221,11 @@ def clean_sequence(lines):
   lines = '\n'.join(lines).split('\n')
   lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
   #
+  for (i, line) in enumerate(lines):
+    if line.startswith('    START WITH'):
+      lines[i] = ''
+  #
+  lines = list(filter(None, lines))
   return lines
 
 
