@@ -96,7 +96,9 @@ def clean_table(lines):
     #
     if line.startswith('TABLESPACE') or\
       line.startswith('PCTFREE') or\
-      line.startswith('NOCOMPRESS LOGGING'):
+      line.startswith('NOCOMPRESS LOGGING') or\
+      line.startswith('NOCACHE LOGGING') or\
+      line.startswith('LOB ("'):
       lines[i] = ''
     #
     if line.startswith('CONSTRAINT'):
@@ -113,7 +115,7 @@ def clean_table(lines):
 
   # remove empty lines
   lines = list(filter(None, lines))
-  lines[len(lines) - 1] += ';'
+  lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
   return lines
 
 
