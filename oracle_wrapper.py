@@ -1,6 +1,7 @@
 # coding: utf-8
-import os, collections
-import oracledb as cx_Oracle  #import cx_Oracle
+import sys, os, collections
+import oracledb
+import cx_Oracle
 
 class Oracle:
 
@@ -32,14 +33,15 @@ class Oracle:
 
     # try wallet first
     if 'wallet' in self.tns and self.tns['wallet']:
-      self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'],\
+      self.conn = oracledb.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'],\
         wallet_location = self.tns['wallet'], wallet_password = self.tns['wallet_pwd'])
       #
       return
 
     if not 'dsn' in self.tns:
       self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
-    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'])
+      #self.tns['dsn'] = '{}:{}/{}'.format(self.tns['host'], self.tns['port'], self.tns['sid'])
+    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'UTF-8')
 
 
 
