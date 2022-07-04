@@ -127,6 +127,9 @@ if args['recent'] == None or int(args['recent']) > 0:
     # write object to file
     with open(file, 'w', encoding = 'utf-8') as h:
       h.write(obj)
+  #
+  if not args['verbose']:
+    print()
   print()
 
 
@@ -138,7 +141,7 @@ if args['csv']:
   files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
   ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
   #
-  print('\nEXPORT TABLES DATA:', len(files))
+  print('EXPORT TABLES DATA:', len(files))
   print('-------------------')
   #
   for table_name in sorted(files):
