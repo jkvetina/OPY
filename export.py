@@ -200,7 +200,8 @@ if 'app' in args and int(args['app'] or 0) > 0:
   output  = result.stdout.strip()
 #
 os.chdir(root)
-os.remove(apex_dir + apex_tmp)
+if os.path.exists(apex_dir + apex_tmp):
+  os.remove(apex_dir + apex_tmp)
 
 
 
