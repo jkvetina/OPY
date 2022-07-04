@@ -10,6 +10,8 @@ def get_object(conn, object_type, object_name):
   else:
     desc = conn.fetch(query_describe_object, object_type = object_type, object_name = object_name)
   #
+  if len(desc) == 0:
+    return
   return re.sub('\t', '    ', str(desc[0][0]).strip())  # replace tabs with 4 spaces
 
 
