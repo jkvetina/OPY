@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, glob, csv, subprocess, datetime, shutil
+import sys, os, argparse, pickle, timeit, glob, csv, subprocess, datetime, shutil, zipfile, hashlib
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -305,6 +305,10 @@ if args['patch']:
           print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
           last_dir = curr_dir
   print('    {:<48}{:>10}'.format('', os.path.getsize(output)))
+
+  # create binary to whatever purpose
+  with zipfile.ZipFile(patch_file + '.zip', 'w') as myzip:
+    myzip.write(patch_file)
   print()
 
 print('TIME:', round(timeit.default_timer() - start, 2))
