@@ -34,9 +34,32 @@ root          = os.path.dirname(os.path.realpath(__file__))
 conn_dir      = '/conn'
 rollout_dir   = root + '/patches'
 rollout_done  = root + '/patches_done'
-rollout_dirs  = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
+rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
+rolldir_obj   = rollout_dir + '/40_objects---LIVE'
+rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
+rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
 today         = datetime.datetime.today().strftime('%Y-%m-%d')
+rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
+patch_file    = '{}/{}.sql'.format(rollout_done, today)
 
+# target folders by object types
+git_target = args['target'] + '/database/'
+folders = {
+  'TABLE'             : git_target + 'tables/',
+  'VIEW'              : git_target + 'views/',
+  'MATERIALIZED VIEW' : git_target + 'mviews/',
+  'TRIGGER'           : git_target + 'triggers/',
+  'INDEX'             : git_target + 'indexes/',
+  'SEQUENCE'          : git_target + 'sequences/',
+  'PROCEDURE'         : git_target + 'procedures/',
+  'FUNCTION'          : git_target + 'functions/',
+  'PACKAGE'           : git_target + 'packages/',
+  'PACKAGE BODY'      : git_target + 'packages/',
+  'JOB'               : git_target + 'jobs/',
+  'DATA'              : git_target + 'data/',
+  'GRANT'             : git_target + 'grants/',
+  'APEX'              : git_target + 'apex/',
+}
 
 
 #
@@ -79,25 +102,6 @@ if args['recent'] == None or int(args['recent']) > 0:
   for row in data_constraints:
     print('{:>8} | {}'.format(row.constraint_type, row.count_))
   print()
-
-# target folders by object types
-target = args['target'] + '/database/'
-folders = {
-  'TABLE'             : target + 'tables/',
-  'VIEW'              : target + 'views/',
-  'MATERIALIZED VIEW' : target + 'mviews/',
-  'TRIGGER'           : target + 'triggers/',
-  'INDEX'             : target + 'indexes/',
-  'SEQUENCE'          : target + 'sequences/',
-  'PROCEDURE'         : target + 'procedures/',
-  'FUNCTION'          : target + 'functions/',
-  'PACKAGE'           : target + 'packages/',
-  'PACKAGE BODY'      : target + 'packages/',
-  'JOB'               : target + 'jobs/',
-  'DATA'              : target + 'data/',
-  'GRANT'             : target + 'grants/',
-  'APEX'              : target + 'apex/',
-}
 
 
 
@@ -247,30 +251,29 @@ for file in files:
 
 
 #
-# PREPARE RELEASE
+# PREPARE PATCH
 #
 if args['patch']:
-  output  = '{}/{}.sql'.format(rollout_done, today)
-  if os.path.exists(output):
-    os.remove(output)
-  #
-  print('PREPARING PATCH:', output.replace(root, ''))
+  print('PREPARING PATCH:', patch_file.replace(root, ''))
   print('----------------')
+  #
+  if os.path.exists(patch_file):
+    os.remove(patch_file)
   #
   if not os.path.exists(rollout_dir):
     os.makedirs(rollout_dir)
   if not os.path.exists(rollout_done):
     os.makedirs(rollout_done)
   #
-  manual_file = '{}/20_diffs---MANUALLY/{}.sql'.format(rollout_dir, today)
+  manual_file = '{}/{}.sql'.format(rolldir_man, today)
   if not os.path.exists(manual_file):
     with open(manual_file, 'w') as f:
       f.write('')
   #
-  for d in rollout_dirs:
-    files_mask  = '{}/{}/*.sql'.format(target, re.sub('\d+[_]', '', d))
+  for d in rolldirs:
+    files_mask  = '{}/{}/*.sql'.format(git_target, re.sub('\d+[_]', '', d))
     files       = sorted(glob.glob(files_mask))
-    out_file    = '{}/40_objects---LIVE/{}.sql'.format(rollout_dir, d)
+    out_file    = '{}/{}.sql'.format(rolldir_obj, d)
     #
     if not (os.path.isdir(os.path.dirname(out_file))):
       os.makedirs(os.path.dirname(out_file))
@@ -282,7 +285,7 @@ if args['patch']:
           z.write('/\n\n'.encode('utf-8'))
 
   # refresh current apps
-  files = glob.glob(rollout_dir + '/90_apex_app---LIVE/*.sql')
+  files = glob.glob(rolldir_apex + '/*.sql')
   for file in files:
     apex_file = folders['APEX'] + os.path.basename(file)
     if os.path.exists(apex_file):
@@ -297,14 +300,15 @@ if args['patch']:
       if 'MANUALLY' in file and not (today in file):
         flag = ' <- CHECK'
       #
-      with open(output, 'ab') as z:
+      with open(patch_file, 'ab') as z:
         #z.write((file + '\n').encode('utf-8'))
         with open(file, 'rb') as h:
           z.write(h.read())
           (curr_dir, short) = file.replace(rollout_dir, '').lstrip('/').split('/')
           print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
           last_dir = curr_dir
-  print('    {:<48}{:>10}'.format('', os.path.getsize(output)))
+  print('    {:<48}{:>10}'.format('', os.path.getsize(patch_file)))
+  print()
 
   # create binary to whatever purpose
   with zipfile.ZipFile(patch_file + '.zip', 'w') as myzip:
