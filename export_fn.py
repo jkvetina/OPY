@@ -273,7 +273,6 @@ def clean_index(lines):
 
 
 def clean_job(lines):
-  args = ''
   for (i, line) in enumerate(lines):
     #if line.startswith('sys.dbms_scheduler.set_attribute(') or\
     #  line.startswith('COMMIT;') or\
@@ -284,7 +283,6 @@ def clean_job(lines):
     if line.lstrip().startswith('sys.dbms_scheduler.set_attribute(') and 'NLS_ENV' in line:
       lines[i] = ''
     if line.startswith(');'):
-      args = lines[i:]
       lines = replace(' '.join(lines[2:i]), r'\s+', ' ')  # everything to 1 line
       lines = lines.replace('end_date=>NULL,', '')
       lines = lines.replace('job_class=>\'"DEFAULT_JOB_CLASS"\',', '')
@@ -297,5 +295,32 @@ def clean_job(lines):
     lines[i] = line
   #
   return lines
+
+
+
+def get_job_fixed(object_name, obj, conn):
+  # fix priority and status
+  data = conn.fetch_assoc(query_describe_job_details, job_name = object_name)
+  job_priority  = data[0].job_priority
+  job_enabled   = '--' if data[0].enabled == 'FALSE' else ''
+
+  # fix arguments
+  args = ''
+  data = conn.fetch_assoc(query_describe_job_args, job_name = object_name)
+  for row in data:
+    kind  = 'position'
+    name  = row.argument_position
+    value = row.value
+    #
+    if row.argument_name:
+      kind  = 'name'
+      name = '\'{}\''.format(row.argument_name)
+    #
+    args += '\n    DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE(in_job_name, argument_{} => {}, argument_value => {});'.format(kind, name, value)
+  #
+  if len(args) > 0:
+    args += '\n    --'
+  #
+  return job_template.format(object_name, obj, args, job_priority, job_enabled)
 
 

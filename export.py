@@ -137,6 +137,10 @@ if args['recent'] == None or int(args['recent']) > 0:
     if object_type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
       obj += get_object_comments(conn, object_name)
 
+    # fill in job template
+    if object_type in ('JOB'):
+      obj = get_job_fixed(object_name, obj, conn)
+
     # write object to file
     with open(file, 'w', encoding = 'utf-8') as h:
       h.write(obj + '\n\n')

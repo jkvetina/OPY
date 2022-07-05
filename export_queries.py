@@ -121,6 +121,21 @@ WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRI
     AND o.object_type = :object_type
     AND o.object_name = :object_name"""
 
+query_describe_job_details = """
+SELECT job_name, enabled, job_priority
+FROM user_scheduler_jobs j
+WHERE j.job_name = :job_name"""
+
+query_describe_job_args = """
+SELECT
+    j.argument_name,
+    j.argument_position,
+    j.argument_type,
+    j.value
+FROM user_scheduler_job_args j
+WHERE j.job_name = :job_name
+ORDER BY j.argument_position"""
+
 job_template = """DECLARE
     in_job_name             CONSTANT VARCHAR2(30)   := '{}';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
@@ -135,7 +150,9 @@ BEGIN
     DBMS_SCHEDULER.CREATE_JOB (
 {}
     );
-    --
+    --{}
+    DBMS_SCHEDULER.SET_ATTRIBUTE(in_job_name, 'JOB_PRIORITY', {});
+    {}DBMS_SCHEDULER.ENABLE(in_job_name);
     COMMIT;
     --
     IF in_run_immediatelly THEN
