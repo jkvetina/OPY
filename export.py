@@ -322,7 +322,7 @@ if args['patch']:
 
 
 #
-# MARK ROLLOUT
+# PREVIEW/CONFIRM ROLLOUT
 #
 if args['rollout']:
   if not args['y']:
@@ -362,6 +362,7 @@ if args['rollout']:
           diff[type] = []
         diff[type].append([file, hash_old])
 
+  # show differences
   for type, files in diff.items():
     for i, (file, hash) in enumerate(sorted(files)):
       flag = '<- CHECK' if (type == 'TABLE' and hash != '') else ''
