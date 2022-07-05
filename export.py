@@ -13,15 +13,17 @@ parser.add_argument('-t', '--type',     help = 'Filter specific object type', de
 parser.add_argument('-r', '--recent',   help = 'Filter objects compiled since SYSDATE - $recent')
 parser.add_argument('-a', '--app',      help = 'APEX application')
 parser.add_argument('-p', '--page',     help = 'APEX page')
-parser.add_argument('-c', '--csv',      help = '', nargs = '?', default = False, const = True)
-parser.add_argument('-v', '--verbose',  help = '', nargs = '?', default = False, const = True)
+parser.add_argument('-c', '--csv',      help = 'Export tables in data/ dor to CSV files', nargs = '?', default = False, const = True)
+parser.add_argument('-v', '--verbose',  help = 'Show object names during export', nargs = '?', default = False, const = True)
 parser.add_argument('-d', '--debug',    help = '', nargs = '?', default = False, const = True)
+parser.add_argument('-z', '--patch',    help = 'Prepare patch', nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 
 # check args
 if args['debug']:
-  print('ARGS:\n-----')
+  print('ARGS:')
+  print('-----')
   for (key, value) in args.items():
     if not (key in ('pwd', 'wallet_pwd')):
       print('{:>8} = {}'.format(key, value))
@@ -41,7 +43,8 @@ db_conf = args['target'] + 'python/db.conf'
 if args['name']:
   db_conf = '{}{}/{}.conf'.format(root, conn_dir, args['name'])
 #
-print('CONNECTING:\n-----------\n  {}\n'.format(db_conf))
+print('CONNECTING:')
+print('-----------\n  {}\n'.format(db_conf))
 conn = None
 with open(db_conf, 'rb') as f:
   conn_bak  = pickle.load(f)
@@ -53,7 +56,8 @@ with open(db_conf, 'rb') as f:
 # PREVIEW OBJECTS
 #
 if args['recent'] == None or int(args['recent']) > 0:
-  print('OBJECTS PREVIEW:\n----------------')
+  print('OBJECTS PREVIEW:')
+  print('----------------')
   data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
   summary = {}
   for row in data_objects:
@@ -65,7 +69,8 @@ if args['recent'] == None or int(args['recent']) > 0:
   for row in all_objects:
     print('{:>20} | {:>4} | {:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.count_))
   print('                          ^')
-  print('    CONSTRAINTS:\n    ------------')
+  print('    CONSTRAINTS:')
+  print('    ------------')
   data_constraints = conn.fetch_assoc(query_constraints)
   for row in data_constraints:
     print('{:>8} | {}'.format(row.constraint_type, row.count_))
@@ -202,7 +207,9 @@ if 'app' in args and int(args['app'] or 0) > 0:
   process = 'sql /nolog < {}'.format(apex_tmp)
   result  = subprocess.run(process, shell = True, capture_output = True, text = True)
   output  = result.stdout.strip()
-#
+  print()
+
+# remove temp file
 os.chdir(root)
 if os.path.exists(apex_dir + apex_tmp):
   os.remove(apex_dir + apex_tmp)
