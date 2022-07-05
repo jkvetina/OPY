@@ -192,8 +192,12 @@ if 'app' in args and int(args['app'] or 0) > 0:
   print('    FOLDER |', apex_dir)
   #
   content = ''
-  content += 'set cloudconfig ../../../conn/Wallet_{}.zip\n'.format(conn_bak['name'])
-  content += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
+  if 'wallet' in conn_bak:
+    content += 'set cloudconfig ../../../conn/Wallet_{}.zip\n'.format(conn_bak['name'])
+    content += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
+  else:
+    content += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
+  #
   content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(args['app'])
   content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(args['app'])
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
