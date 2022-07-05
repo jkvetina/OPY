@@ -15,8 +15,10 @@ parser.add_argument('-a', '--app',      help = 'APEX application')
 parser.add_argument('-p', '--page',     help = 'APEX page')
 parser.add_argument('-c', '--csv',      help = 'Export tables in data/ dor to CSV files', nargs = '?', default = False, const = True)
 parser.add_argument('-v', '--verbose',  help = 'Show object names during export', nargs = '?', default = False, const = True)
-parser.add_argument('-d', '--debug',    help = '', nargs = '?', default = False, const = True)
-parser.add_argument('-z', '--patch',    help = 'Prepare patch', nargs = '?', default = False, const = True)
+parser.add_argument('--debug',          help = '', nargs = '?', default = False, const = True)
+parser.add_argument('--patch',          help = 'Prepare patch', nargs = '?', default = False, const = True)
+parser.add_argument('--rollout',        help = 'Mark rollout as done', nargs = '?', default = False, const = True)
+parser.add_argument('-y',               help = 'Proceed with rollout', nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 
@@ -313,6 +315,60 @@ if args['patch']:
   # create binary to whatever purpose
   with zipfile.ZipFile(patch_file + '.zip', 'w') as myzip:
     myzip.write(patch_file)
+
+
+
+#
+# MARK ROLLOUT
+#
+if args['rollout']:
+  if not args['y']:
+    print('ROLLOUT PREVIEW: (files changed since last rollout)')
+    print('----------------\n')
+  else:
+    print('ROLLOUT CONFIRMED:')
+    print('------------------\n')
+
+  # get old hashes
+  hashed_old = {}
+  diff = {}
+  f = open(rollout_log, 'r')
+  for line in f.readlines():
+    (file, hash) = line.split('|')
+    hashed_old[file.strip()] = hash.strip()
+
+  # go thru existing files
+  hashed = []
+  for (type, path) in folders.items():
+    # skip some folders
+    if type in ('APEX', 'DATA', 'PACKAGE BODY'):
+      continue
+    #
+    files = glob.glob(path + '*.sql')
+    for file in files:
+      # calculate file hash
+      hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
+      file = file.replace(git_target, '')
+      hashed.append('{:<45} | {}'.format(file, hash))
+
+      # show differences
+      hash_old = hashed_old.get(file, '')
+      if hash != hash_old:
+        type = [k for k, v in folders.items() if v == git_target + os.path.dirname(file) + '/'][0]
+        if not (type in diff):
+          diff[type] = []
+        diff[type].append([file, hash_old])
+
+  for type, files in diff.items():
+    for i, (file, hash) in enumerate(sorted(files)):
+      flag = '<- CHECK' if (type == 'TABLE' and hash != '') else ''
+      print('{:>20} | {:<36}{}'.format(type if i == 0 else '', file.split('/')[1], flag))
+
+  # store hashes for next patch
+  if args['y']:
+    with open(rollout_log, 'w') as h:
+      h.write('\n'.join(sorted(hashed)))
+  #
   print()
 
 print('TIME:', round(timeit.default_timer() - start, 2))
