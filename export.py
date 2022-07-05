@@ -18,7 +18,6 @@ parser.add_argument('-v', '--verbose',  help = 'Show object names during export'
 parser.add_argument('--debug',          help = '', nargs = '?', default = False, const = True)
 parser.add_argument('--patch',          help = 'Prepare patch', nargs = '?', default = False, const = True)
 parser.add_argument('--rollout',        help = 'Mark rollout as done', nargs = '?', default = False, const = True)
-parser.add_argument('-y',               help = 'Proceed with rollout', nargs = '?', default = False, const = True)
 parser.add_argument('-zip',             help = 'Patch as ZIP', nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
@@ -265,7 +264,7 @@ for file in files:
 # PREPARE PATCH
 #
 if args['patch']:
-  print('PREPARING PATCH:', patch_file.replace(root, ''))
+  print('PREPARING PATCH:', patch_file.replace(root, ''), '+ .zip' if args['patch'] else '')
   print('----------------')
   #
   if os.path.exists(patch_file):
@@ -282,9 +281,9 @@ if args['patch']:
       f.write('')
   #
   for dir in rolldirs:
+    out_file    = '{}/{}.sql'.format(rolldir_obj, dir)
     files_mask  = '{}{}/*.sql'.format(git_target, re.sub('\d+[_]', '', dir))
     files       = sorted(glob.glob(files_mask))
-    out_file    = '{}/{}.sql'.format(rolldir_obj, dir)
     #
     if not (os.path.isdir(os.path.dirname(out_file))):
       os.makedirs(os.path.dirname(out_file))
@@ -336,13 +335,13 @@ if args['patch']:
 #
 # PREVIEW/CONFIRM ROLLOUT
 #
-if args['rollout']:
-  if not args['y']:
-    print('ROLLOUT PREVIEW: (files changed since last rollout)')
-    print('----------------')
-  else:
+if (args['rollout'] or args['patch']):
+  if args['rollout']:
     print('ROLLOUT CONFIRMED:')
     print('------------------')
+  else:
+    print('ROLLOUT PREVIEW: (files changed since last rollout)')
+    print('----------------')
 
   # go thru existing files
   diff = {}
@@ -374,7 +373,7 @@ if args['rollout']:
       print('{:>20} | {:<36}{}'.format(type if i == 0 else '', file.split('/')[1], flag))
 
   # store hashes for next patch
-  if args['y']:
+  if args['rollout']:
     with open(rollout_log, 'w') as h:
       h.write('\n'.join(sorted(hashed)))
   #
