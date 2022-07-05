@@ -234,6 +234,13 @@ os.chdir(root)
 if os.path.exists(apex_dir + apex_tmp):
   os.remove(apex_dir + apex_tmp)
 
+# get old hashes
+hashed_old = {}
+f = open(rollout_log, 'r')
+for line in f.readlines():
+  (file, hash) = line.split('|')
+  hashed_old[file.strip()] = hash.strip()
+
 
 
 #
@@ -274,19 +281,24 @@ if args['patch']:
     with open(manual_file, 'w') as f:
       f.write('')
   #
-  for d in rolldirs:
-    files_mask  = '{}/{}/*.sql'.format(git_target, re.sub('\d+[_]', '', d))
+  for dir in rolldirs:
+    files_mask  = '{}{}/*.sql'.format(git_target, re.sub('\d+[_]', '', dir))
     files       = sorted(glob.glob(files_mask))
-    out_file    = '{}/{}.sql'.format(rolldir_obj, d)
+    out_file    = '{}/{}.sql'.format(rolldir_obj, dir)
     #
     if not (os.path.isdir(os.path.dirname(out_file))):
       os.makedirs(os.path.dirname(out_file))
     #
     with open(out_file, 'wb') as z:
       for file in files:
-        with open(file, 'rb') as h:
-          z.write(h.read())
-          z.write('/\n\n'.encode('utf-8'))
+        hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
+        hash_old = hashed_old.get(file.replace(git_target, ''), '')
+
+        # add only changed objects
+        if hash != hash_old:
+          with open(file, 'rb') as h:
+            z.write(h.read())
+            z.write('/\n\n'.encode('utf-8'))
 
   # refresh current apps
   files = glob.glob(rolldir_apex + '/*.sql')
@@ -327,20 +339,13 @@ if args['patch']:
 if args['rollout']:
   if not args['y']:
     print('ROLLOUT PREVIEW: (files changed since last rollout)')
-    print('----------------\n')
+    print('----------------')
   else:
     print('ROLLOUT CONFIRMED:')
-    print('------------------\n')
-
-  # get old hashes
-  hashed_old = {}
-  diff = {}
-  f = open(rollout_log, 'r')
-  for line in f.readlines():
-    (file, hash) = line.split('|')
-    hashed_old[file.strip()] = hash.strip()
+    print('------------------')
 
   # go thru existing files
+  diff = {}
   hashed = []
   for (type, path) in folders.items():
     # skip some folders
