@@ -19,6 +19,7 @@ parser.add_argument('--debug',          help = '', nargs = '?', default = False,
 parser.add_argument('--patch',          help = 'Prepare patch', nargs = '?', default = False, const = True)
 parser.add_argument('--rollout',        help = 'Mark rollout as done', nargs = '?', default = False, const = True)
 parser.add_argument('-y',               help = 'Proceed with rollout', nargs = '?', default = False, const = True)
+parser.add_argument('-zip',             help = 'Patch as ZIP', nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 
@@ -43,6 +44,7 @@ rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
 today         = datetime.datetime.today().strftime('%Y-%m-%d')
 rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
 patch_file    = '{}/{}.sql'.format(rollout_done, today)
+zip_file      = '{}/{}.zip'.format(rollout_done, today)
 
 # target folders by object types
 git_target = args['target'] + '/database/'
@@ -313,8 +315,9 @@ if args['patch']:
   print()
 
   # create binary to whatever purpose
-  with zipfile.ZipFile(patch_file + '.zip', 'w') as myzip:
-    myzip.write(patch_file)
+  if args['zip']:
+    with zipfile.ZipFile(zip_file, 'w') as myzip:
+      myzip.write(patch_file)
 
 
 
