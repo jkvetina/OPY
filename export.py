@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, glob, csv, subprocess
+import sys, os, argparse, pickle, timeit, glob, csv, subprocess, datetime, shutil
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -30,8 +30,12 @@ if args['debug']:
   print('')
 
 # current dir
-root = os.path.dirname(os.path.realpath(__file__))
-conn_dir = '/conn'
+root          = os.path.dirname(os.path.realpath(__file__))
+conn_dir      = '/conn'
+rollout_dir   = root + '/patches'
+rollout_done  = root + '/patches_done'
+rollout_dirs  = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
+today         = datetime.datetime.today().strftime('%Y-%m-%d')
 
 
 
@@ -232,7 +236,70 @@ for file in files:
   with open(file, 'w') as h:
     h.write(content)
 
-print('\nTIME:', round(timeit.default_timer() - start, 2))
+
+
+#
+# PREPARE RELEASE
+#
+if args['patch']:
+  output  = '{}/{}.sql'.format(rollout_done, today)
+  if os.path.exists(output):
+    os.remove(output)
+  #
+  print('PREPARING PATCH:', output.replace(root, ''))
+  print('----------------')
+  #
+  if not os.path.exists(rollout_dir):
+    os.makedirs(rollout_dir)
+  if not os.path.exists(rollout_done):
+    os.makedirs(rollout_done)
+  #
+  manual_file = '{}/20_diffs---MANUALLY/{}.sql'.format(rollout_dir, today)
+  if not os.path.exists(manual_file):
+    with open(manual_file, 'w') as f:
+      f.write('')
+  #
+  for d in rollout_dirs:
+    files_mask  = '{}/{}/*.sql'.format(target, re.sub('\d+[_]', '', d))
+    files       = sorted(glob.glob(files_mask))
+    out_file    = '{}/40_objects---LIVE/{}.sql'.format(rollout_dir, d)
+    #
+    if not (os.path.isdir(os.path.dirname(out_file))):
+      os.makedirs(os.path.dirname(out_file))
+    #
+    with open(out_file, 'wb') as z:
+      for file in files:
+        with open(file, 'rb') as h:
+          z.write(h.read())
+          z.write('/\n\n'.encode('utf-8'))
+
+  # refresh current apps
+  files = glob.glob(rollout_dir + '/90_apex_app---LIVE/*.sql')
+  for file in files:
+    apex_file = folders['APEX'] + os.path.basename(file)
+    if os.path.exists(apex_file):
+      shutil.copyfile(apex_file, file)
+
+  # join all files in a folder to a single file
+  files = sorted(glob.glob(rollout_dir + '/**/*.sql', recursive = True))
+  last_dir = ''
+  for file in files:
+    if not ('---SKIP.sql' in file):
+      flag = ''
+      if 'MANUALLY' in file and not (today in file):
+        flag = ' <- CHECK'
+      #
+      with open(output, 'ab') as z:
+        #z.write((file + '\n').encode('utf-8'))
+        with open(file, 'rb') as h:
+          z.write(h.read())
+          (curr_dir, short) = file.replace(rollout_dir, '').lstrip('/').split('/')
+          print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
+          last_dir = curr_dir
+  print('    {:<48}{:>10}'.format('', os.path.getsize(output)))
+  print()
+
+print('TIME:', round(timeit.default_timer() - start, 2))
 print('\n')
 
 
