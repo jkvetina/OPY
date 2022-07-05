@@ -113,6 +113,8 @@ if args['recent'] == None or int(args['recent']) > 0:
 #
 if args['recent'] == None or int(args['recent']) > 0:
   print('EXPORTING:', '\n----------' if args['verbose'] else '')
+  #
+  recent_type = ''
   for (i, row) in enumerate(data_objects):
     object_type, object_name = row.object_type, row.object_name
 
@@ -129,7 +131,8 @@ if args['recent'] == None or int(args['recent']) > 0:
     file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
     #
     if args['verbose']:
-      print('{:>20} | {:<30} {:>8}'.format(object_type, object_name, len(obj)))
+      print('{:>20} | {:<30} {:>8}'.format(object_type if object_type != recent_type else '', object_name, len(obj)))
+      recent_type = object_type
     else:
       perc = (i + 1) / len(data_objects)
       dots = int(70 * perc)
