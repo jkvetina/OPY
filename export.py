@@ -107,7 +107,7 @@ if args['recent'] == None or int(args['recent']) > 0:
 # EXPORT OBJECTS
 #
 if args['recent'] == None or int(args['recent']) > 0:
-  print('EXPORTING:', '\n----------' if args['verbose'] else '')
+  print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
   recent_type = ''
   for (i, row) in enumerate(data_objects):
