@@ -1,10 +1,30 @@
 # get database objects overview
-query_all_objects = """
-SELECT object_type, COUNT(*) AS count_
-FROM user_objects
-WHERE object_type NOT IN ('LOB', 'TABLE PARTITION')
-GROUP BY object_type
-ORDER BY 1"""
+query_summary = """
+WITH a AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY a.object_type) AS r#,
+        a.object_type,
+        COUNT(*) AS object_count
+    FROM user_objects a
+    WHERE a.object_type NOT IN ('LOB', 'TABLE PARTITION')
+    GROUP BY a.object_type
+),
+c AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY c.constraint_type) AS r#,
+        c.constraint_type,
+        COUNT(*) AS constraint_count
+    FROM user_constraints c
+    GROUP BY c.constraint_type
+)
+SELECT
+    a.object_type,
+    a.object_count,
+    c.constraint_type,
+    c.constraint_count
+FROM a
+FULL JOIN c ON c.r# = a.r#
+ORDER BY NVL(a.r#, c.r#)"""
 
 # objects to process
 query_objects = """
@@ -98,13 +118,6 @@ WHERE m.table_name          = :table_name
         OR m.comments   IS NOT NULL
     )
 ORDER BY c.column_id"""
-
-# constraints
-query_constraints = """
-SELECT constraint_type, COUNT(*) AS count_
-FROM user_constraints
-GROUP BY constraint_type
-ORDER BY 1"""
 
 #
 query_describe_job = """
