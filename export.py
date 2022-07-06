@@ -52,7 +52,7 @@ folders = {
 
 # current dir
 root          = os.path.dirname(os.path.realpath(__file__))
-conn_dir      = '/conn'
+conn_dir      = root + '/conn'
 rollout_dir   = git_target + '../patches'
 rollout_done  = git_target + '../patches_done'
 rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
@@ -74,14 +74,37 @@ db_conf = args['target'] + 'documentation/db.conf'
 #
 start = timeit.default_timer()
 if args['name']:
-  db_conf = '{}{}/{}.conf'.format(root, conn_dir, args['name'])
+  db_conf = '{}/{}.conf'.format(conn_dir, args['name'])
 #
-print('CONNECTING:')
-print('-----------\n  {}\n'.format(db_conf))
-conn = None
+common  = os.path.commonprefix([db_conf, git_target])
+conn    = None
 with open(db_conf, 'rb') as f:
   conn_bak  = pickle.load(f)
   conn      = Oracle(conn_bak)
+
+# find wallet
+wallet_file = ''
+if 'name' in conn_bak:
+  wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), conn_bak['name'])
+  if not os.path.exists(wallet_file):
+    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), conn_bak['name'])
+    if not os.path.exists(wallet_file):
+      wallet_file = ''
+#
+print('CONNECTING:')
+print('-----------')
+print('    SOURCE | {}@{}/{}{}'.format(
+  conn_bak['user'],
+  conn_bak.get('host', ''),
+  conn_bak.get('service', ''),
+  conn_bak.get('sid', '')))
+#
+if wallet_file != '':
+  print('    WALLET | {}'.format(conn_bak['wallet'].replace(common, '~ ')))
+#
+print('           | {}'.format(db_conf.replace(common, '~ ')))
+print('    TARGET | {}'.format(git_target.replace(common, '~ ')))
+print()
 
 
 
@@ -201,11 +224,11 @@ if 'app' in args and int(args['app'] or 0) > 0:
   print('EXPORTING APEX APP:')
   print('-------------------')
   print('       APP |', args['app'])
-  print('    FOLDER |', apex_dir)
+  print('    FOLDER |', apex_dir.replace(common, '~ '))
   #
   content = ''
-  if 'wallet' in conn_bak:
-    content += 'set cloudconfig ../../../conn/Wallet_{}.zip\n'.format(conn_bak['name'])
+  if wallet_file != '' and 'wallet' in conn_bak:
+    content += 'set cloudconfig {}\n'.format(wallet_file)
     content += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
   else:
     content += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
