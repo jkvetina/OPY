@@ -31,20 +31,6 @@ if args['debug']:
       print('{:>8} = {}'.format(key, value))
   print('')
 
-# current dir
-root          = os.path.dirname(os.path.realpath(__file__))
-conn_dir      = '/conn'
-rollout_dir   = root + '/patches'
-rollout_done  = root + '/patches_done'
-rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
-rolldir_obj   = rollout_dir + '/40_objects---LIVE'
-rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
-rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
-today         = datetime.datetime.today().strftime('%Y-%m-%d')
-rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
-patch_file    = '{}/{}.sql'.format(rollout_done, today)
-zip_file      = '{}/{}.zip'.format(rollout_done, today)
-
 # target folders by object types
 git_target = args['target'] + '/database/'
 folders = {
@@ -64,12 +50,29 @@ folders = {
   'APEX'              : git_target + 'apex/',
 }
 
+# current dir
+root          = os.path.dirname(os.path.realpath(__file__))
+conn_dir      = '/conn'
+rollout_dir   = git_target + '../patches'
+rollout_done  = git_target + '../patches_done'
+rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
+rolldir_obj   = rollout_dir + '/40_objects---LIVE'
+rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
+rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
+today         = datetime.datetime.today().strftime('%Y-%m-%d')
+rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
+patch_file    = '{}/{}.sql'.format(rollout_done, today)
+zip_file      = '{}/{}.zip'.format(rollout_done, today)
+
+# primary connection file
+db_conf = args['target'] + 'documentation/db.conf'
+
+
 
 #
 # CONNECT TO DATABASE
 #
 start = timeit.default_timer()
-db_conf = args['target'] + 'python/db.conf'
 if args['name']:
   db_conf = '{}{}/{}.conf'.format(root, conn_dir, args['name'])
 #
@@ -262,7 +265,7 @@ for file in files:
 # PREPARE PATCH
 #
 if args['patch']:
-  print('PREPARING PATCH:', patch_file.replace(root, ''), '+ .zip' if args['patch'] else '')
+  print('PREPARING PATCH:', patch_file.replace(root, ''), '+ .zip' if args['zip'] else '')
   print('----------------')
   #
   if os.path.exists(patch_file):
