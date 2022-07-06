@@ -13,12 +13,12 @@ parser.add_argument('-t', '--type',     help = 'Filter specific object type', de
 parser.add_argument('-r', '--recent',   help = 'Filter objects compiled since SYSDATE - $recent')
 parser.add_argument('-a', '--app',      help = 'APEX application')
 parser.add_argument('-p', '--page',     help = 'APEX page')
-parser.add_argument('-c', '--csv',      help = 'Export tables in data/ dor to CSV files', nargs = '?', default = False, const = True)
-parser.add_argument('-v', '--verbose',  help = 'Show object names during export', nargs = '?', default = False, const = True)
-parser.add_argument('--debug',          help = '', nargs = '?', default = False, const = True)
-parser.add_argument('--patch',          help = 'Prepare patch', nargs = '?', default = False, const = True)
-parser.add_argument('--rollout',        help = 'Mark rollout as done', nargs = '?', default = False, const = True)
-parser.add_argument('-zip',             help = 'Patch as ZIP', nargs = '?', default = False, const = True)
+parser.add_argument('-csv',             help = 'Export tables in data/ dor to CSV files',   nargs = '?', default = False, const = True)
+parser.add_argument('-verbose',         help = 'Show object names during export',           nargs = '?', default = False, const = True)
+parser.add_argument('-debug',           help = '',                                          nargs = '?', default = False, const = True)
+parser.add_argument('-patch',           help = 'Prepare patch',                             nargs = '?', default = False, const = True)
+parser.add_argument('-rollout',         help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
+parser.add_argument('-zip',             help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 
