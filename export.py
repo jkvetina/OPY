@@ -111,21 +111,22 @@ print()
 #
 # PREVIEW OBJECTS
 #
+print('OBJECTS OVERVIEW:                            CONSTRAINTS:')
+print('-----------------                            ------------')
+data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
+summary = {}
+for row in data_objects:
+  if not (row.object_type) in summary:
+    summary[row.object_type] = 0
+  summary[row.object_type] += 1
+#
+all_objects = conn.fetch_assoc(query_summary)
+for row in all_objects:
+  print('{:>20} | {:>4} | {:>6} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+#
 if args['recent'] == None or int(args['recent']) > 0:
-  print('OBJECTS OVERVIEW:                            CONSTRAINTS:')
-  print('-----------------                            ------------')
-  data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
-  summary = {}
-  for row in data_objects:
-    if not (row.object_type) in summary:
-      summary[row.object_type] = 0
-    summary[row.object_type] += 1
-  #
-  all_objects = conn.fetch_assoc(query_summary)
-  for row in all_objects:
-    print('{:>20} | {:>4} | {:>6} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
-  print('                          ^')
-  print()
+  print('                          ^')  # to highlight affected objects
+print()
 
 
 
