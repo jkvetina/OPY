@@ -181,6 +181,10 @@ if args['recent'] == None or int(args['recent']) > 0:
       obj = get_job_fixed(object_name, obj, conn)
 
     # write object to file
+    obj = obj.rstrip()
+    if obj.rstrip('/') != obj:
+      obj = obj.rstrip('/').rstrip() + '\n/'
+    #
     with open(file, 'w', encoding = 'utf-8') as h:
       h.write(obj + '\n\n')
   #
