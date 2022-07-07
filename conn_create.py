@@ -21,11 +21,14 @@ args = {key: args[key] for key in args if args[key] != None}  # remove empty val
 
 # get root
 root = os.path.dirname(os.path.realpath(__file__))
-conn_dir = '/conn'
-pickle_file = '{}{}/{}.conf'.format(root, conn_dir, args['name'])
+conn_dir = root + '/conn'
+pickle_file = '{}/{}.conf'.format(conn_dir, args['name'])
+#
+if not os.path.exists(conn_dir):
+  os.makedirs(conn_dir)
 
 # check wallet for connection name
-wallet_dir = '{}{}/Wallet_{}'.format(root, conn_dir, args['name'])
+wallet_dir = '{}/Wallet_{}'.format(conn_dir, args['name'])
 if os.path.isdir(wallet_dir):
   args['wallet'] = wallet_dir
 
