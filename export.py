@@ -32,7 +32,7 @@ if args['debug']:
   print('')
 
 # target folders by object types
-git_target = args['target'] + '/database/'
+git_target = os.path.abspath(args['target'] + '/database') + '/'
 folders = {
   'TABLE'             : git_target + 'tables/',
   'VIEW'              : git_target + 'views/',
@@ -52,9 +52,9 @@ folders = {
 
 # current dir
 root          = os.path.dirname(os.path.realpath(__file__))
-conn_dir      = root + '/conn'
-rollout_dir   = git_target + '../patches'
-rollout_done  = git_target + '../patches_done'
+conn_dir      = os.path.abspath(root + '/conn')
+rollout_dir   = os.path.normpath(git_target + '../patches')
+rollout_done  = os.path.normpath(git_target + '../patches_done')
 rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
 rolldir_obj   = rollout_dir + '/40_objects---LIVE'
 rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
@@ -63,9 +63,11 @@ today         = datetime.datetime.today().strftime('%Y-%m-%d')
 rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
 patch_file    = '{}/{}.sql'.format(rollout_done, today)
 zip_file      = '{}/{}.zip'.format(rollout_done, today)
+apex_dir      = folders['APEX']
+apex_tmp      = os.path.abspath(apex_dir + '/export.tmp')
 
 # primary connection file
-db_conf = args['target'] + 'documentation/db.conf'
+db_conf = os.path.normpath(args['target'] + '/documentation/db.conf')
 
 
 
@@ -74,9 +76,9 @@ db_conf = args['target'] + 'documentation/db.conf'
 #
 start = timeit.default_timer()
 if args['name']:
-  db_conf = '{}/{}.conf'.format(conn_dir, args['name'])
+  db_conf = os.path.normpath('{}/{}.conf'.format(conn_dir, args['name']))
 #
-common  = os.path.commonprefix([db_conf, git_target])
+common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 conn    = None
 with open(db_conf, 'rb') as f:
   conn_bak  = pickle.load(f)
@@ -218,9 +220,6 @@ if args['csv']:
 #
 # EXPORT APEX APP
 #
-apex_dir = folders['APEX']
-apex_tmp = './export.tmp'
-#
 if 'app' in args and int(args['app'] or 0) > 0:
   print('EXPORTING APEX APP:')
   print('-------------------')
@@ -255,8 +254,8 @@ if 'app' in args and int(args['app'] or 0) > 0:
 
 # remove temp file
 os.chdir(root)
-if os.path.exists(apex_dir + apex_tmp):
-  os.remove(apex_dir + apex_tmp)
+if os.path.exists(apex_tmp):
+  os.remove(apex_tmp)
 
 # get old hashes
 hashed_old = {}
@@ -344,7 +343,7 @@ if args['patch']:
         #z.write((file + '\n').encode('utf-8'))
         with open(file, 'rb') as h:
           z.write(h.read())
-          (curr_dir, short) = file.replace(rollout_dir, '').lstrip('/').split('/')
+          (curr_dir, short) = file.replace(rollout_dir, '').replace('\\', '/').lstrip('/').split('/')
           print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
           last_dir = curr_dir
   print('    {:<48}{:>10}'.format('', os.path.getsize(patch_file)))
@@ -395,7 +394,7 @@ if (args['rollout'] or args['patch']):
   for type, files in diff.items():
     for i, (file, hash) in enumerate(sorted(files)):
       flag = '<- CHECK' if (type == 'TABLE' and hash != '') else ''
-      print('{:>20} | {:<36}{}'.format(type if i == 0 else '', file.split('/')[1], flag))
+      print('{:>20} | {:<36}{}'.format(type if i == 0 else '', file.replace('\\', '/').split('/')[1], flag))
 
   # store hashes for next patch
   if args['rollout']:
