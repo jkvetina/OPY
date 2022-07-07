@@ -15,6 +15,7 @@ parser.add_argument('-s', '--sid',        help = 'SID')
 parser.add_argument('-r', '--service',    help = 'Service name')
 parser.add_argument('-w', '--wallet',     help = 'Wallet path')
 parser.add_argument('-x', '--wallet_pwd', help = 'Wallet password')
+parser.add_argument('-t', '--target',     help = 'Target for Git')
 #
 args = vars(parser.parse_args())
 args = {key: args[key] for key in args if args[key] != None}  # remove empty values
@@ -26,6 +27,13 @@ pickle_file = '{}/{}.conf'.format(conn_dir, args['name'])
 #
 if not os.path.exists(conn_dir):
   os.makedirs(conn_dir)
+
+# auto update/append existing file
+if os.path.exists(pickle_file):
+  with open(pickle_file, 'rb') as f:
+    for (arg, value) in pickle.load(f).items():
+      if not arg in args:
+        args[arg] = value
 
 # check wallet for connection name
 wallet_dir = '{}/Wallet_{}'.format(conn_dir, args['name'])
