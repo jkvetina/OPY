@@ -108,6 +108,11 @@ print('           | {}'.format(db_conf.replace(common, '~ ')))
 print('    TARGET | {}'.format(git_target.replace(common, '~ ')))
 print()
 
+# create basic dirs
+for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rolldir_apex]:
+  if not (os.path.exists(dir)):
+    os.makedirs(dir)
+
 
 
 #
@@ -189,6 +194,9 @@ if args['recent'] == None or int(args['recent']) > 0:
 # EXPORT DATA
 #
 if args['csv']:
+  if not (os.path.isdir(folders['DATA'])):
+    os.makedirs(folders['DATA'])
+  #
   files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
   ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
   #
@@ -259,10 +267,11 @@ if os.path.exists(apex_tmp):
 
 # get old hashes
 hashed_old = {}
-f = open(rollout_log, 'r')
-for line in f.readlines():
-  (file, hash) = line.split('|')
-  hashed_old[file.strip()] = hash.strip()
+if os.path.exists(rollout_log):
+  f = open(rollout_log, 'r')
+  for line in f.readlines():
+    (file, hash) = line.split('|')
+    hashed_old[file.strip()] = hash.strip()
 
 
 
