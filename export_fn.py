@@ -69,6 +69,7 @@ def clean_table(lines):
       lines[i] = lines[i].replace(' COLLATE "USING_NLS_COMP"', '')
       lines[i] = lines[i].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
       lines[i] = lines[i].replace(' SEGMENT CREATION IMMEDIATE', '')
+      lines[i] = lines[i].replace(' SEGMENT CREATION DEFERRED', '')
       lines[i] = lines[i].replace('(PARTITION', '(\n    PARTITION')
       lines[i] = lines[i].replace('" )', '"\n)')
       lines[i] = lines[i].replace('TIMESTAMP\' ', 'TIMESTAMP \'')
