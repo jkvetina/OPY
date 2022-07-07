@@ -21,6 +21,21 @@ parser.add_argument('-rollout',         help = 'Mark rollout as done',          
 parser.add_argument('-zip',             help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
+#
+root      = os.path.dirname(os.path.realpath(__file__))
+conn_dir  = os.path.abspath(root + '/conn')
+
+# primary connection file
+db_conf = os.path.normpath(args['target'] + '/documentation/db.conf')
+if args['name']:
+  db_conf = os.path.normpath('{}/{}.conf'.format(conn_dir, args['name']))
+#
+with open(db_conf, 'rb') as f:
+  conn_bak = pickle.load(f)
+
+# overwrite target from pickle file
+if 'name' in args and len(args['target']) <= 1 and 'target' in conn_bak:
+  args['target'] = conn_bak['target']
 
 # check args
 if args['debug']:
@@ -51,8 +66,6 @@ folders = {
 }
 
 # current dir
-root          = os.path.dirname(os.path.realpath(__file__))
-conn_dir      = os.path.abspath(root + '/conn')
 rollout_dir   = os.path.normpath(git_target + '../patches')
 rollout_done  = os.path.normpath(git_target + '../patches_done')
 rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
@@ -66,23 +79,14 @@ zip_file      = '{}/{}.zip'.format(rollout_done, today)
 apex_dir      = folders['APEX']
 apex_tmp      = os.path.abspath(apex_dir + '/export.tmp')
 
-# primary connection file
-db_conf = os.path.normpath(args['target'] + '/documentation/db.conf')
-
 
 
 #
 # CONNECT TO DATABASE
 #
-start = timeit.default_timer()
-if args['name']:
-  db_conf = os.path.normpath('{}/{}.conf'.format(conn_dir, args['name']))
-#
+start   = timeit.default_timer()
 common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
-conn    = None
-with open(db_conf, 'rb') as f:
-  conn_bak  = pickle.load(f)
-  conn      = Oracle(conn_bak)
+conn    = Oracle(conn_bak)
 
 # find wallet
 wallet_file = ''
