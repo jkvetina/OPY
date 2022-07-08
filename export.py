@@ -272,9 +272,7 @@ if 'app' in args and int(args['app'] or 0) > 0:
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
 
-  # change current dir so we have extracts in correct path
-  os.chdir(apex_dir)
-  #
+  # export APEX stuff
   with open(apex_tmp, 'w+') as f:
     f.write(content)
     f.close()
@@ -285,7 +283,6 @@ if 'app' in args and int(args['app'] or 0) > 0:
   print()
 
 # remove temp file
-os.chdir(root)
 if os.path.exists(apex_tmp):
   os.remove(apex_tmp)
 
