@@ -177,7 +177,7 @@ END;
 """
 
 query_apex_applications = """
-SELECT
+SELECT DISTINCT
     a.application_id,
     a.application_name,
     a.pages,
