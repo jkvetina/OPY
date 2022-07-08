@@ -268,6 +268,7 @@ if 'app' in args and int(args['app'] or 0) > 0:
   #
   content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(apex_dir, args['app'])
   content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(apex_dir, args['app'])
+  content += 'apex export -dir {} -nochecksum -applicationid {} -expType EMBEDDED_CODE\n'.format(apex_dir, args['app'])
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
 
