@@ -140,6 +140,17 @@ if args['recent'] == None or int(args['recent']) > 0:
   print('                           ^')  # to highlight affected objects
 print()
 
+# show APEX applications for the same schema
+all_apps  = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'])
+apex_apps = {}
+header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+#
+print(header + '\n' + '-' * len(header))
+for row in all_apps:
+  apex_apps[row.application_id] = row
+  print('  {:>6} | {:<36} | {:>4} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+print()
+
 
 
 #
@@ -238,10 +249,15 @@ if args['csv']:
 # EXPORT APEX APP
 #
 if 'app' in args and int(args['app'] or 0) > 0:
+  if not os.path.exists(apex_dir):
+    os.makedirs(apex_dir)
+  #
   print('EXPORTING APEX APP:')
   print('-------------------')
-  print('       APP |', args['app'])
-  print('    FOLDER |', apex_dir.replace(common, '~ '))
+  print('          APP |', args['app'])
+  print('    WORKSPACE |', apex_apps[int(args['app'])].workspace)
+  print('        PAGES |', apex_apps[int(args['app'])].pages)
+  print('       TARGET |', apex_dir.replace(common, '~ '))
   #
   content = ''
   if wallet_file != '' and 'wallet' in conn_bak:
@@ -250,14 +266,12 @@ if 'app' in args and int(args['app'] or 0) > 0:
   else:
     content += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
   #
-  content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(args['app'])
-  content += 'apex export -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(args['app'])
+  content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(apex_dir, args['app'])
+  content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(apex_dir, args['app'])
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
 
   # change current dir so we have extracts in correct path
-  if not os.path.exists(apex_dir):
-    os.makedirs(apex_dir)
   os.chdir(apex_dir)
   #
   with open(apex_tmp, 'w+') as f:

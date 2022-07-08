@@ -176,3 +176,19 @@ END;
 /
 """
 
+query_apex_applications = """
+SELECT
+    a.application_id,
+    a.application_name,
+    a.pages,
+    a.last_updated_on,
+    w.workspace,
+    w.workspace_id
+FROM apex_applications a
+JOIN apex_workspace_schemas s
+    ON s.workspace_id   = a.workspace_id
+JOIN apex_workspaces w
+    ON w.workspace_id   = a.workspace_id
+WHERE a.owner           = :schema
+ORDER BY 1"""
+
