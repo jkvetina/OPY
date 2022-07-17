@@ -157,6 +157,10 @@ def clean_table(lines):
     if lines[i].startswith('XMLTYPE'):
       lines[i] = ''
 
+    # fix IOT tables
+    if lines[i].startswith('ORGANIZATION INDEX'):
+      lines[i] = 'ORGANIZATION INDEX'
+
   # remove empty lines
   lines = list(filter(None, lines))
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
