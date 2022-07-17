@@ -106,16 +106,22 @@ def clean_table(lines):
     if line.startswith('PARTITION'):
       lines[i] = fix_simple_name(lines[i])
     #
-    if line.startswith(')  PCTFREE'):
+    if line.startswith(')  PCTFREE') or line.startswith(') PCTFREE'):
       lines[i] = ')'
     #
     if line.startswith(')  DEFAULT COLLATION "USING_NLS_COMP" PCTFREE'):
       lines[i] = ')'
     #
+    if line.startswith('NOCACHE'):
+      lines[i] = ''
+    #
     if line.startswith('TABLESPACE') or\
       line.startswith('PCTFREE') or\
+      line.startswith('PCTTHRESHOLD') or\
       line.startswith('NOCOMPRESS LOGGING') or\
       line.startswith('NOCACHE LOGGING') or\
+      line.startswith('CACHE') or\
+      line.startswith('STORAGE IN') or\
       line.startswith('LOB ("'):
       lines[i] = ''
     #
