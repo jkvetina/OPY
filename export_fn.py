@@ -167,6 +167,9 @@ def clean_table(lines):
 
   # remove empty lines
   lines = list(filter(None, lines))
+  lines = '\n'.join(lines)
+  lines = lines.replace('\n)\n;\nCREATE', '\n);\n--\nCREATE')  # fix new lines
+  lines = lines.split('\n')
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
   return lines
 
