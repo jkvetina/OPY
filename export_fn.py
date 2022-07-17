@@ -137,6 +137,14 @@ def clean_table(lines):
     #
     lines[i] = lines[i].replace(' DEFERRABLE', '\n        DEFERRABLE')
 
+    # fix some strange PK/index combinations
+    if i > 1 and lines[i].startswith('CREATE'):
+      lines[i] = fix_simple_name(lines[i]).rstrip() + ';'
+      lines[i - 1] += ';'  # fix new lines later
+    #
+    if i > 1 and lines[i].startswith('ALTER TABLE'):
+      lines[i] = fix_simple_name(lines[i])
+
   # remove empty lines
   lines = list(filter(None, lines))
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
