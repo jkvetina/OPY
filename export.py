@@ -174,6 +174,10 @@ if args['recent'] == None or int(args['recent']) > 0:
     #
     obj   = get_object(conn, object_type, object_name)
     file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
+    if obj == None:
+      print()
+      print('  OBJECT EMPTY', object_type, object_name)
+      print()
     #
     if args['verbose']:
       print('{:>20} | {:<30} {:>8}'.format(object_type if object_type != recent_type else '', object_name, len(obj)))
