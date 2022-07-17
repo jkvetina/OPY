@@ -153,6 +153,10 @@ def clean_table(lines):
       #print('  NAMELESS CONSTRAINT', lines[i])
       #print()
 
+    # fix XMLTYPE
+    if lines[i].startswith('XMLTYPE'):
+      lines[i] = ''
+
   # remove empty lines
   lines = list(filter(None, lines))
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
