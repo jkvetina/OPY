@@ -161,6 +161,10 @@ def clean_table(lines):
     if lines[i].startswith('ORGANIZATION INDEX'):
       lines[i] = 'ORGANIZATION INDEX'
 
+    # fix temp tables
+    if lines[i].startswith(') ON COMMIT'):
+      lines[i] = lines[i].replace(') ON COMMIT', ')\nON COMMIT')
+
   # remove empty lines
   lines = list(filter(None, lines))
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
