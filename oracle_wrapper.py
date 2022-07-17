@@ -34,14 +34,14 @@ class Oracle:
     # try wallet first
     if 'wallet' in self.tns and self.tns['wallet']:
       self.conn = oracledb.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'],\
-        wallet_location = self.tns['wallet'], wallet_password = self.tns['wallet_pwd'])
+        wallet_location = self.tns['wallet'], wallet_password = self.tns['wallet_pwd'], encoding = 'utf8')
       #
       return
 
     if not 'dsn' in self.tns:
       self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
       #self.tns['dsn'] = '{}:{}/{}'.format(self.tns['host'], self.tns['port'], self.tns['sid'])
-    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'UTF-8')
+    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
 
 
 
