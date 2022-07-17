@@ -301,7 +301,10 @@ def clean_trigger(lines):
 
   # fix missing slash
   if not found_slash:
-    lines[len(lines) - 2] = '/';
+    if len(lines[len(lines) - 2]) == 0:
+      lines[len(lines) - 2] = '/';
+    else:
+      lines[len(lines) - 1] = '/';
   #
   return lines
 
