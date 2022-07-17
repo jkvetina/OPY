@@ -145,6 +145,14 @@ def clean_table(lines):
     if i > 1 and lines[i].startswith('ALTER TABLE'):
       lines[i] = fix_simple_name(lines[i])
 
+    # fix nameless keys
+    if lines[i].startswith('PRIMARY KEY') or lines[i].startswith('FOREIGN KEY') or lines[i].startswith('UNIQUE') or lines[i].startswith('CHECK'):
+      lines[i] = '    --\n    ' + fix_simple_name(lines[i])
+      #
+      #print()
+      #print('  NAMELESS CONSTRAINT', lines[i])
+      #print()
+
   # remove empty lines
   lines = list(filter(None, lines))
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
