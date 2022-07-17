@@ -180,7 +180,11 @@ if args['recent'] == None or int(args['recent']) > 0:
       print()
     #
     if args['verbose']:
-      print('{:>20} | {:<30} {:>8}'.format(object_type if object_type != recent_type else '', object_name, len(obj)))
+      obj_type    = object_type if object_type != recent_type else ''
+      obj_name    = object_name if len(object_name) <= 30 else object_name[0:27] + '...'
+      obj_length  = len(obj) if obj else ''
+      obj_check   = '< NAME' if obj and len(object_name) > 30 else ''
+      print('{:>20} | {:<30} {:>8} {}'.format(obj_type, obj_name, obj_length, obj_check))
       recent_type = object_type
     else:
       perc = (i + 1) / len(data_objects)
