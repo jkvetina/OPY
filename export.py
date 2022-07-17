@@ -241,7 +241,7 @@ if args['csv']:
       continue
     #
     file        = '{}{}.csv'.format(folders['DATA'], table_name)
-    csv_file    = open(file, 'w')
+    csv_file    = open(file, 'w', encoding = 'utf-8')
     writer      = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
     columns     = [col for col in conn.cols if not (col in ignore_columns)]
     order_by    = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
