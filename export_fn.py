@@ -53,6 +53,14 @@ def fix_simple_name(obj):
 
 
 
+def fix_next_sequence(obj):
+  obj = re.sub(r'"([A-Z0-9_$#]+)"\."([A-Z0-9_$#]+)"."NEXTVAL"', lambda x : x.group(2).lower() + '.NEXTVAL', obj)
+  obj = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), obj)
+  #
+  return obj
+
+
+
 def clean_table(lines):
   lines[0] = fix_simple_name(lines[0]) + ' ('
   lines[1] = lines[1].lstrip().lstrip('(').lstrip()  # fix fisrt column
@@ -80,10 +88,19 @@ def clean_table(lines):
     # fic column name
     if line.startswith('"'):
       columns = lines[i].replace(' (', '(').strip().split(' ', 3)
+
+      # fix constraint name or NEXTVAL sequence as default
+      extra   = ' '.join(columns[2:])
+      if extra.startswith('DEFAULT'):
+        extra = fix_next_sequence(extra)
+      elif extra.startswith('CONSTRAINT'):
+        extra = fix_simple_name(extra)
+
+      # format line
       lines[i] = '    {:<30}  {:<16}{}'.format(
         fix_simple_name(columns[0]),
         columns[1].replace('NUMBER(*,0)', 'INTEGER') if len(columns) > 1 else '',
-        fix_simple_name(' '.join(columns[2:])) if len(columns) > 2 else ''
+        extra if len(columns) > 2 else ''
       ).rstrip()
     #
     if line.startswith('PARTITION'):
