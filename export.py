@@ -235,6 +235,9 @@ if args['csv']:
     try:
       table_exists = conn.fetch('SELECT * FROM {} WHERE ROWNUM = 1'.format(table_name))
     except:
+      print()
+      print('  TABLE MISSING', table_name)
+      print()
       continue
     #
     file        = '{}{}.csv'.format(folders['DATA'], table_name)
