@@ -123,6 +123,7 @@ for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rol
 #
 print('OBJECTS OVERVIEW:                                  CONSTRAINTS:')
 print('-----------------                                  ------------')
+#
 data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
 summary = {}
 for row in data_objects:
@@ -131,11 +132,12 @@ for row in data_objects:
   summary[row.object_type] += 1
 #
 all_objects = conn.fetch_assoc(query_summary)
+print('                     CHANGED |  TOTAL')  # fetch data first
 for row in all_objects:
   check = '' if row.object_type in folders else '<--'  # mark not supported object types
   print('{:>20} | {:>5} | {:>6} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
 #
-if args['recent'] == None or int(args['recent']) > 0:
+if args['recent'] == None or int(args['recent'] or 0) > 0:
   print('                           ^')  # to highlight affected objects
 print()
 
@@ -145,6 +147,7 @@ apex_apps = {}
 header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
 #
 print(header + '\n' + '-' * len(header))
+print('                                                 PAGES | CHANGED')
 for row in all_apps:
   apex_apps[row.application_id] = row
   print('  {:>6} | {:<36} | {:>4} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
@@ -155,7 +158,7 @@ print()
 #
 # EXPORT OBJECTS
 #
-if args['recent'] == None or int(args['recent']) > 0:
+if args['recent'] == None or int(args['recent'] or 0) > 0:
   print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
   recent_type = ''
@@ -267,7 +270,7 @@ if 'app' in args and int(args['app'] or 0) > 0:
   print('          APP |', args['app'])
   print('    WORKSPACE |', apex_apps[int(args['app'])].workspace)
   print('        PAGES |', apex_apps[int(args['app'])].pages)
-  print('       TARGET |', apex_dir.replace(common, '~ '))
+  #print('       TARGET |', apex_dir.replace(common, '~ '))
   #
   content = ''
   if wallet_file != '' and 'wallet' in conn_bak:
@@ -286,6 +289,12 @@ if 'app' in args and int(args['app'] or 0) > 0:
   process = 'sql /nolog <<EOF\n{}\nEOF'.format(content)
   result  = subprocess.run(process, shell = True, capture_output = True, text = True)
   output  = result.stdout.strip()
+  #
+  if args['debug']:
+    print()
+    print(process)
+    print()
+    print(output)
   print()
 
 # get old hashes
