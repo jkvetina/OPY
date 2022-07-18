@@ -121,8 +121,8 @@ for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rol
 #
 # PREVIEW OBJECTS
 #
-print('OBJECTS OVERVIEW:                                  CONSTRAINTS:')
-print('-----------------                                  ------------')
+print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
+print('-----------------                                      ------------')
 #
 data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
 summary = {}
@@ -132,10 +132,10 @@ for row in data_objects:
   summary[row.object_type] += 1
 #
 all_objects = conn.fetch_assoc(query_summary)
-print('                     CHANGED |  TOTAL')  # fetch data first
+print('                     | CHANGED |   TOTAL')  # fetch data first
 for row in all_objects:
   check = '' if row.object_type in folders else '<--'  # mark not supported object types
-  print('{:>20} | {:>5} | {:>6} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+  print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
 #
 if args['recent'] == None or int(args['recent'] or 0) > 0:
   print('                           ^')  # to highlight affected objects
@@ -230,8 +230,9 @@ if args['csv']:
   files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
   ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
   #
-  print('EXPORT TABLES DATA:', len(files))
-  print('-------------------')
+  print('EXPORT TABLES DATA: ({})'.format(len(files)))
+  if args['verbose']:
+    print('-------------------')
   #
   for table_name in sorted(files):
     try:
