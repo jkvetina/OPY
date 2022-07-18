@@ -278,7 +278,13 @@ if args['csv']:
 #
 # EXPORT APEX APP
 #
-if 'app' in args and int(args['app'] or 0) > 0:
+if 'app' in args and int(args['app'] or 0) >= 0:
+  # recreate temp dir
+  if os.path.exists(apex_temp_dir):
+    shutil.rmtree(apex_temp_dir)
+  os.makedirs(apex_temp_dir)
+
+  # prep target dir
   if not os.path.exists(apex_dir):
     os.makedirs(apex_dir)
   #
@@ -366,6 +372,26 @@ if 'app' in args and int(args['app'] or 0) > 0:
       sys.stdout.flush()
   #
   print()
+  print()
+
+  # move some changed files to proper APEX folder
+  apex_partial = apex_temp_dir + 'f' + args['app']
+  if os.path.exists(apex_partial):
+    remove_files = [
+      'install_component.sql',
+      'install_page.sql',
+      'application/end_environment.sql',
+      'application/set_environment.sql',
+      'application/pages/delete*.sql',
+    ]
+    for file_pattern in remove_files:
+      for file in glob.glob(apex_partial + '/' + file_pattern):
+        os.remove(file)
+    #
+    shutil.copytree(apex_partial, apex_dir + 'f' + args['app'], dirs_exist_ok = True)
+  #
+  if os.path.exists(apex_temp_dir):
+    shutil.rmtree(apex_temp_dir)
 
 # get old hashes
 hashed_old = {}
