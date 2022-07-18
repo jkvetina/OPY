@@ -259,6 +259,13 @@ if args['csv']:
     for row in data:
       writer.writerow(row)
     csv_file.close()
+  #
+  if not args['verbose']:
+    print()
+  print()
+
+
+
 #
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
