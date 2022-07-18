@@ -250,9 +250,17 @@ if args['csv']:
     columns     = [col for col in conn.cols if not (col in ignore_columns)]
     order_by    = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
     data        = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+
+    # show progress
+    if args['verbose']:
+      print('  {:30} {:>8}'.format(table_name, len(data)))
+    else:
+      perc = (i + 1) / len(files)
+      dots = int(70 * perc)
+      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+      sys.stdout.flush()
     #
     writer.writerow(conn.cols)  # headers
-    print('  {:30} {:>8}'.format(table_name, len(data)))
     for row in data:
       writer.writerow(row)
     csv_file.close()
@@ -330,6 +338,13 @@ if 'app' in args and int(args['app'] or 0) > 0:
             objects[line_type] = []
           objects[line_type].append(line_name)
           changed.append(':'.join(line_object))
+        #
+        print()
+        print('  CHANGES SINCE {}: ({})'.format(today, len(changed)))
+        print('  -------------------------')
+        for obj_type, obj_names in objects.items():
+          print('    {:>18} | {}'.format(obj_type, ', '.join(sorted(obj_names))))
+        print()
 
     # show progress
     if args['debug']:
