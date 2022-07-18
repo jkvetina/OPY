@@ -77,7 +77,6 @@ rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
 patch_file    = '{}/{}.sql'.format(rollout_done, today)
 zip_file      = '{}/{}.zip'.format(rollout_done, today)
 apex_dir      = folders['APEX']
-apex_tmp      = os.path.abspath(apex_dir + '/export.tmp')
 
 
 
@@ -284,18 +283,10 @@ if 'app' in args and int(args['app'] or 0) > 0:
   #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
 
   # export APEX stuff
-  with open(apex_tmp, 'w+') as f:
-    f.write(content)
-    f.close()
-  #
-  process = 'sql /nolog < {}'.format(apex_tmp)
+  process = 'sql /nolog <<EOF\n{}\nEOF'.format(content)
   result  = subprocess.run(process, shell = True, capture_output = True, text = True)
   output  = result.stdout.strip()
   print()
-
-# remove temp file
-if os.path.exists(apex_tmp):
-  os.remove(apex_tmp)
 
 # get old hashes
 hashed_old = {}
