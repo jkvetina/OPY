@@ -79,8 +79,7 @@ SELECT 'JOB' AS object_type, j.job_name AS object_name
 FROM user_scheduler_jobs j
 WHERE :recent IS NULL
     AND (:object_type = 'JOB' OR :object_type IS NULL)
-ORDER BY 1, 2
-"""
+ORDER BY 1, 2"""
 
 # get table comments
 query_table_comments = """
@@ -191,4 +190,8 @@ JOIN apex_workspaces w
     ON w.workspace_id   = a.workspace_id
 WHERE a.owner           = :schema
 ORDER BY 1"""
+
+query_today = """
+SELECT TO_CHAR(TRUNC(SYSDATE) + 1 - :recent, 'YYYY-MM-DD') AS today
+FROM DUAL"""
 

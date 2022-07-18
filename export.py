@@ -77,7 +77,7 @@ rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
 patch_file    = '{}/{}.sql'.format(rollout_done, today)
 zip_file      = '{}/{}.zip'.format(rollout_done, today)
 apex_dir      = folders['APEX']
-
+apex_temp_dir = apex_dir + 'temp/'
 
 
 #
@@ -86,6 +86,7 @@ apex_dir      = folders['APEX']
 start   = timeit.default_timer()
 common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 conn    = Oracle(conn_bak)
+today   = conn.fetch_assoc(query_today, recent = args['recent'])[0].today  # calculate date from recent arg
 
 # find wallet
 wallet_file = ''
@@ -273,29 +274,75 @@ if 'app' in args and int(args['app'] or 0) > 0:
   print('        PAGES |', apex_apps[int(args['app'])].pages)
   #print('       TARGET |', apex_dir.replace(common, '~ '))
   #
-  content = ''
+  request_conn = ''
+  requests = []
   if wallet_file != '' and 'wallet' in conn_bak:
-    content += 'set cloudconfig {}\n'.format(wallet_file)
-    content += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
+    request_conn += 'set cloudconfig {}\n'.format(wallet_file)
+    request_conn += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
   else:
-    content += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
+    request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
   #
-  content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations\n'.format(apex_dir, args['app'])
-  content += 'apex export -dir {} -nochecksum -applicationid {} -skipExportDate -expComments -expTranslations -split\n'.format(apex_dir, args['app'])
-  content += 'apex export -dir {} -nochecksum -applicationid {} -expType EMBEDDED_CODE\n'.format(apex_dir, args['app'])
-  #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML \n'
-  #content  = 'apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML \n'
+  if int(args['recent'] or 0) > 0:
+    # partial export, get list of changed objects since that, show it to user
+    requests.append('apex export -applicationid {app_id} -list -changesSince {since}')
+    requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expComponents {changed} -expType EMBEDDED_CODE')
+  else:
+    # export app in several formats
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+  #
+  #-expOriginalIds -> strange owner and app_id
+  #
+  # @TODO: export readable version(s) when switch to 22.1
+  #
+  #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML')
+  #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML')
+  #
+  # @TODO: export app+ws files + decode
+  #
 
   # export APEX stuff
-  process = 'sql /nolog <<EOF\n{}\nEOF'.format(content)
-  result  = subprocess.run(process, shell = True, capture_output = True, text = True)
-  output  = result.stdout.strip()
+  changed = []
+  for (i, request) in enumerate(requests):
+    changed = ' '.join(changed)  # will be filled in previous for-loop iteration
+    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, app_id = args['app'], since = today, changed = changed)
+    process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
+    result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+    output  = result.stdout.strip()
+
+    # check output for recent APEX changes
+    if ' -list' in request:
+      lines   = output.split('\n')
+      objects = {}
+      changed = []
+      if lines[5].startswith('Date') and lines[6].startswith('----------------'):
+        for line in lines[7:]:
+          if line.startswith('Disconnected'):
+            break
+          line_date   = line[0:16].strip()
+          line_object = line[17:57].strip().split(':')
+          line_type   = line_object[0]
+          line_name   = line_object[1]
+          #
+          if not (line_type in objects):
+            objects[line_type] = []
+          objects[line_type].append(line_name)
+          changed.append(':'.join(line_object))
+
+    # show progress
+    if args['debug']:
+      print()
+      print(process)
+      print()
+      print(output)
+    else:
+      perc = (i + 1) / len(requests)
+      dots = int(70 * perc)
+      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+      sys.stdout.flush()
   #
-  if args['debug']:
-    print()
-    print(process)
-    print()
-    print(output)
   print()
 
 # get old hashes
