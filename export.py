@@ -139,19 +139,7 @@ for row in all_objects:
   print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
 #
 if args['recent'] == None or int(args['recent'] or 0) > 0:
-  print('                           ^')  # to highlight affected objects
-print()
-
-# show APEX applications for the same schema
-all_apps  = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'])
-apex_apps = {}
-header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
-#
-print(header + '\n' + '-' * len(header))
-print('                                                 PAGES | CHANGED')
-for row in all_apps:
-  apex_apps[row.application_id] = row
-  print('  {:>6} | {:<36} | {:>4} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+  print('                             ^')  # to highlight affected objects
 print()
 
 
@@ -271,6 +259,19 @@ if args['csv']:
     for row in data:
       writer.writerow(row)
     csv_file.close()
+#
+# APEX APPLICATIONS OVERVIEW (for the same schema)
+#
+all_apps = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'].upper())
+if len(all_apps):
+  apex_apps = {}
+  header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+  #
+  print(header + '\n' + '-' * len(header))
+  print('                                                | PAGES | LAST CHANGE AT')
+  for row in all_apps:
+    apex_apps[row.application_id] = row
+    print('  {:>6} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
   print()
 
 
