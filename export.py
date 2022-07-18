@@ -235,7 +235,7 @@ if args['csv']:
   if args['verbose']:
     print('-------------------')
   #
-  for table_name in sorted(files):
+  for (i, table_name) in enumerate(sorted(files)):
     try:
       table_exists = conn.fetch('SELECT * FROM {} WHERE ROWNUM = 1'.format(table_name))
     except:
@@ -249,7 +249,14 @@ if args['csv']:
     writer      = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
     columns     = [col for col in conn.cols if not (col in ignore_columns)]
     order_by    = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
-    data        = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+    #
+    try:
+      data      = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+    except Exception as e:
+      print()
+      print('  CSV EXPORT FAILED', table_name)
+      print(e)
+      print()
 
     # show progress
     if args['verbose']:
