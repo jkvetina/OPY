@@ -21,6 +21,7 @@ parser.add_argument('-rollout',         help = 'Mark rollout as done',          
 parser.add_argument('-zip',             help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
+args['app'] = int(args['app'] or 0)
 #
 root      = os.path.dirname(os.path.realpath(__file__))
 conn_dir  = os.path.abspath(root + '/conn')
@@ -269,9 +270,10 @@ if args['csv']:
 #
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
-all_apps = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'].upper())
+all_apps  = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'].upper())
+apex_apps = {}
+#
 if len(all_apps):
-  apex_apps = {}
   header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
   #
   print(header + '\n' + '-' * len(header))
@@ -286,7 +288,7 @@ if len(all_apps):
 #
 # EXPORT APEX APP
 #
-if 'app' in args and int(args['app'] or 0) >= 0:
+if 'app' in args and args['app'] in apex_apps:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir)
@@ -299,8 +301,8 @@ if 'app' in args and int(args['app'] or 0) >= 0:
   print('EXPORTING APEX APP:')
   print('-------------------')
   print('          APP |', args['app'])
-  print('    WORKSPACE |', apex_apps[int(args['app'])].workspace)
-  print('        PAGES |', apex_apps[int(args['app'])].pages)
+  print('    WORKSPACE |', apex_apps[args['app']].workspace)
+  print('        PAGES |', apex_apps[args['app']].pages)
   #print('       TARGET |', apex_dir.replace(common, '~ '))
   #
   request_conn = ''
@@ -383,7 +385,7 @@ if 'app' in args and int(args['app'] or 0) >= 0:
   print()
 
   # move some changed files to proper APEX folder
-  apex_partial = apex_temp_dir + 'f' + args['app']
+  apex_partial = '{}f{}'.format(apex_temp_dir, args['app'])
   if os.path.exists(apex_partial):
     remove_files = [
       'install_component.sql',
@@ -396,7 +398,7 @@ if 'app' in args and int(args['app'] or 0) >= 0:
       for file in glob.glob(apex_partial + '/' + file_pattern):
         os.remove(file)
     #
-    shutil.copytree(apex_partial, apex_dir + 'f' + args['app'], dirs_exist_ok = True)
+    shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, args['app']), dirs_exist_ok = True)
   #
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir)
