@@ -348,7 +348,7 @@ if 'app' in args and args['app'] in apex_apps:
       lines   = output.split('\n')
       objects = {}
       changed = []
-      if lines[5].startswith('Date') and lines[6].startswith('----------------'):
+      if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
         for line in lines[7:]:
           if line.startswith('Disconnected'):
             break
