@@ -180,7 +180,7 @@ SELECT DISTINCT
     a.application_id,
     a.application_name,
     a.pages,
-    a.last_updated_on,
+    TO_CHAR(a.last_updated_on, 'YYYY-MM-DD HH24:MI') AS last_updated_on,
     w.workspace,
     w.workspace_id
 FROM apex_applications a

@@ -125,6 +125,7 @@ for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rol
 #
 # PREVIEW OBJECTS
 #
+print()
 print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
 print('-----------------                                      ------------')
 #
@@ -222,6 +223,7 @@ if args['csv']:
   files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
   ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
   #
+  print()
   print('EXPORT TABLES DATA: ({})'.format(len(files)))
   if args['verbose']:
     print('-------------------')
@@ -284,11 +286,12 @@ apex_apps = {}
 if len(all_apps):
   header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
   #
+  print()
   print(header + '\n' + '-' * len(header))
-  print('                                                | PAGES | LAST CHANGE AT')
+  print('                                                  | PAGES | LAST CHANGE AT')
   for row in all_apps:
     apex_apps[row.application_id] = row
-    print('  {:>6} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+    print('{:>10} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
   print()
 
 
@@ -308,6 +311,7 @@ if 'app' in args and args['app'] in apex_apps:
   if not os.path.exists(apex_ws_files):
     os.makedirs(apex_ws_files)
   #
+  print()
   print('EXPORTING APEX APP:')
   print('-------------------')
   print('          APP |', args['app'])
@@ -364,20 +368,21 @@ if 'app' in args and args['app'] in apex_apps:
           if line.startswith('Disconnected'):
             break
           line_date   = line[0:16].strip()
-          line_object = line[17:57].strip().split(':')
-          line_type   = line_object[0]
-          line_name   = line_object[1]
+          line_object = line[17:57].strip()
+          line_type   = line_object.split(':')[0]
+          line_name   = line[57:].strip()
           #
           if not (line_type in objects):
             objects[line_type] = []
           objects[line_type].append(line_name)
-          changed.append(':'.join(line_object))
+          changed.append(line_object)
         #
         print()
-        print('  CHANGES SINCE {}: ({})'.format(today, len(changed)))
-        print('  -------------------------')
+        print('CHANGES SINCE {}: ({})'.format(today, len(changed)))
+        print('-------------------------')
         for obj_type, obj_names in objects.items():
-          print('    {:>18} | {}'.format(obj_type, ', '.join(sorted(obj_names))))
+          for (j, name) in enumerate(sorted(obj_names)):
+            print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
         print()
 
     # show progress
@@ -451,6 +456,7 @@ for file in files:
 # PREPARE PATCH
 #
 if args['patch']:
+  print()
   print('PREPARING PATCH:', patch_file.replace(root, ''), '+ .zip' if args['zip'] else '')
   print('----------------')
   #
@@ -523,6 +529,7 @@ if args['patch']:
 # PREVIEW/CONFIRM ROLLOUT
 #
 if (args['rollout'] or args['patch']):
+  print()
   if args['rollout']:
     print('ROLLOUT CONFIRMED:')
     print('------------------')
