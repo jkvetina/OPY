@@ -1,5 +1,16 @@
 # Oracle wrapper for Python
 
+## Exporting database objects and applications
+
+- execute queries in Oracle database
+- export Oracle database objects
+- export APEX applications
+
+Read this for more info:
+http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-apps.html
+
+<br />
+
 ## Connect to database
 
 #### Connect to database with SID or service name
