@@ -1,34 +1,50 @@
-import sys, re
+import sys, re, traceback
 from export_queries import *
 
 
 
 def get_object(conn, object_type, object_name):
-  # get object from database
-  if object_type == 'JOB':
-    desc = conn.fetch(query_describe_job, object_name = object_name)
-  else:
-    desc = conn.fetch(query_describe_object, object_type = object_type, object_name = object_name)
-  #
-  if len(desc) == 0:
+  try:
+    # get object from database
+    if object_type == 'JOB':
+      desc = conn.fetch(query_describe_job, object_name = object_name)
+    else:
+      desc = conn.fetch(query_describe_object, object_type = object_type, object_name = object_name)
+    #
+    if len(desc) > 0:
+      return re.sub('\t', '    ', str(desc[0][0]).strip())  # replace tabs with 4 spaces
     return
-  return re.sub('\t', '    ', str(desc[0][0]).strip())  # replace tabs with 4 spaces
+  except Exception:
+    print()
+    print('#')
+    print('# OBJECT_EXPORT_FAILED:', object_type, object_name)
+    print('#')
+    print(traceback.format_exc())
+    print(sys.exc_info()[2])
 
 
 
 def get_object_comments(conn, object_name):
-  lines = ['\n--']
-  data = conn.fetch_assoc(query_table_comments, table_name = object_name)
-  for row in data:
-    lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), (row.comments or '').replace('\'', '')))
-  #
-  data = conn.fetch_assoc(query_column_comments, table_name = object_name)
-  if len(data) > 0:
-    lines.append('--')
-  for row in data:
-    lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(row.column_name, (row.comments or '').replace('\'', '')))
-  #
-  return '\n'.join(lines)
+  try:
+    lines = ['\n--']
+    data = conn.fetch_assoc(query_table_comments, table_name = object_name)
+    for row in data:
+      lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), (row.comments or '').replace('\'', '')))
+    #
+    data = conn.fetch_assoc(query_column_comments, table_name = object_name)
+    if len(data) > 0:
+      lines.append('--')
+    for row in data:
+      lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(row.column_name, (row.comments or '').replace('\'', '')))
+    #
+    return '\n'.join(lines)
+  except Exception:
+    print()
+    print('#')
+    print('# OBJECT_COMMENT_FAILED:', object_name)
+    print('#')
+    print(traceback.format_exc())
+    print(sys.exc_info()[2])
 
 
 

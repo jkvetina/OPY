@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, glob, csv, subprocess, datetime, shutil, zipfile, hashlib
+import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, hashlib
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -227,10 +227,13 @@ if args['csv']:
   for (i, table_name) in enumerate(sorted(files)):
     try:
       table_exists = conn.fetch('SELECT * FROM {} WHERE ROWNUM = 1'.format(table_name))
-    except:
+    except Exception:
       print()
-      print('  TABLE MISSING', table_name)
-      print()
+      print('#')
+      print('# TABLE_MISSING:', table_name)
+      print('#')
+      #print(traceback.format_exc())
+      #print(sys.exc_info()[2])
       continue
     #
     file        = '{}{}.csv'.format(folders['DATA'], table_name)
@@ -241,11 +244,14 @@ if args['csv']:
     #
     try:
       data      = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
-    except Exception as e:
+    except Exception:
       print()
-      print('  CSV EXPORT FAILED', table_name)
-      print(e)
-      print()
+      print('#')
+      print('# CSV_EXPORT_FAILED:', table_name)
+      print('#')
+      print(traceback.format_exc())
+      print(sys.exc_info()[2])
+      continue
 
     # show progress
     if args['verbose']:
