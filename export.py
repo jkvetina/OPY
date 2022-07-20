@@ -79,6 +79,8 @@ patch_file    = '{}/{}.sql'.format(rollout_done, today)
 zip_file      = '{}/{}.zip'.format(rollout_done, today)
 apex_dir      = folders['APEX']
 apex_temp_dir = apex_dir + 'temp/'
+apex_ws_files = apex_dir + 'workspace_files/'
+
 
 
 #
@@ -303,6 +305,8 @@ if 'app' in args and args['app'] in apex_apps:
   # prep target dir
   if not os.path.exists(apex_dir):
     os.makedirs(apex_dir)
+  if not os.path.exists(apex_ws_files):
+    os.makedirs(apex_ws_files)
   #
   print('EXPORTING APEX APP:')
   print('-------------------')
@@ -329,6 +333,7 @@ if 'app' in args and args['app'] in apex_apps:
     requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
     requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
     requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+    requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args['app']].workspace_id))
   #
   #-expOriginalIds -> strange owner and app_id
   #
@@ -344,7 +349,7 @@ if 'app' in args and args['app'] in apex_apps:
   changed = []
   for (i, request) in enumerate(requests):
     changed = ' '.join(changed)  # will be filled in previous for-loop iteration
-    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, app_id = args['app'], since = today, changed = changed)
+    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = today, changed = changed)
     process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
     result  = subprocess.run(process, shell = True, capture_output = True, text = True)
     output  = result.stdout.strip()
@@ -389,6 +394,11 @@ if 'app' in args and args['app'] in apex_apps:
   #
   print()
   print()
+
+  # rename workspace files
+  ws_files = 'files_{}.sql'.format(apex_apps[args['app']].workspace_id)
+  if os.path.exists(apex_ws_files + ws_files):
+    os.rename(apex_ws_files + ws_files, '{}{}.sql'.format(apex_ws_files, apex_apps[args['app']].workspace))
 
   # move some changed files to proper APEX folder
   apex_partial = '{}f{}'.format(apex_temp_dir, args['app'])
