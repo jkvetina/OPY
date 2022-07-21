@@ -306,6 +306,12 @@ if 'app' in args and args['app'] in apex_apps:
   os.makedirs(apex_temp_dir)
 
   # prep target dir
+  if not(args['recent']) or args['recent'] == 0:
+    # delete folder to remove obsolete objects only on full export
+    apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
+    if os.path.exists(apex_dir_app):
+      shutil.rmtree(apex_dir_app)
+  #
   if not os.path.exists(apex_dir):
     os.makedirs(apex_dir)
   if not os.path.exists(apex_ws_files):
