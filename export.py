@@ -21,7 +21,8 @@ parser.add_argument('-rollout',         help = 'Mark rollout as done',          
 parser.add_argument('-zip',             help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
-args['app'] = int(args['app'] or 0)
+args['app']     = int(args['app']     or 0)
+args['recent']  = int(args['recent']  or 0)
 #
 root      = os.path.dirname(os.path.realpath(__file__))
 conn_dir  = os.path.abspath(root + '/conn')
@@ -142,7 +143,7 @@ for row in all_objects:
   check = '' if row.object_type in folders else '<--'  # mark not supported object types
   print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
 #
-if args['recent'] == None or int(args['recent'] or 0) > 0:
+if args['recent'] > 0:
   print('                             ^')  # to highlight affected objects
 print()
 
@@ -151,7 +152,7 @@ print()
 #
 # EXPORT OBJECTS
 #
-if args['recent'] == None or int(args['recent'] or 0) > 0:
+if args['recent'] > 0:
   print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
   recent_type = ''
@@ -306,7 +307,7 @@ if 'app' in args and args['app'] in apex_apps:
   os.makedirs(apex_temp_dir)
 
   # prep target dir
-  if not(args['recent']) or args['recent'] == 0:
+  if args['recent'] == 0:
     # delete folder to remove obsolete objects only on full export
     apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
     if os.path.exists(apex_dir_app):
@@ -333,7 +334,7 @@ if 'app' in args and args['app'] in apex_apps:
   else:
     request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
   #
-  if int(args['recent'] or 0) > 0:
+  if args['recent'] > 0:
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')
     requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
