@@ -176,7 +176,7 @@ END;
 """
 
 query_apex_applications = """
-SELECT DISTINCT
+SELECT
     a.application_id,
     a.application_name,
     a.pages,
@@ -186,6 +186,7 @@ SELECT DISTINCT
 FROM apex_applications a
 JOIN apex_workspace_schemas s
     ON s.workspace_id   = a.workspace_id
+    AND s.schema        = a.owner
 JOIN apex_workspaces w
     ON w.workspace_id   = a.workspace_id
 WHERE a.owner           = :schema
