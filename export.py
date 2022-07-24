@@ -354,13 +354,13 @@ if 'app' in args and args['app'] in apex_apps:
   if args['recent'] > 0:
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')
-    requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
     requests.append('apex export -dir {dir} -applicationid {app_id} -changesSince {since} -nochecksum -expType EMBEDDED_CODE')
+    requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
   else:
     # export app in several formats
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
     requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
     requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args['app']].workspace_id))
   #
   #-expOriginalIds -> strange owner and app_id
