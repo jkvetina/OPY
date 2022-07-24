@@ -167,6 +167,13 @@ if len(data_objects):
     object_type, object_name = row.object_type, row.object_name
 
     # make sure we have target folders ready
+    if not (object_type in folders):
+      if (args['debug']):
+        print('#')
+        print('# OBJECT_TYPE_NOT_SUPPOERTED:', object_type)
+        print('#\n')
+      continue
+    #
     folder = folders[object_type]
     if not (os.path.isdir(folder)):
       os.makedirs(folder)
@@ -177,7 +184,7 @@ if len(data_objects):
     #
     obj   = get_object(conn, object_type, object_name)
     file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
-    if obj == None and (args['verbose'] or args['debug']):
+    if obj == None and args['debug']:
       print('#')
       print('# OBJECT_EMPTY:', object_type, object_name)
       print('#\n')
