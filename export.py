@@ -128,25 +128,27 @@ for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rol
 #
 # PREVIEW OBJECTS
 #
-print()
-print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
-print('-----------------                                      ------------')
-#
-data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
-summary = {}
-for row in data_objects:
-  if not (row.object_type) in summary:
-    summary[row.object_type] = 0
-  summary[row.object_type] += 1
-#
-all_objects = conn.fetch_assoc(query_summary)
-print('                     | CHANGED |   TOTAL')  # fetch data first
-for row in all_objects:
-  check = '' if row.object_type in folders else '<--'  # mark not supported object types
-  print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
-#
-print('                             ^')  # to highlight affected objects
-print()
+data_objects = []
+if args['recent'] != 0:
+  print()
+  print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
+  print('-----------------                                      ------------')
+  #
+  data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
+  summary = {}
+  for row in data_objects:
+    if not (row.object_type) in summary:
+      summary[row.object_type] = 0
+    summary[row.object_type] += 1
+  #
+  all_objects = conn.fetch_assoc(query_summary)
+  print('                     | CHANGED |   TOTAL')  # fetch data first
+  for row in all_objects:
+    check = '' if row.object_type in folders else '<--'  # mark not supported object types
+    print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+  #
+  print('                             ^')  # to highlight affected objects
+  print()
 
 
 
