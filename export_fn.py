@@ -188,7 +188,14 @@ def clean_table(lines, schema):
   # remove empty lines
   lines = list(filter(None, lines))
   lines = '\n'.join(lines)
+
+  # fix missing ;
   lines = lines.replace('\n)\n;\nCREATE', '\n);\n--\nCREATE')  # fix new lines
+
+  # fix missing comma
+  lines = lines.replace(')\n    --', '),\n    --')
+
+  # return as array
   lines = lines.split('\n')
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
   return lines
