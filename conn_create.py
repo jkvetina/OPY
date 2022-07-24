@@ -38,7 +38,7 @@ if os.path.exists(pickle_file):
 #
 # check wallet for connection name
 #
-if args['wallet']:
+if 'wallet' in args and args['wallet']:
   wallet_dir = '{}/Wallet_{}'.format(conn_dir, args['wallet'])
   if not os.path.isdir(wallet_dir):
     print('#')
