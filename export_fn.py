@@ -54,6 +54,9 @@ def replace(subject, pattern, replacement, flags = 0):
 
 
 def get_lines(obj):
+  if obj == None:
+    return []
+  #
   lines = [s.rstrip() for s in obj.split('\n')]
   lines[0] = lines[0].lstrip()
   #

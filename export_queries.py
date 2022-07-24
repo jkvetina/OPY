@@ -30,7 +30,8 @@ ORDER BY NVL(a.r#, c.r#)"""
 query_objects = """
 SELECT DISTINCT o.object_type, o.object_name
 FROM user_objects o
-WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'TABLE', 'VIEW', 'SEQUENCE', 'INDEX', 'MATERIALIZED VIEW')
+WHERE 1 = 1
+    AND o.object_type NOT IN ('LOB', 'TABLE PARTITION')
     AND o.object_type LIKE :object_type || '%'
     AND o.object_name NOT LIKE 'SYS\\_%' ESCAPE '\\'
     AND o.object_name NOT LIKE 'ISEQ$$_%'
@@ -122,16 +123,15 @@ ORDER BY c.column_id"""
 query_describe_job = """
 SELECT DBMS_METADATA.GET_DDL('PROCOBJ', job_name) AS object_desc
 FROM user_scheduler_jobs
-WHERE job_name NOT LIKE 'OTDB\\___\\_%' ESCAPE '\\'
-    AND job_name NOT LIKE 'OTD\\_%' ESCAPE '\\'
-    AND job_name = :object_name"""
+WHERE job_name      NOT LIKE 'OTDB\\___\\_%' ESCAPE '\\'
+    AND job_name    NOT LIKE 'OTD\\_%' ESCAPE '\\'
+    AND job_name    = :object_name"""
 
 query_describe_object = """
 SELECT DBMS_METADATA.GET_DDL(REPLACE(o.object_type, ' ', '_'), o.object_name) AS object_desc
 FROM user_objects o
-WHERE o.object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'TABLE', 'VIEW', 'MATERIALIZED VIEW', 'SEQUENCE', 'INDEX')
-    AND o.object_type = :object_type
-    AND o.object_name = :object_name"""
+WHERE o.object_type     = :object_type
+    AND o.object_name   = :object_name"""
 
 query_describe_job_details = """
 SELECT job_name, enabled, job_priority

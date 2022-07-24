@@ -173,10 +173,11 @@ if len(data_objects):
     #
     obj   = get_object(conn, object_type, object_name)
     file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
-    if obj == None:
-      print()
-      print('  OBJECT EMPTY', object_type, object_name)
-      print()
+    if obj == None and (args['verbose'] or args['debug']):
+      print('#')
+      print('# OBJECT_EMPTY:', object_type, object_name)
+      print('#\n')
+      continue
     #
     if args['verbose']:
       obj_type    = object_type if object_type != recent_type else ''
@@ -192,7 +193,9 @@ if len(data_objects):
       sys.stdout.flush()
     #
     lines = get_lines(obj)
-    lines = getattr(sys.modules[__name__], 'clean_' + object_type.replace(' ', '_').lower())(lines)
+    cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
+    if getattr(sys.modules[__name__], cleanup_fn, None):
+      lines = getattr(sys.modules[__name__], cleanup_fn)(lines, schema)
     obj   = '\n'.join(lines)
 
     # append comments
@@ -239,7 +242,7 @@ if args['csv']:
       print()
       print('#')
       print('# TABLE_MISSING:', table_name)
-      print('#')
+      print('#\n')
       #print(traceback.format_exc())
       #print(sys.exc_info()[2])
       continue
@@ -256,7 +259,7 @@ if args['csv']:
       print()
       print('#')
       print('# CSV_EXPORT_FAILED:', table_name)
-      print('#')
+      print('#\n')
       print(traceback.format_exc())
       print(sys.exc_info()[2])
       continue
