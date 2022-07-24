@@ -420,6 +420,9 @@ if 'app' in args and args['app'] in apex_apps:
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
+
+    # cleanup files after each loop
+    clean_apex_files(folders)
   #
   print()
   print()
@@ -444,7 +447,8 @@ if 'app' in args and args['app'] in apex_apps:
         os.remove(file)
     #
     shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, args['app']), dirs_exist_ok = True)
-  #
+
+  # cleanup
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir)
 
@@ -455,24 +459,6 @@ if os.path.exists(rollout_log):
   for line in f.readlines():
     (file, hash) = line.split('|')
     hashed_old[file.strip()] = hash.strip()
-
-
-
-#
-# REMOVE TIMESTAMPS FROM ALL APEX FILES
-#
-apex_dir = folders['APEX']
-files = glob.glob(apex_dir + '/**/*.sql', recursive = True)
-#
-for file in files:
-  content = ''
-  with open(file, 'r') as h:
-    content = h.read()
-    content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", content)
-    content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", content)
-  #
-  with open(file, 'w') as h:
-    h.write(content)
 
 
 

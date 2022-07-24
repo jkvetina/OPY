@@ -1,4 +1,4 @@
-import sys, re, traceback
+import sys, re, traceback, glob
 from export_queries import *
 
 
@@ -416,4 +416,20 @@ def get_job_fixed(object_name, obj, conn):
   #
   return job_template.format(object_name, obj, args, job_priority, job_enabled)
 
+
+
+def clean_apex_files(folders):
+  # remove timestamps from all apex files
+  apex_dir = folders['APEX']
+  files = glob.glob(apex_dir + '/**/*.sql', recursive = True)
+  #
+  for file in files:
+    content = ''
+    with open(file, 'r') as h:
+      content = h.read()
+      content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", content)
+      content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", content)
+    #
+    with open(file, 'w') as h:
+      h.write(content)
 
