@@ -248,7 +248,8 @@ if args['csv']:
   #
   for (i, table_name) in enumerate(sorted(files)):
     try:
-      table_exists = conn.fetch('SELECT * FROM {} WHERE ROWNUM = 1'.format(table_name))
+      table_cols    = conn.fetch(query_csv_columns.format(table_name))[0][0]
+      table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       print()
       print('#')

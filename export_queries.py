@@ -198,3 +198,9 @@ SELECT
     SYS_CONTEXT('USERENV', 'CURRENT_USER')              AS curr_user
 FROM DUAL"""
 
+query_csv_columns = """
+SELECT LISTAGG(c.column_name, ', ') AS cols
+FROM user_tab_cols c
+WHERE c.table_name  = '{}'
+    AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
+
