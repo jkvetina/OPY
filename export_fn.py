@@ -64,8 +64,9 @@ def get_lines(obj):
 
 
 
-def fix_simple_name(obj):
-  obj = replace(obj, '("[A-Z0-9_$#]+")\.', '')
+def fix_simple_name(obj, schema):
+  obj = obj.replace('"{}".'.format(schema), '')  # remove current schema
+  #obj = replace(obj, '("[A-Z0-9_$#]+")\.', '')
   obj = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), obj)
   #
   return obj
@@ -80,8 +81,8 @@ def fix_next_sequence(obj):
 
 
 
-def clean_table(lines):
-  lines[0] = fix_simple_name(lines[0]) + ' ('
+def clean_table(lines, schema):
+  lines[0] = fix_simple_name(lines[0], schema) + ' ('
   lines[1] = lines[1].lstrip().lstrip('(').lstrip()  # fix fisrt column
 
   # throw away some distrators
@@ -113,17 +114,17 @@ def clean_table(lines):
       if extra.startswith('DEFAULT'):
         extra = fix_next_sequence(extra)
       elif extra.startswith('CONSTRAINT'):
-        extra = fix_simple_name(extra)
+        extra = fix_simple_name(extra, schema)
 
       # format line
       lines[i] = '    {:<30}  {:<16}{}'.format(
-        fix_simple_name(columns[0]),
+        fix_simple_name(columns[0], schema),
         columns[1].replace('NUMBER(*,0)', 'INTEGER') if len(columns) > 1 else '',
         extra if len(columns) > 2 else ''
       ).rstrip()
     #
     if line.startswith('PARTITION'):
-      lines[i] = fix_simple_name(lines[i])
+      lines[i] = fix_simple_name(lines[i], schema)
     #
     if line.startswith(')  PCTFREE') or line.startswith(') PCTFREE'):
       lines[i] = ')'
@@ -145,28 +146,28 @@ def clean_table(lines):
       lines[i] = ''
     #
     if line.startswith('CONSTRAINT'):
-      lines[i] = '    --\n    ' + fix_simple_name(lines[i])
+      lines[i] = '    --\n    ' + fix_simple_name(lines[i], schema)
       lines[i] = lines[i].replace(' CHECK (', '\n        CHECK (')
       lines[i] = lines[i].replace(' PRIMARY KEY (', '\n        PRIMARY KEY (')
       lines[i] = lines[i].replace(' FOREIGN KEY (', '\n        FOREIGN KEY (')
       lines[i] = lines[i].replace(' UNIQUE (', '\n        UNIQUE (')
     #
     if line.startswith('REFERENCES'):
-      lines[i] = '        ' + fix_simple_name(lines[i])
+      lines[i] = '        ' + fix_simple_name(lines[i], schema)
     #
     lines[i] = lines[i].replace(' DEFERRABLE', '\n        DEFERRABLE')
 
     # fix some strange PK/index combinations
     if i > 1 and lines[i].startswith('CREATE'):
-      lines[i] = fix_simple_name(lines[i]).rstrip() + ';'
+      lines[i] = fix_simple_name(lines[i], schema).rstrip() + ';'
       lines[i - 1] += ';'  # fix new lines later
     #
     if i > 1 and lines[i].startswith('ALTER TABLE'):
-      lines[i] = fix_simple_name(lines[i])
+      lines[i] = fix_simple_name(lines[i], schema)
 
     # fix nameless keys
     if lines[i].startswith('PRIMARY KEY') or lines[i].startswith('FOREIGN KEY') or lines[i].startswith('UNIQUE') or lines[i].startswith('CHECK'):
-      lines[i] = '    --\n    ' + fix_simple_name(lines[i])
+      lines[i] = '    --\n    ' + fix_simple_name(lines[i], schema)
       #
       #print()
       #print('  NAMELESS CONSTRAINT', lines[i])
@@ -194,23 +195,21 @@ def clean_table(lines):
 
 
 
-def clean_view(lines):
+def clean_view(lines, schema):
   lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
   lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
-  lines[0] = fix_simple_name(lines[0])
+  lines[0] = fix_simple_name(lines[0], schema)
   lines[1] = lines[1].lstrip()
   lines[len(lines) - 1] += ';'
-  #
-  # @TODO: add comments (view + columns) -> might not execute if view is not valid
   #
   return lines
 
 
 
-def clean_materialized_view(lines):
+def clean_materialized_view(lines, schema):
   lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
-  lines[0] = fix_simple_name(lines[0])
+  lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
 
   # found query start
@@ -243,8 +242,8 @@ def clean_materialized_view(lines):
 
 
 
-def clean_package(lines):
-  lines = clean_procedure(lines)
+def clean_package(lines, schema):
+  lines = clean_procedure(lines, schema)
 
   # remove body
   for (i, line) in enumerate(lines):
@@ -257,25 +256,25 @@ def clean_package(lines):
 
 
 
-def clean_package_body(lines):
-  return clean_procedure(lines)
+def clean_package_body(lines, schema):
+  return clean_procedure(lines, schema)
 
 
 
-def clean_procedure(lines):
-  lines[0] = fix_simple_name(lines[0])
+def clean_procedure(lines, schema):
+  lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[len(lines) - 1] += '\n/'
   return lines
 
 
 
-def clean_function(lines):
-  return clean_procedure(lines)
+def clean_function(lines, schema):
+  return clean_procedure(lines, schema)
 
 
 
-def clean_sequence(lines):
+def clean_sequence(lines, schema):
   lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')
   lines[0] = lines[0].replace(' INCREMENT BY 1', '')
   lines[0] = lines[0].replace(' NOORDER', '')
@@ -285,7 +284,7 @@ def clean_sequence(lines):
   lines[0] = lines[0].replace(' GLOBAL', '')
   lines[0] = lines[0].replace(' GLOBAL', '')
   #
-  lines[0] = fix_simple_name(lines[0])
+  lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = replace(lines[0], '\s+', ' ').strip() + ';'
   #
   lines[0] = lines[0].replace(' MINVALUE', '\n    MINVALUE')
@@ -304,8 +303,8 @@ def clean_sequence(lines):
 
 
 
-def clean_trigger(lines):
-  lines[0] = fix_simple_name(lines[0])
+def clean_trigger(lines, schema):
+  lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = lines[0].replace(' EDITIONABLE', '')
 
   # fix enable/disable trigger
@@ -314,7 +313,7 @@ def clean_trigger(lines):
     if line.startswith('ALTER TRIGGER'):
       lines[i] = replace(line, 'ALTER TRIGGER "[^"]+"."[^"]+" ENABLE', '');
       if '" DISABLE' in line:
-        lines[i] = fix_simple_name(line.replace(' DISABLE', ' DISABLE;'));
+        lines[i] = fix_simple_name(line.replace(' DISABLE', ' DISABLE;'), schema);
         lines[i - 1] = '/\n';
         found_slash = True
 
@@ -329,7 +328,7 @@ def clean_trigger(lines):
 
 
 
-def clean_index(lines):
+def clean_index(lines, schema):
   for (i, line) in enumerate(lines):
     # throw away some distrators
     if line.startswith('  STORAGE') or\
@@ -341,7 +340,7 @@ def clean_index(lines):
       lines[i] = lines[i].lstrip()
       lines[i] = lines[i].replace('TABLESPACE', '    COMPUTE STATISTICS\n    TABLESPACE')
   #
-  lines[0] = fix_simple_name(lines[0]).replace(' ON ', '\n    ON ')
+  lines[0] = fix_simple_name(lines[0], schema).replace(' ON ', '\n    ON ')
   lines = list(filter(None, lines))
   lines[len(lines) - 1] += ';'
   #

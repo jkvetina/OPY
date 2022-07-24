@@ -90,7 +90,10 @@ apex_ws_files = apex_dir + 'workspace_files/'
 start   = timeit.default_timer()
 common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 conn    = Oracle(conn_bak)
-today   = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')[0].today  # calculate date from recent arg
+#
+data    = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
+today   = data[0].today  # calculate date from recent arg
+schema  = data[0].curr_user
 
 # find wallet
 wallet_file = ''

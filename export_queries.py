@@ -193,6 +193,8 @@ WHERE a.owner           = :schema
 ORDER BY 1"""
 
 query_today = """
-SELECT TO_CHAR(TRUNC(SYSDATE) + 1 - :recent, 'YYYY-MM-DD') AS today
+SELECT
+    TO_CHAR(TRUNC(SYSDATE) + 1 - :recent, 'YYYY-MM-DD') AS today,
+    SYS_CONTEXT('USERENV', 'CURRENT_USER')              AS curr_user
 FROM DUAL"""
 
