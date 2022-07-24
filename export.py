@@ -94,7 +94,9 @@ today   = conn.fetch_assoc(query_today, recent = args['recent'])[0].today  # cal
 
 # find wallet
 wallet_file = ''
-if 'name' in conn_bak:
+if 'wallet' in conn_bak:
+  wallet_file = conn_bak['wallet']
+elif 'name' in conn_bak:
   wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), conn_bak['name'])
   if not os.path.exists(wallet_file):
     wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), conn_bak['name'])

@@ -13,7 +13,7 @@ parser.add_argument('-h', '--host',       help = 'Host')
 parser.add_argument('-o', '--port',       help = 'Port')
 parser.add_argument('-s', '--sid',        help = 'SID')
 parser.add_argument('-r', '--service',    help = 'Service name')
-parser.add_argument('-w', '--wallet',     help = 'Wallet path')
+parser.add_argument('-w', '--wallet',     help = 'Wallet name')
 parser.add_argument('-x', '--wallet_pwd', help = 'Wallet password')
 parser.add_argument('-t', '--target',     help = 'Target for Git')
 #
@@ -35,22 +35,51 @@ if os.path.exists(pickle_file):
       if not arg in args:
         args[arg] = value
 
+#
 # check wallet for connection name
-wallet_dir = '{}/Wallet_{}'.format(conn_dir, args['name'])
-if os.path.isdir(wallet_dir):
-  args['wallet'] = wallet_dir
+#
+if args['wallet']:
+  wallet_dir = '{}/Wallet_{}'.format(conn_dir, args['wallet'])
+  if not os.path.isdir(wallet_dir):
+    print('#')
+    print('# WALLET DIR MISSING', wallet_dir)
+    print('#')
+    print()
+    sys.exit()
 
   # set defaults
   if not ('service' in args):
-    args['service'] = (args['name'] + '_medium').lower()
+    args['service'] = (args['wallet'] + '_medium').lower()
+
+  # store as full path
+  args['wallet'] = wallet_dir
 
   # get DSN from TNS file
   with open(args['wallet'] + '/tnsnames.ora') as f:
     for line in f.readlines():
       if line.startswith(args['service'].lower()):
         args['dsn'] = line.split('=', 1)[1].strip()
+  #
+  if not ('dsn' in args):
+    print('#')
+    print('# DSN MISSING', args['service'])
+    print('#')
+    print()
+    sys.exit()
 
-# check args
+
+
+#
+# store args into unreadable pickle
+#
+with open(pickle_file, 'wb') as f:
+  pickle.dump(args, f, protocol = pickle.HIGHEST_PROTOCOL)
+
+# check pickle
+with open(pickle_file, 'rb') as f:
+  args = pickle.load(f)
+
+# check args after merge with current pickle
 print('ARGS:\n--')
 for (key, value) in args.items():
   if not (key in ('pwd', 'wallet_pwd')):
@@ -59,17 +88,9 @@ print('')
 
 
 
-# store args into unreadable pickle
-with open(pickle_file, 'wb') as f:
-  pickle.dump(args, f, protocol = pickle.HIGHEST_PROTOCOL)
-
-# check pickle
-with open(pickle_file, 'rb') as f:
-  args = pickle.load(f)
-
-
-
+#
 # check connectivity
+#
 ora = Oracle(args)
 data = ora.fetch("SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') FROM DUAL")
 print('CONNECTED:\n--\n  SERVER TIME =', data[0][0])  # data[row][col]
