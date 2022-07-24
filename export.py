@@ -22,7 +22,7 @@ parser.add_argument('-zip',             help = 'Patch as ZIP',                  
 #
 args = vars(parser.parse_args())
 args['app']     = int(args['app']     or 0)
-args['recent']  = int(args['recent']  or 0)
+args['recent']  = int(args['recent']  or -1)
 #
 root      = os.path.dirname(os.path.realpath(__file__))
 conn_dir  = os.path.abspath(root + '/conn')
@@ -90,7 +90,7 @@ apex_ws_files = apex_dir + 'workspace_files/'
 start   = timeit.default_timer()
 common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 conn    = Oracle(conn_bak)
-today   = conn.fetch_assoc(query_today, recent = args['recent'])[0].today  # calculate date from recent arg
+today   = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')[0].today  # calculate date from recent arg
 
 # find wallet
 wallet_file = ''
@@ -132,7 +132,7 @@ print()
 print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
 print('-----------------                                      ------------')
 #
-data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'])
+data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
 summary = {}
 for row in data_objects:
   if not (row.object_type) in summary:
@@ -145,8 +145,7 @@ for row in all_objects:
   check = '' if row.object_type in folders else '<--'  # mark not supported object types
   print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
 #
-if args['recent'] > 0:
-  print('                             ^')  # to highlight affected objects
+print('                             ^')  # to highlight affected objects
 print()
 
 
@@ -154,7 +153,7 @@ print()
 #
 # EXPORT OBJECTS
 #
-if args['recent'] > 0:
+if len(data_objects):
   print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
   recent_type = ''
@@ -309,7 +308,7 @@ if 'app' in args and args['app'] in apex_apps:
   os.makedirs(apex_temp_dir)
 
   # prep target dir
-  if args['recent'] == 0:
+  if args['recent'] <= 0:
     # delete folder to remove obsolete objects only on full export
     apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
     if os.path.exists(apex_dir_app):
