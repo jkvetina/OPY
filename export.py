@@ -332,7 +332,7 @@ if 'app' in args and args['app'] in apex_apps:
   request_conn = ''
   requests = []
   if wallet_file != '' and 'wallet' in conn_bak:
-    request_conn += 'set cloudconfig {}\n'.format(wallet_file)
+    request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
     request_conn += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
   else:
     request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
