@@ -61,6 +61,7 @@ folders = {
   'FUNCTION'          : git_target + 'functions/',
   'PACKAGE'           : git_target + 'packages/',
   'PACKAGE BODY'      : git_target + 'packages/',
+  'SYNONYM'           : git_target + 'synonyms/',
   'JOB'               : git_target + 'jobs/',
   'DATA'              : git_target + 'data/',
   'GRANT'             : git_target + 'grants/',

@@ -348,7 +348,16 @@ def clean_index(lines, schema):
 
 
 
-def clean_job(lines):
+def clean_synonym(lines, schema):
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
+  lines[0] = fix_simple_name(lines[0], schema)
+  lines[len(lines) - 1] += ';'
+  #
+  return lines
+
+
+
+def clean_job(lines, schema):
   for (i, line) in enumerate(lines):
     #if line.startswith('sys.dbms_scheduler.set_attribute(') or\
     #  line.startswith('COMMIT;') or\
