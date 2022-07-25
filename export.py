@@ -453,7 +453,10 @@ if 'app' in args and args['app'] in apex_apps:
   # rename workspace files
   ws_files = 'files_{}.sql'.format(apex_apps[args['app']].workspace_id)
   if os.path.exists(apex_ws_files + ws_files):
-    os.rename(apex_ws_files + ws_files, '{}{}.sql'.format(apex_ws_files, apex_apps[args['app']].workspace))
+    target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[args['app']].workspace)
+    if os.path.exists(target_file):
+      os.remove(target_file)
+    os.rename(apex_ws_files + ws_files, target_file)
 
   # move some changed files to proper APEX folder
   apex_partial = '{}f{}'.format(apex_temp_dir, args['app'])
