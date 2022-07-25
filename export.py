@@ -82,6 +82,7 @@ zip_file      = '{}/{}.zip'.format(rollout_done, today)
 apex_dir      = folders['APEX']
 apex_temp_dir = apex_dir + 'temp/'
 apex_ws_files = apex_dir + 'workspace_files/'
+apex_tmp      = 'apex.tmp'
 
 
 
@@ -352,7 +353,7 @@ if 'app' in args and args['app'] in apex_apps:
   else:
     request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
   #
-  if args['recent'] > 0:
+  if args['recent'] > 0 and os.name != 'nt':
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -dir {dir} -applicationid {app_id} -changesSince {since} -nochecksum -expType EMBEDDED_CODE')
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')
@@ -375,55 +376,76 @@ if 'app' in args and args['app'] in apex_apps:
   #
 
   # export APEX stuff
-  changed = []
-  for (i, request) in enumerate(requests):
-    changed = ' '.join(changed)  # will be filled in previous for-loop iteration
-    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = today, changed = changed)
-    process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
+  if os.name == 'nt':
+    # for Windows create one script, full export only
+    content = request_conn + '\n\r'
+    for request in requests:
+      content += request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app']) + '\n\r'
+
+    # create temp file
+    with open(apex_tmp, 'w') as f:
+      f.write(content + 'exit;')
+    #
+    process = 'sql /nolog @apex.tmp'
     result  = subprocess.run(process, shell = True, capture_output = True, text = True)
-    output  = result.stdout.strip()
-
-    # check output for recent APEX changes
-    if ' -list' in request:
-      lines   = output.split('\n')
-      objects = {}
-      changed = []
-      if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
-        for line in lines[7:]:
-          if line.startswith('Disconnected'):
-            break
-          line_date   = line[0:16].strip()
-          line_object = line[17:57].strip()
-          line_type   = line_object.split(':')[0]
-          line_name   = line[57:].strip()
-          #
-          if not (line_type in objects):
-            objects[line_type] = []
-          objects[line_type].append(line_name)
-          changed.append(line_object)
-        #
-        print()
-        print('CHANGES SINCE {}: ({})'.format(today, len(changed)))
-        print('-------------------------')
-        for obj_type, obj_names in objects.items():
-          for (j, name) in enumerate(sorted(obj_names)):
-            print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
-        print()
-
-    # show progress
-    if args['debug']:
-      print()
-      print(process)
-      print()
-      print(output)
-    else:
-      perc = (i + 1) / len(requests)
-      dots = int(70 * perc)
-      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-      sys.stdout.flush()
+    #
+    if os.path.exists(apex_tmp):
+      os.remove(apex_tmp)
 
     # cleanup files after each loop
     clean_apex_files(folders)
+
+  else:
+    # for normal platforms
+    changed = []
+    for (i, request) in enumerate(requests):
+      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = today, changed = changed)
+      process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
+      result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+      output  = result.stdout.strip()
+
+      # check output for recent APEX changes
+      if ' -list' in request:
+        lines   = output.split('\n')
+        objects = {}
+        changed = []
+        if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
+          for line in lines[7:]:
+            if line.startswith('Disconnected'):
+              break
+            line_date   = line[0:16].strip()
+            line_object = line[17:57].strip()
+            line_type   = line_object.split(':')[0]
+            line_name   = line[57:].strip()
+            #
+            if not (line_type in objects):
+              objects[line_type] = []
+            objects[line_type].append(line_name)
+            changed.append(line_object)
+          #
+          print()
+          print('CHANGES SINCE {}: ({})'.format(today, len(changed)))
+          print('-------------------------')
+          for obj_type, obj_names in objects.items():
+            for (j, name) in enumerate(sorted(obj_names)):
+              print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
+          print()
+        changed = ' '.join(changed)
+
+      # show progress
+      if args['debug']:
+        print()
+        print(process)
+        print()
+        print(output)
+      else:
+        perc = (i + 1) / len(requests)
+        dots = int(70 * perc)
+        sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+        sys.stdout.flush()
+
+      # cleanup files after each loop
+      clean_apex_files(folders)
   #
   print()
   print()
