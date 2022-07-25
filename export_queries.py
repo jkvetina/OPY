@@ -199,8 +199,8 @@ SELECT
 FROM DUAL"""
 
 query_csv_columns = """
-SELECT LISTAGG(c.column_name, ', ') AS cols
+SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols
 FROM user_tab_cols c
-WHERE c.table_name  = '{}'
+WHERE c.table_name  = UPPER('{}')
     AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
 
