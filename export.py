@@ -560,6 +560,13 @@ if args['patch']:
         if real_today in file:
           flag = ' <- TODAY'
         else:
+          # check file hash and ignore processed files
+          hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
+          file = file.replace(rolldir_man, '../' + rolldir_man.split('/')[-1])
+          hash_old = hashed_old.get(file, '')
+          if hash == hash_old:
+            continue
+          #
           flag = ' <- CHECK'
       #
       with open(patch_file, 'ab') as z:
