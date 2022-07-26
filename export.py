@@ -508,7 +508,7 @@ if os.path.exists(rollout_log):
 #
 if args['patch']:
   print()
-  print('PREPARING PATCH:', patch_file.replace(root, ''), '+ .zip' if args['zip'] else '')
+  print('PREPARING PATCH:', patch_file.replace(common, '~ '), '+ .zip' if args['zip'] else '')
   print('----------------')
   #
   if os.path.exists(patch_file):
