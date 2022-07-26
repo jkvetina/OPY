@@ -74,10 +74,10 @@ rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '4
 rolldir_obj   = rollout_dir + '/40_objects---LIVE'
 rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
 rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
-today         = datetime.datetime.today().strftime('%Y-%m-%d')
+real_today    = datetime.datetime.today().strftime('%Y-%m-%d')
 rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
-patch_file    = '{}/{}.sql'.format(rollout_done, today)
-zip_file      = '{}/{}.zip'.format(rollout_done, today)
+patch_file    = '{}/{}.sql'.format(rollout_done, real_today)
+zip_file      = '{}/{}.zip'.format(rollout_done, real_today)
 apex_dir      = folders['APEX']
 apex_temp_dir = apex_dir + 'temp/'
 apex_ws_files = apex_dir + 'workspace_files/'
@@ -92,9 +92,9 @@ start   = timeit.default_timer()
 common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 conn    = Oracle(conn_bak)
 #
-data    = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
-today   = data[0].today  # calculate date from recent arg
-schema  = data[0].curr_user
+data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
+req_today = data[0].today  # calculate date from recent arg
+schema    = data[0].curr_user
 
 # find wallet
 wallet_file = ''
@@ -414,7 +414,7 @@ if 'app' in args and args['app'] in apex_apps:
     # for normal platforms
     changed = []
     for (i, request) in enumerate(requests):
-      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = today, changed = changed)
+      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
       result  = subprocess.run(process, shell = True, capture_output = True, text = True)
       output  = result.stdout.strip()
@@ -439,7 +439,7 @@ if 'app' in args and args['app'] in apex_apps:
             changed.append(line_object)
           #
           print()
-          print('CHANGES SINCE {}: ({})'.format(today, len(changed)))
+          print('CHANGES SINCE {}: ({})'.format(req_today, len(changed)))
           print('-------------------------')
           for obj_type, obj_names in objects.items():
             for (j, name) in enumerate(sorted(obj_names)):
@@ -519,7 +519,7 @@ if args['patch']:
   if not os.path.exists(rollout_done):
     os.makedirs(rollout_done)
   #
-  manual_file = '{}/{}.sql'.format(rolldir_man, today)
+  manual_file = '{}/{}.sql'.format(rolldir_man, real_today)
   if not os.path.exists(manual_file):
     with open(manual_file, 'w') as f:
       f.write('')
