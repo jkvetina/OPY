@@ -592,9 +592,13 @@ if (args['rollout'] or args['patch']):
     print('----------------')
 
   # go thru existing files
-  diff = {}
-  hashed = []
-  for (type, path) in folders.items():
+  diff        = {}
+  hashed      = []
+  extra_dirs  = {
+    'MANUALLY': rolldir_man + '/',  # add manual scripts to run them just once
+  }
+  files_to_hash = {**folders, **extra_dirs}
+  for (type, path) in files_to_hash.items():
     # skip some folders
     if type in ('APEX', 'DATA', 'PACKAGE BODY'):
       continue
