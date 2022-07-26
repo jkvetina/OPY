@@ -607,7 +607,7 @@ if (args['rollout'] or args['patch']):
   files_to_hash = {**folders, **extra_dirs}
   for (type, path) in files_to_hash.items():
     # skip some folders
-    if type in ('APEX', 'DATA', 'PACKAGE BODY'):
+    if type in ('APEX', 'PACKAGE BODY'):
       continue
     #
     files = glob.glob(path + '*.sql')
