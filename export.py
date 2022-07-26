@@ -336,15 +336,25 @@ if 'app' in args and args['app'] in apex_apps:
     os.makedirs(apex_dir)
   if not os.path.exists(apex_ws_files):
     os.makedirs(apex_ws_files)
+
+  # get app details
+  apex = conn.fetch_assoc(query_apex_app_detail.format(args['app']))[0]
   #
   print()
   print('EXPORTING APEX APP:')
   print('-------------------')
-  print('          APP |', args['app'])
-  print('    WORKSPACE |', apex_apps[args['app']].workspace)
-  print('        PAGES |', apex_apps[args['app']].pages)
-  #print('       TARGET |', apex_dir.replace(common, '~ '))
-  #
+  print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
+  print('        NAME | {}'.format(apex.app_name))
+  print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
+  print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
+  print()
+  print('       PAGES | {:<8}      LISTS | {:<8}    SETTINGS | {:<8}'.format(apex.pages, apex.lists or '', apex.settings or ''))
+  print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
+  print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
+  print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
+  print()
+
+  # prepare requests (multiple exports)
   request_conn = ''
   requests = []
   if wallet_file != '' and 'wallet' in conn_bak:

@@ -192,6 +192,46 @@ JOIN apex_workspaces w
 WHERE a.owner           = :schema
 ORDER BY 1"""
 
+query_apex_app_detail = """
+SELECT
+    w.workspace,
+    --w.workspace_id
+    a.owner,
+    a.application_group             AS app_group,
+    a.application_id                AS app_id,
+    a.alias                         AS app_alias,
+    a.application_name              AS app_name,
+    a.pages,
+    NULLIF(a.application_items, 0)          AS items,
+    NULLIF(a.application_processes, 0)      AS processes,
+    NULLIF(a.application_computations, 0)   AS computations,
+    NULLIF(a.application_settings, 0)       AS settings,
+    NULLIF(a.lists, 0)                      AS lists,
+    NULLIF(a.lists_of_values, 0)            AS lovs,
+    NULLIF(a.web_services, 0)               AS ws,
+    NULLIF(a.translation_messages, 0)       AS translations,
+    NULLIF(a.build_options, 0)              AS build_options,
+    NULLIF(a.authorization_schemes, 0)      AS authz_schemes,
+    --
+    CASE WHEN a.authentication_scheme_type != 'No Authentication' THEN a.authentication_scheme END AS authn_scheme,
+    --a.availability_status,
+    CASE WHEN a.db_session_init_code IS NOT NULL THEN 'Y' END       AS has_init_code,
+    CASE WHEN a.db_session_cleanup_code IS NOT NULL THEN 'Y' END    AS has_cleanup,
+    CASE WHEN a.friendly_url = 'Yes' THEN 'Y' END                   AS has_friendly_url,
+    CASE WHEN a.debugging = 'Allowed' THEN 'Y' END                  AS has_debugging,
+    CASE WHEN a.error_handling_function IS NOT NULL THEN 'Y' END    AS has_error_fn,
+    --
+    a.compatibility_mode,
+    TO_CHAR(a.created_on, 'YYYY-MM-DD HH24:MI')         AS created_at,
+    TO_CHAR(a.last_updated_on, 'YYYY-MM-DD HH24:MI')    AS changed_at
+FROM apex_applications a
+JOIN apex_workspace_schemas s
+    ON s.workspace_id       = a.workspace_id
+    AND s.schema            = a.owner
+JOIN apex_workspaces w
+    ON w.workspace_id       = a.workspace_id
+WHERE a.application_id      = {}"""
+
 query_today = """
 SELECT
     TO_CHAR(TRUNC(SYSDATE) + 1 - :recent, 'YYYY-MM-DD') AS today,
