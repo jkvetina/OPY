@@ -556,8 +556,11 @@ if args['patch']:
   for file in files:
     if not ('---SKIP.sql' in file):
       flag = ''
-      if 'MANUALLY' in file and not (today in file):
-        flag = ' <- CHECK'
+      if 'MANUALLY' in file:
+        if real_today in file:
+          flag = ' <- TODAY'
+        else:
+          flag = ' <- CHECK'
       #
       with open(patch_file, 'ab') as z:
         #z.write((file + '\n').encode('utf-8'))
