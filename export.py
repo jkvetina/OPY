@@ -604,15 +604,18 @@ if (args['rollout'] or args['patch']):
       # calculate file hash
       hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
       file = file.replace(git_target, '')
+      file = file.replace(rolldir_man, '../' + rolldir_man.split('/')[-1])  # add patch files
+      #
       hashed.append('{:<45} | {}'.format(file, hash))
 
       # show differences
       hash_old = hashed_old.get(file, '')
       if hash != hash_old:
-        type = [k for k, v in folders.items() if v == git_target + os.path.dirname(file) + '/'][0]
-        if not (type in diff):
-          diff[type] = []
-        diff[type].append([file, hash_old])
+        type = [k for k, v in folders.items() if v == git_target + os.path.dirname(file) + '/']
+        if len(type):
+          if not (type[0] in diff):
+            diff[type[0]] = []
+          diff[type[0]].append([file, hash_old])
 
   # show differences
   for type, files in diff.items():
