@@ -238,6 +238,15 @@ SELECT
     SYS_CONTEXT('USERENV', 'CURRENT_USER')              AS curr_user
 FROM DUAL"""
 
+query_verions = """
+SELECT
+    a.version_no    AS apex_version,
+    p.version_full  AS db_version
+    --SYS_CONTEXT('USERENV', 'SERVER_HOST')   AS host,
+    --SYS_CONTEXT('USERENV', 'INSTANCE_NAME') AS instance
+FROM apex_release a
+CROSS JOIN product_component_version p"""
+
 query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols
 FROM user_tab_cols c

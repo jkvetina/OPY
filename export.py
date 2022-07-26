@@ -122,6 +122,12 @@ print('           | {}'.format(db_conf.replace(common, '~ ')))
 print('    TARGET | {}'.format(git_target.replace(common, '~ ')))
 print()
 
+# get versions
+data = conn.fetch_assoc(query_verions)[0]
+print('  DATABASE | {}'.format('.'.join(data.db_version.split('.')[0:2])))
+print('      APEX | {}'.format('.'.join(data.apex_version.split('.')[0:2])))
+print()
+
 # create basic dirs
 for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rolldir_apex]:
   if not (os.path.exists(dir)):
@@ -364,8 +370,8 @@ if 'app' in args and args['app'] in apex_apps:
   #
   if args['recent'] > 0 and os.name != 'nt':
     # partial export, get list of changed objects since that, show it to user
+    requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
     requests.append('apex export -dir {dir} -applicationid {app_id} -changesSince {since} -nochecksum -expType EMBEDDED_CODE')
-    requests.append('apex export -applicationid {app_id} -list -changesSince {since}')
     requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
   else:
     # export app in several formats
