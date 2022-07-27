@@ -86,15 +86,12 @@ folders = {
 
 # map objects to patch folders
 patch_map = {
-  '10_init'               : [],
-  '20_new_tables'         : ['TABLE', 'SEQUENCE', 'INDEX', 'MATERIALIZED VIEW'],
-  '30_table+data_changes' : [],
-  '40_repeatable_objects' : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
-  '50_jobs'               : ['JOB'],
-  '60_cleanup'            : [],
-  '70_data'               : ['DATA'],
-  '80_finally'            : [],
-  '90_apex'               : ['APEX'],
+  'init'      : [],
+  'tables'    : ['TABLE', 'SEQUENCE', 'INDEX', 'MATERIALIZED VIEW'],
+  'objects'   : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
+  'jobs'      : ['JOB'],
+  'data'      : ['DATA'],
+  'apex'      : ['APEX'],
 }
 
 # some variables
@@ -106,6 +103,20 @@ patch_today     = '{}/patch_{}.sql'.format(patch_done, today_date)
 patch_zip       = '{}/patch_{}.zip'.format(patch_done, today_date)
 rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
 common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
+#
+patch_folders = {
+  'init'      : patch_root + '/10_init/',
+  'tables'    : patch_root + '/20_new_tables/',
+  'changes'   : patch_root + '/30_table+data_changes/',
+  'objects'   : patch_root + '/40_repeatable_objects/',
+  'jobs'      : patch_root + '/50_jobs/',
+  'cleanup'   : patch_root + '/60_cleanup/',
+  'data'      : patch_root + '/70_data/',
+  'finally'   : patch_root + '/80_finally/',
+  'apex'      : patch_root + '/90_apex/',
+}
+#
+patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
 
 # apex folders
 apex_dir        = folders['APEX']
@@ -167,10 +178,19 @@ for dir in [git_target, patch_root, patch_done]:
   if not os.path.exists(dir):
     os.makedirs(dir)
 #
-for dir in patch_map:
-  dir = patch_root + '/' + dir
+for (type, dir) in patch_folders.items():
   if not os.path.exists(dir):
     os.makedirs(dir)
+
+# delete old empty patch files
+for file in glob.glob(os.path.dirname(patch_manually) + '/*.sql'):
+  if os.path.getsize(file) == 0:
+    os.remove(file)
+
+# create new patch file for manual changes (ALTER statements, related data changes...)
+if not os.path.exists(patch_manually):
+  with open(patch_manually, 'w') as f:
+    f.write('')
 
 # get old hashes
 hashed_old = {}
@@ -556,18 +576,8 @@ if args['patch']:
   print('PREPARING PATCH:', patch_today.replace(common_root, '~ '), '+ .zip' if args['zip'] else '')
   print('----------------')
   #
-  if os.path.exists(patch_today):
-    os.remove(patch_today)
   #
-  if not os.path.exists(patch_root):
-    os.makedirs(patch_root)
-  if not os.path.exists(patch_done ):
-    os.makedirs(patch_done )
   #
-  manual_file = '{}/{}.sql'.format(rolldir_tables, today_date)
-  if not os.path.exists(manual_file):
-    with open(manual_file, 'w') as f:
-      f.write('')
   #
   for dir in rolldirs:
     out_file    = '{}/{}.sql'.format(rolldir_objects, dir)
@@ -607,7 +617,7 @@ if args['patch']:
         else:
           # check file hash and ignore processed files
           hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
-          file = file.replace(rolldir_tables, '../' + rolldir_tables.split('/')[-1])
+          file = file.replace(patch_folders['changes'], '../' + patch_folders['changes'].split('/')[-1])
           hash_old = hashed_old.get(file, '')
           if hash == hash_old:
             continue
@@ -647,7 +657,7 @@ if (args['rollout'] or args['patch']):
   diff        = {}
   hashed      = []
   extra_dirs  = {
-    'MANUALLY': rolldir_tables + '/',  # add manual scripts to run them just once
+    'MANUALLY': patch_folders['changes'] + '/',  # add manual scripts to run them just once
   }
   files_to_hash = {**folders, **extra_dirs}
   for (type, path) in files_to_hash.items():
@@ -660,7 +670,7 @@ if (args['rollout'] or args['patch']):
       # calculate file hash
       hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
       file = file.replace(git_target, '')
-      file = file.replace(rolldir_tables, '../' + rolldir_tables.split('/')[-1])  # add patch files
+      file = file.replace(patch_folders['changes'], '../' + patch_folders['changes'].split('/')[-1])  # add patch files
       #
       hashed.append('{:<45} | {}'.format(file, hash))
 
