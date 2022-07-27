@@ -7,7 +7,7 @@ from export_fn import *
 # ARGS
 #
 parser = argparse.ArgumentParser()
-parser.add_argument('target',                       help = 'Target folder (Git root)')
+parser.add_argument('-g', '-target',  '--target',   help = 'Target folder (Git root)')
 parser.add_argument('-n', '-name',    '--name',     help = 'Connection name')
 parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type', default = '')
 parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compiled since SYSDATE - $recent')
@@ -26,17 +26,20 @@ args['recent']  = int(args['recent']  or -1)
 root      = os.path.dirname(os.path.realpath(__file__))
 conn_dir  = os.path.abspath(root + '/conn')
 
-# primary connection file
-db_conf = os.path.normpath(args['target'] + '/documentation/db.conf')
-if args['name']:
-  db_conf = os.path.normpath('{}/{}.conf'.format(conn_dir, args['name']))
+# find connection file
+conn_files = []
+if 'target' in args and args['target'] != None and len(args['target']) > 0:
+  conn_files.append(args['target'] + '/documentation/db.conf')
+if 'name' in args:
+  conn_files.append(os.path.normpath('{}/{}.conf'.format(conn_dir, args['name'])))
 #
-with open(db_conf, 'rb') as f:
-  conn_bak = pickle.load(f)
-
-# overwrite target from pickle file
-if 'name' in args and len(args['target']) <= 1 and 'target' in conn_bak:
-  args['target'] = conn_bak['target']
+for db_conf in conn_files:
+  if os.path.exists(db_conf):
+    with open(db_conf, 'rb') as f:
+      conn_bak = pickle.load(f)
+      if args['target'] == None and 'target' in conn_bak:  # overwrite target from pickle file
+        args['target'] = conn_bak['target']
+      break
 
 # check args
 if args['debug']:
@@ -46,6 +49,14 @@ if args['debug']:
     if not (key in ('pwd', 'wallet_pwd')):
       print('{:>8} = {}'.format(key, value))
   print('')
+
+# check target
+if (args['target'] == None or len(args['target']) == 0):
+  print('#')
+  print('# UNKNOWN TARGET')
+  print('#')
+  print()
+  sys.exit()
 
 # target folders by object types
 git_target = os.path.abspath(args['target'] + '/database') + '/'
