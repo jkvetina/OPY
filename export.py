@@ -130,8 +130,8 @@ except Exception:
   version_apex  = ''
   version_db    = conn.fetch_value(query_version_db_old)
 #
-print('  DATABASE | {}'.format('.'.join(version_apex.split('.')[0:2])))
-print('      APEX | {}'.format('.'.join(version_db.split('.')[0:2])))
+print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
+print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
 print()
 
 # create basic dirs
@@ -268,7 +268,7 @@ if args['csv']:
   #
   for (i, table_name) in enumerate(sorted(files)):
     try:
-      table_cols    = conn.fetch(query_csv_columns.format(table_name))[0][0]
+      table_cols    = conn.fetch_value(query_csv_columns.format(table_name))
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       print()
