@@ -296,19 +296,23 @@ if args['csv']:
       print(sys.exc_info()[2])
       continue
 
+    # save as CSV
+    writer.writerow(conn.cols)  # headers
+    for row in data:
+      writer.writerow(row)
+    csv_file.close()
+
     # show progress
     if args['verbose']:
+      #
+      # @TODO: compare hash_old with hash
+      #
       print('  {:30} {:>8}'.format(table_name, len(data)))
     else:
       perc = (i + 1) / len(files)
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
-    #
-    writer.writerow(conn.cols)  # headers
-    for row in data:
-      writer.writerow(row)
-    csv_file.close()
   #
   if not args['verbose']:
     print()
