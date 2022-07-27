@@ -575,10 +575,75 @@ if args['patch']:
   print()
   print('PREPARING PATCH:', patch_today.replace(common_root, '~ '), '+ .zip' if args['zip'] else '')
   print('----------------')
+
   #
+  # CONVERT CSV FILES TO MERGE STATEMENTS
   #
+  files = glob.glob(folders['DATA'] + '/*.csv')
+  for csv_file in files:
+    table_name  = csv_file.split('/')[-1].replace('.csv', '').lower()
+    columns     = []
+    csv_select  = []
+    all_rows    = []
+    update_cols = []
+    skip_update = '--'
+    csv_rows    = 0
+
+    # parse CSV file and create WITH table
+    with open(csv_file, mode = 'r', encoding = 'utf-8') as csv_file:
+      csv_reader = csv.DictReader(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+      for row in csv_reader:
+        csv_rows += 1
+        all_rows.append(row)
+        #
+        cols = []
+        for col_name, col_value in row.items():
+          if not isinstance(col_value, (int, float)):
+            col_value = '\'{}\''.format(col_value.replace('\'', '\'\''))
+          cols.append('{} AS {}'.format(col_value, col_name))
+        csv_select.append('SELECT {} FROM DUAL'.format(', '.join(cols)))
+        #
+        if not len(columns):
+          columns = list(row.keys())
+    csv_select = ' UNION ALL\n    '.join(csv_select)
+
+    # ignore empty files
+    if csv_rows == 0:
+      continue
+
+    # get primary key cols for merge
+    primary_cols = conn.fetch_value(query_csv_primary_columns, table_name = table_name)
+    if primary_cols == None:
+      continue
+    #
+    primary_cols = primary_cols.lower().split(',')
+    primary_cols_set = []
+    for col in primary_cols:
+      primary_cols_set.append('t.{} = s.{}'.format(col, col))
+    primary_cols_set = '\n    ' + '\n    AND '.join(primary_cols_set) + '\n'
+
+    # get other columns
+    for col in columns:
+      if not (col in primary_cols):
+        update_cols.append('t.{} = s.{}'.format(col, col))
+    update_cols = ',\n{}        '.format(skip_update).join(update_cols)
+    #
+    all_cols    = 't.' + ',\n        t.'.join(columns)
+    all_values  = 's.' + ',\n        s.'.join(columns)
+
+    # store the query in the patch folder
+    query       = template_csv_merge.format(table_name = table_name, primary_cols_set = primary_cols_set, csv_content_query = csv_select, non_primary_cols_set = update_cols, all_cols = all_cols, all_values = all_values, skip_update = skip_update)
+    target_file = '{}{}.sql'.format(patch_folders['data'], table_name)
+    #
+    if os.path.exists(target_file):
+      os.remove(target_file)
+    with open(target_file, 'w', encoding = 'utf-8') as f:
+      f.write(query)
+
   #
+  # CONTINUE WITH PATCH
   #
+
   for dir in rolldirs:
     out_file    = '{}/{}.sql'.format(rolldir_objects, dir)
     files_mask  = '{}{}/*.sql'.format(git_target, re.sub('\d+[_]', '', dir))
