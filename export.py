@@ -58,6 +58,12 @@ if (args['target'] == None or len(args['target']) == 0):
   print()
   sys.exit()
 
+
+
+#
+# SETUP VARIABLES
+#
+
 # target folders by object types
 git_target = os.path.abspath(args['target'] + '/database') + '/'
 folders = {
@@ -78,31 +84,41 @@ folders = {
   'APEX'              : git_target + 'apex/',
 }
 
-# current dir
-rollout_dir   = os.path.normpath(git_target + '../patches')
-rollout_done  = os.path.normpath(git_target + '../patches_done')
-rolldirs      = ['41_sequences', '42_functions', '43_procedures', '45_views', '44_packages', '48_triggers', '49_indexes']
-rolldir_obj   = rollout_dir + '/40_objects---LIVE'
-rolldir_man   = rollout_dir + '/20_diffs---MANUALLY'
-rolldir_apex  = rollout_dir + '/90_apex_app---LIVE'
-real_today    = datetime.datetime.today().strftime('%Y-%m-%d')
-rollout_log   = '{}/{}'.format(rollout_done, 'rollout.log')
-patch_file    = '{}/{}.sql'.format(rollout_done, real_today)
-zip_file      = '{}/{}.zip'.format(rollout_done, real_today)
-apex_dir      = folders['APEX']
-apex_temp_dir = apex_dir + 'temp/'
-apex_ws_files = apex_dir + 'workspace_files/'
-apex_tmp      = 'apex.tmp'
+# map objects to patch folders
+patch_map = {
+  '10_init'               : [],
+  '20_new_tables'         : ['TABLE', 'SEQUENCE', 'INDEX', 'MATERIALIZED VIEW'],
+  '30_table+data_changes' : [],
+  '40_repeatable_objects' : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
+  '50_jobs'               : ['JOB'],
+  '60_cleanup'            : [],
+  '70_data'               : ['DATA'],
+  '80_finally'            : [],
+  '90_apex'               : ['APEX'],
+}
+
+# some variables
+start_timer     = timeit.default_timer()
+today_date      = datetime.datetime.today().strftime('%Y-%m-%d')  # YYYY-MM-DD
+patch_root      = os.path.normpath(git_target + '../patches')
+patch_done      = os.path.normpath(git_target + '../patches_done')
+patch_today     = '{}/patch_{}.sql'.format(patch_done, today_date)
+patch_zip       = '{}/patch_{}.zip'.format(patch_done, today_date)
+rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
+common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
+
+# apex folders
+apex_dir        = folders['APEX']
+apex_temp_dir   = apex_dir + 'temp/'  # temp file for partial APEX exports
+apex_ws_files   = apex_dir + 'workspace_files/'
+apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
 
 
 
 #
 # CONNECT TO DATABASE
 #
-start   = timeit.default_timer()
-common  = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
-conn    = Oracle(conn_bak)
-#
+conn      = Oracle(conn_bak)
 data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
 req_today = data[0].today  # calculate date from recent arg
 schema    = data[0].curr_user
@@ -127,10 +143,10 @@ print('    SOURCE | {}@{}/{}{}'.format(
   conn_bak.get('sid', '')))
 #
 if wallet_file != '':
-  print('    WALLET | {}'.format(conn_bak['wallet'].replace(common, '~ ')))
+  print('    WALLET | {}'.format(conn_bak['wallet'].replace(common_root, '~ ')))
 #
-print('           | {}'.format(db_conf.replace(common, '~ ')))
-print('    TARGET | {}'.format(git_target.replace(common, '~ ')))
+print('           | {}'.format(db_conf.replace(common_root, '~ ')))
+print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
 print()
 
 # get versions
@@ -146,8 +162,13 @@ print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
 print()
 
 # create basic dirs
-for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rolldir_apex]:
-  if not (os.path.exists(dir)):
+for dir in [git_target, patch_root, patch_done]:
+  if not os.path.exists(dir):
+    os.makedirs(dir)
+#
+for dir in patch_map:
+  dir = patch_root + '/' + dir
+  if not os.path.exists(dir):
     os.makedirs(dir)
 
 # get old hashes
@@ -529,24 +550,24 @@ if 'app' in args and args['app'] in apex_apps:
 #
 if args['patch']:
   print()
-  print('PREPARING PATCH:', patch_file.replace(common, '~ '), '+ .zip' if args['zip'] else '')
+  print('PREPARING PATCH:', patch_today.replace(common_root, '~ '), '+ .zip' if args['zip'] else '')
   print('----------------')
   #
-  if os.path.exists(patch_file):
-    os.remove(patch_file)
+  if os.path.exists(patch_today):
+    os.remove(patch_today)
   #
-  if not os.path.exists(rollout_dir):
-    os.makedirs(rollout_dir)
-  if not os.path.exists(rollout_done):
-    os.makedirs(rollout_done)
+  if not os.path.exists(patch_root):
+    os.makedirs(patch_root)
+  if not os.path.exists(patch_done ):
+    os.makedirs(patch_done )
   #
-  manual_file = '{}/{}.sql'.format(rolldir_man, real_today)
+  manual_file = '{}/{}.sql'.format(rolldir_tables, today_date)
   if not os.path.exists(manual_file):
     with open(manual_file, 'w') as f:
       f.write('')
   #
   for dir in rolldirs:
-    out_file    = '{}/{}.sql'.format(rolldir_obj, dir)
+    out_file    = '{}/{}.sql'.format(rolldir_objects, dir)
     files_mask  = '{}{}/*.sql'.format(git_target, re.sub('\d+[_]', '', dir))
     files       = sorted(glob.glob(files_mask))
     #
@@ -572,38 +593,38 @@ if args['patch']:
       shutil.copyfile(apex_file, file)
 
   # join all files in a folder to a single file
-  files = sorted(glob.glob(rollout_dir + '/**/*.sql', recursive = True))
+  files = sorted(glob.glob(patch_root + '/**/*.sql', recursive = True))
   last_dir = ''
   for file in files:
     if not ('---SKIP.sql' in file):
       flag = ''
       if 'MANUALLY' in file:
-        if real_today in file:
+        if today_date in file:
           flag = ' <- TODAY'
         else:
           # check file hash and ignore processed files
           hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
-          file = file.replace(rolldir_man, '../' + rolldir_man.split('/')[-1])
+          file = file.replace(rolldir_tables, '../' + rolldir_tables.split('/')[-1])
           hash_old = hashed_old.get(file, '')
           if hash == hash_old:
             continue
           #
           flag = ' <- CHECK'
       #
-      with open(patch_file, 'ab') as z:
+      with open(patch_today, 'ab') as z:
         #z.write((file + '\n').encode('utf-8'))
         with open(file, 'rb') as h:
           z.write(h.read())
-          (curr_dir, short) = file.replace(rollout_dir, '').replace('\\', '/').lstrip('/').split('/')
           print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
+          (curr_dir, short) = file.replace(patch_root, '').replace('\\', '/').lstrip('/').split('/')
           last_dir = curr_dir
   print('    {:<48}{:>10}'.format('', os.path.getsize(patch_file)))
   print()
 
   # create binary to whatever purpose
   if args['zip']:
-    with zipfile.ZipFile(zip_file, 'w') as myzip:
-      myzip.write(patch_file)
+    with zipfile.ZipFile(patch_zip, 'w') as myzip:
+      myzip.write(patch_today)
 
 
 
@@ -623,7 +644,7 @@ if (args['rollout'] or args['patch']):
   diff        = {}
   hashed      = []
   extra_dirs  = {
-    'MANUALLY': rolldir_man + '/',  # add manual scripts to run them just once
+    'MANUALLY': rolldir_tables + '/',  # add manual scripts to run them just once
   }
   files_to_hash = {**folders, **extra_dirs}
   for (type, path) in files_to_hash.items():
@@ -636,7 +657,7 @@ if (args['rollout'] or args['patch']):
       # calculate file hash
       hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
       file = file.replace(git_target, '')
-      file = file.replace(rolldir_man, '../' + rolldir_man.split('/')[-1])  # add patch files
+      file = file.replace(rolldir_tables, '../' + rolldir_tables.split('/')[-1])  # add patch files
       #
       hashed.append('{:<45} | {}'.format(file, hash))
 
@@ -662,7 +683,7 @@ if (args['rollout'] or args['patch']):
   #
   print()
 
-print('TIME:', round(timeit.default_timer() - start, 2))
+print('TIME:', round(timeit.default_timer() - start_timer, 2))
 print('\n')
 
 
