@@ -117,6 +117,25 @@ class Oracle:
 
 
 
+  def fetch_value(self, query, autobind = None, **binds):
+    if autobind and len(autobind):
+      binds = self.get_binds(query, autobind)
+    #
+    self.curs = self.conn.cursor()
+    self.curs.arraysize = 1
+    data = self.curs.execute(query.strip(), **binds).fetchmany(1)
+    #
+    self.cols = [row[0].lower() for row in self.curs.description]
+    self.desc = {}
+    for row in self.curs.description:
+      self.desc[row[0].lower()] = row
+    #
+    if len(data):
+      return data[0][0]
+    return data
+
+
+
   def commit(self):
     try: self.conn.commit()
     except:
