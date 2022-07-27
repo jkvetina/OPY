@@ -150,16 +150,17 @@ print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
 print()
 
 # get versions
-try:
-  version_apex  = conn.fetch_value(query_version_apex)
-  version_db    = conn.fetch_value(query_version_db)
-except Exception:
-  version_apex  = version_apex or ''
-  version_db    = conn.fetch_value(query_version_db_old)
-#
-print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
-print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
-print()
+if args['verbose']:
+  try:
+    version_apex  = conn.fetch_value(query_version_apex)
+    version_db    = conn.fetch_value(query_version_db)
+  except Exception:
+    version_apex  = version_apex or ''
+    version_db    = conn.fetch_value(query_version_db_old)
+  #
+  print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
+  print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
+  print()
 
 # create basic dirs
 for dir in [git_target, patch_root, patch_done]:
@@ -400,14 +401,16 @@ if 'app' in args and args['app'] in apex_apps:
   print('-------------------')
   print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
   print('        NAME | {}'.format(apex.app_name))
-  print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
-  print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
-  print()
-  print('       PAGES | {:<8}      LISTS | {:<8}    SETTINGS | {:<8}'.format(apex.pages, apex.lists or '', apex.settings or ''))
-  print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
-  print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
-  print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
-  print()
+  #
+  if args['verbose']:
+    print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
+    print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
+    print()
+    print('       PAGES | {:<8}      LISTS | {:<8}    SETTINGS | {:<8}'.format(apex.pages, apex.lists or '', apex.settings or ''))
+    print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
+    print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
+    print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
+    print()
 
   # prepare requests (multiple exports)
   request_conn = ''
