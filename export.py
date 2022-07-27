@@ -279,7 +279,7 @@ if args['csv']:
   #
   for (i, table_name) in enumerate(sorted(files)):
     try:
-      table_cols    = conn.fetch_value(query_csv_columns.format(table_name))
+      table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       print()
@@ -372,7 +372,7 @@ if 'app' in args and args['app'] in apex_apps:
     os.makedirs(apex_ws_files)
 
   # get app details
-  apex = conn.fetch_assoc(query_apex_app_detail.format(args['app']))[0]
+  apex = conn.fetch_assoc(query_apex_app_detail, app_id = args['app'])[0]
   #
   print()
   print('EXPORTING APEX APP:')

@@ -230,7 +230,7 @@ JOIN apex_workspace_schemas s
     AND s.schema            = a.owner
 JOIN apex_workspaces w
     ON w.workspace_id       = a.workspace_id
-WHERE a.application_id      = {}"""
+WHERE a.application_id      = :app_id"""
 
 query_today = """
 SELECT
@@ -254,6 +254,6 @@ WHERE p.product LIKE 'Oracle Database%'"""
 query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols
 FROM user_tab_cols c
-WHERE c.table_name  = UPPER('{}')
+WHERE c.table_name  = UPPER(:table_name)
     AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
 
