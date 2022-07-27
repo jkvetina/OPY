@@ -257,3 +257,47 @@ FROM user_tab_cols c
 WHERE c.table_name  = UPPER(:table_name)
     AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
 
+query_csv_primary_columns = """
+WITH p AS (
+    SELECT c.column_name, c.position
+    FROM user_cons_columns c
+    JOIN user_constraints n
+        ON n.table_name         = c.table_name
+        AND n.constraint_name   = c.constraint_name
+    WHERE n.table_name          = UPPER(:table_name)
+        AND n.constraint_type   = 'P'
+)
+SELECT MAX(t.columns) AS columns
+FROM (
+    SELECT LISTAGG(p.column_name, ',') WITHIN GROUP (ORDER BY p.position) AS columns
+    FROM p
+    UNION ALL
+    SELECT LISTAGG(c.column_name, ',') WITHIN GROUP (ORDER BY c.position) AS columns
+    FROM user_cons_columns c
+    JOIN user_constraints n
+        ON n.table_name         = c.table_name
+        AND n.constraint_name   = c.constraint_name
+    WHERE n.table_name          = UPPER(:table_name)
+        AND n.constraint_type   = 'U'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM p
+        )
+) t"""
+
+template_csv_merge = """MERGE INTO {table_name} t
+USING (
+    {csv_content_query}
+) s
+ON ({primary_cols_set})
+{skip_update}WHEN MATCHED THEN
+{skip_update}    UPDATE SET
+{skip_update}        {non_primary_cols_set}
+WHEN NOT MATCHED THEN
+    INSERT (
+        {all_cols}
+    )
+    VALUES (
+        {all_values}
+    );\n"""
+
