@@ -127,7 +127,7 @@ try:
   version_apex  = conn.fetch_value(query_version_apex)
   version_db    = conn.fetch_value(query_version_db)
 except Exception:
-  version_apex  = ''
+  version_apex  = version_apex or ''
   version_db    = conn.fetch_value(query_version_db_old)
 #
 print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
