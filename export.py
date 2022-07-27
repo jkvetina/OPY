@@ -199,6 +199,8 @@ if os.path.exists(rollout_log):
   for line in f.readlines():
     (file, hash) = line.split('|')
     hashed_old[file.strip()] = hash.strip()
+#
+hashed_new = hashed_old.copy()
 
 
 
@@ -573,8 +575,13 @@ if 'app' in args and args['app'] in apex_apps:
 #
 if args['patch']:
   print()
-  print('PREPARING PATCH:', patch_today.replace(common_root, '~ '), '+ .zip' if args['zip'] else '')
+  print('PREPARING PATCH:')
   print('----------------')
+
+  # remove target files
+  for file in [patch_today, patch_zip]:
+    if os.path.exists(file):
+      os.remove(file)
 
   #
   # CONVERT CSV FILES TO MERGE STATEMENTS
@@ -640,69 +647,66 @@ if args['patch']:
     with open(target_file, 'w', encoding = 'utf-8') as f:
       f.write(query)
 
+
+
   #
   # CONTINUE WITH PATCH
   #
+  # open target file
+  with open(patch_today, 'wb') as z:
+    # go thru database objects in correct order
+    for target_dir in sorted(patch_folders.values()):
+      type = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
+      if not (type in patch_map):
+        continue
+      #
+      last_type = ''
+      for object_type in patch_map[type]:
+        if not (object_type in folders):
+          continue
+        source_dir  = folders[object_type]
+        file_ext    = '*.sql'
+        if object_type == 'DATA':
+          file_ext  = '*.csv'
+        #
+        for file in sorted(glob.glob(source_dir + file_ext)):
+          short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
+          hash_old    = hashed_old.get(short_file, '')
+          hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
 
-  for dir in rolldirs:
-    out_file    = '{}/{}.sql'.format(rolldir_objects, dir)
-    files_mask  = '{}{}/*.sql'.format(git_target, re.sub('\d+[_]', '', dir))
-    files       = sorted(glob.glob(files_mask))
-    #
-    if not (os.path.isdir(os.path.dirname(out_file))):
-      os.makedirs(os.path.dirname(out_file))
-    #
-    with open(out_file, 'wb') as z:
-      for file in files:
-        hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
-        hash_old = hashed_old.get(file.replace(git_target, ''), '')
+          # check file hash and compare it with hash in rollout.log
+          if hash_new == hash_old:
+            continue  # add only changed objects
+          hashed_new[short_file] = hash_new
 
-        # add only changed objects
-        if hash != hash_old:
+          # show progress to user
+          values = [
+            object_type if object_type != last_type else '',
+            os.path.basename(short_file),
+            os.path.getsize(file)
+          ]
+          print('{:>20} | {:<40} {:>12}'.format(*values))
+
+          # dont copy file, just append target patch file
           with open(file, 'rb') as h:
             z.write(h.read())
             z.write('/\n\n'.encode('utf-8'))
-
-  # refresh current apps
-  files = glob.glob(rolldir_apex + '/*.sql')
-  for file in files:
-    apex_file = folders['APEX'] + os.path.basename(file)
-    if os.path.exists(apex_file):
-      shutil.copyfile(apex_file, file)
-
-  # join all files in a folder to a single file
-  files = sorted(glob.glob(patch_root + '/**/*.sql', recursive = True))
-  last_dir = ''
-  for file in files:
-    if not ('---SKIP.sql' in file):
-      flag = ''
-      if 'MANUALLY' in file:
-        if today_date in file:
-          flag = ' <- TODAY'
-        else:
-          # check file hash and ignore processed files
-          hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
-          file = file.replace(patch_folders['changes'], '../' + patch_folders['changes'].split('/')[-1])
-          hash_old = hashed_old.get(file, '')
-          if hash == hash_old:
-            continue
           #
-          flag = ' <- CHECK'
-      #
-      with open(patch_today, 'ab') as z:
-        #z.write((file + '\n').encode('utf-8'))
-        with open(file, 'rb') as h:
-          z.write(h.read())
-          print('    {:>20} | {:<24} {:>10}{}'.format(curr_dir if curr_dir != last_dir else '', short, os.path.getsize(file), flag))
-          (curr_dir, short) = file.replace(patch_root, '').replace('\\', '/').lstrip('/').split('/')
-          last_dir = curr_dir
-  print('    {:<48}{:>10}'.format('', os.path.getsize(patch_file)))
-  print()
+          last_type = object_type
 
-  # create binary to whatever purpose
-  if args['zip']:
-    with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as myzip:
-      myzip.write(patch_today)
+    # create binary to whatever purpose
+    if args['zip']:
+      with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
+        zip.write(patch_today)
+
+    # summary
+    print('{:>64}{:>12}'.format('', replace(str(os.path.getsize(patch_today)), '\d', '-')))
+    print('{:>64}{:>12}'.format(os.path.basename(patch_today), os.path.getsize(patch_today)))
+    #
+    if args['zip']:
+      print('{:>64}{:>12}'.format(os.path.basename(patch_zip), os.path.getsize(patch_zip)))
+    print()
+
 
 
 
