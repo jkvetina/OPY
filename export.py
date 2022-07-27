@@ -139,6 +139,14 @@ for dir in [git_target, rollout_dir, rollout_done, rolldir_obj, rolldir_man, rol
   if not (os.path.exists(dir)):
     os.makedirs(dir)
 
+# get old hashes
+hashed_old = {}
+if os.path.exists(rollout_log):
+  f = open(rollout_log, 'r')
+  for line in f.readlines():
+    (file, hash) = line.split('|')
+    hashed_old[file.strip()] = hash.strip()
+
 
 
 #
@@ -498,14 +506,6 @@ if 'app' in args and args['app'] in apex_apps:
   # cleanup
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir)
-
-# get old hashes
-hashed_old = {}
-if os.path.exists(rollout_log):
-  f = open(rollout_log, 'r')
-  for line in f.readlines():
-    (file, hash) = line.split('|')
-    hashed_old[file.strip()] = hash.strip()
 
 
 
