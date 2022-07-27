@@ -701,7 +701,7 @@ if args['patch']:
 
   # create binary to whatever purpose
   if args['zip']:
-    with zipfile.ZipFile(patch_zip, 'w') as myzip:
+    with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as myzip:
       myzip.write(patch_today)
 
 
