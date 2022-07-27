@@ -238,14 +238,18 @@ SELECT
     SYS_CONTEXT('USERENV', 'CURRENT_USER')              AS curr_user
 FROM DUAL"""
 
-query_verions = """
-SELECT
-    a.version_no    AS apex_version,
-    p.version_full  AS db_version
-    --SYS_CONTEXT('USERENV', 'SERVER_HOST')   AS host,
-    --SYS_CONTEXT('USERENV', 'INSTANCE_NAME') AS instance
-FROM apex_release a
-CROSS JOIN product_component_version p"""
+query_version_apex = """
+SELECT a.version_no AS version
+FROM apex_release a"""
+
+query_version_db = """
+SELECT p.version_full AS version
+FROM product_component_version p"""
+
+query_version_db_old = """
+SELECT p.version
+FROM product_component_version p
+WHERE p.product LIKE 'Oracle Database%'"""
 
 query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols

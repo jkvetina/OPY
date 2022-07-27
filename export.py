@@ -123,9 +123,15 @@ print('    TARGET | {}'.format(git_target.replace(common, '~ ')))
 print()
 
 # get versions
-data = conn.fetch_assoc(query_verions)[0]
-print('  DATABASE | {}'.format('.'.join(data.db_version.split('.')[0:2])))
-print('      APEX | {}'.format('.'.join(data.apex_version.split('.')[0:2])))
+try:
+  version_apex  = conn.fetch_value(query_version_apex)
+  version_db    = conn.fetch_value(query_version_db)
+except Exception:
+  version_apex  = ''
+  version_db    = conn.fetch_value(query_version_db_old)
+#
+print('  DATABASE | {}'.format('.'.join(version_apex.split('.')[0:2])))
+print('      APEX | {}'.format('.'.join(version_db.split('.')[0:2])))
 print()
 
 # create basic dirs
