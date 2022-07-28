@@ -119,19 +119,17 @@ WHERE m.table_name          = :table_name
     )
 ORDER BY c.column_id"""
 
-#
-query_describe_job = """
-SELECT DBMS_METADATA.GET_DDL('PROCOBJ', job_name) AS object_desc
-FROM user_scheduler_jobs
-WHERE job_name      NOT LIKE 'OTDB\\___\\_%' ESCAPE '\\'
-    AND job_name    NOT LIKE 'OTD\\_%' ESCAPE '\\'
-    AND job_name    = :object_name"""
-
 query_describe_object = """
 SELECT DBMS_METADATA.GET_DDL(REPLACE(o.object_type, ' ', '_'), o.object_name) AS object_desc
 FROM user_objects o
 WHERE o.object_type     = :object_type
     AND o.object_name   = :object_name"""
+
+# export jobs
+query_describe_job = """
+SELECT DBMS_METADATA.GET_DDL('PROCOBJ', job_name) AS object_desc
+FROM user_scheduler_jobs
+WHERE job_name = :object_name"""
 
 query_describe_job_details = """
 SELECT job_name, enabled, job_priority
@@ -148,6 +146,7 @@ FROM user_scheduler_job_args j
 WHERE j.job_name = :job_name
 ORDER BY j.argument_position"""
 
+# template used to extract jobs
 job_template = """DECLARE
     in_job_name             CONSTANT VARCHAR2(30)   := '{}';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
@@ -175,6 +174,7 @@ END;
 /
 """
 
+# get applications from the same schema
 query_apex_applications = """
 SELECT
     a.application_id,
@@ -232,6 +232,7 @@ JOIN apex_workspaces w
     ON w.workspace_id       = a.workspace_id
 WHERE a.application_id      = :app_id"""
 
+# get date based on -r argument, r=1 means object changed today since midnight
 query_today = """
 SELECT
     TO_CHAR(TRUNC(SYSDATE) + 1 - :recent, 'YYYY-MM-DD') AS today,
@@ -246,17 +247,20 @@ query_version_db = """
 SELECT p.version_full AS version
 FROM product_component_version p"""
 
+# get database version for older systems
 query_version_db_old = """
 SELECT p.version
 FROM product_component_version p
 WHERE p.product LIKE 'Oracle Database%'"""
 
+# get all compatible columns to export table to CSV
 query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols
 FROM user_tab_cols c
 WHERE c.table_name  = UPPER(:table_name)
     AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
 
+# get primary key columns to MERGE statement
 query_csv_primary_columns = """
 WITH p AS (
     SELECT c.column_name, c.position
@@ -285,6 +289,7 @@ FROM (
         )
 ) t"""
 
+# template for MERGE statement from CSV file
 template_csv_merge = """MERGE INTO {table_name} t
 USING (
     {csv_content_query}
