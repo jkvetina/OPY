@@ -648,50 +648,40 @@ if args['patch']:
       if len(files_changed):
         buckets.append([type, object_type, files_changed])
 
-  #
-  # CONTINUE WITH PATCH
-  #
-  # open target file
-  with open(patch_today, 'wb') as z:
-    # go thru database objects in correct order
-    for target_dir in sorted(patch_folders.values()):
-      type = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
-      if not (type in patch_map):
-        continue
+  # open target file and write new content there
+  with open(patch_today, 'w') as z:
+    for (type, object_type, files) in buckets:
+      print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
       last_type = ''
-      for object_type in patch_map[type]:
-        if not (object_type in folders):
-          continue
-        source_dir  = folders[object_type]
-        file_ext    = '*.sql'
-        if object_type == 'DATA':
-          file_ext  = '*.csv'
+      for file in files:
+        short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
+
+        # show progress to user
+        print('{:>20} |    {:<40}'.format(*[
+          object_type if object_type != last_type else '',
+          os.path.basename(short_file)
+          #os.path.getsize(file)
+        ]))
+
+        # retrieve file content
+        if object_type == 'DATA' and file.endswith('.csv'):
+          content = get_merge_from_csv(file, conn)  # convert CSV files to MERGE
+        else:
+          # retrieve object content
+          with open(file, 'r') as h:
+            content = h.read()
+
+        # dont copy file, just append target patch file
+        if content != None and len(content):
+          z.write('--\n')
+          z.write('-- ' + file + '\n')
+          z.write('--\n')
+          z.write(content.rstrip().rstrip('/'))
+          z.write('\n/\n\n')
         #
-        for file in sorted(glob.glob(source_dir + file_ext)):
-          short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
-          hash_old    = hashed_old.get(short_file, '')
-          hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
-
-          # check file hash and compare it with hash in rollout.log
-          if hash_new == hash_old:
-            continue  # add only changed objects
-          hashed_new[short_file] = hash_new
-
-          # show progress to user
-          values = [
-            object_type if object_type != last_type else '',
-            os.path.basename(short_file),
-            os.path.getsize(file)
-          ]
-          print('{:>20} | {:<40} {:>12}'.format(*values))
-
-          # dont copy file, just append target patch file
-          with open(file, 'rb') as h:
-            z.write(h.read())
-            z.write('/\n\n'.encode('utf-8'))
-          #
-          last_type = object_type
+        last_type = object_type
+      print('{:20} |'.format(''))
 
     # create binary to whatever purpose
     if args['zip']:
@@ -699,11 +689,10 @@ if args['patch']:
         zip.write(patch_today)
 
     # summary
-    print('{:>64}{:>12}'.format('', replace(str(os.path.getsize(patch_today)), '\d', '-')))
-    print('{:>64}{:>12}'.format(os.path.basename(patch_today), os.path.getsize(patch_today)))
+    print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_today), os.path.getsize(patch_today)))
     #
     if args['zip']:
-      print('{:>64}{:>12}'.format(os.path.basename(patch_zip), os.path.getsize(patch_zip)))
+      print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_zip), os.path.getsize(patch_zip)))
     print()
 
 
