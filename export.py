@@ -586,6 +586,13 @@ if args['patch']:
     if os.path.exists(file):
       os.remove(file)
 
+  # if APEX app is requested, then copy it to APEX patch dir
+  if 'app' in args and args['app'] in apex_apps:
+    source_file = '{}/f{}.sql'.format(folders['APEX'], args['app'])
+    target_file = patch_folders['apex'] + os.path.basename(source_file)
+    if os.path.exists(source_file) and not os.path.exists(target_file):
+      shutil.copyfile(source_file, target_file)
+
   # get list of files in correct order
   buckets = []
   for target_dir in sorted(patch_folders.values()):
