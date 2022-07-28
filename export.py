@@ -115,8 +115,10 @@ patch_folders = {
   'finally'   : patch_root + '/80_finally/',
   'apex'      : patch_root + '/90_apex/',
 }
-#
+patch_store     = ('changes', 'apex')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
+file_ext_obj    = '*.sql'
+file_ext_csv    = '*.csv'
 
 # apex folders
 apex_dir        = folders['APEX']
@@ -183,7 +185,7 @@ for (type, dir) in patch_folders.items():
     os.makedirs(dir)
 
 # delete old empty patch files
-for file in glob.glob(os.path.dirname(patch_manually) + '/*.sql'):
+for file in glob.glob(os.path.dirname(patch_manually) + '/' + file_ext_obj):
   if os.path.getsize(file) == 0:
     os.remove(file)
 
