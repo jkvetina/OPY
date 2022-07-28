@@ -188,9 +188,10 @@ for file in glob.glob(os.path.dirname(patch_manually) + '/*.sql'):
     os.remove(file)
 
 # create new patch file for manual changes (ALTER statements, related data changes...)
-if not os.path.exists(patch_manually):
-  with open(patch_manually, 'w') as f:
-    f.write('')
+if args['patch']:
+  if not os.path.exists(patch_manually):
+    with open(patch_manually, 'w') as f:
+      f.write('')
 
 # get old hashes
 hashed_old = {}
