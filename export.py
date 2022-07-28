@@ -593,6 +593,13 @@ if args['patch']:
     if os.path.exists(source_file) and not os.path.exists(target_file):
       shutil.copyfile(source_file, target_file)
 
+  # refresh current apps (keep app placeholders in patch/apex dir if you want them to be part of the patch)
+  # so if you have multiple apps exported, you probably dont want to include all of them in patch
+  for target_file in glob.glob(patch_folders['apex'] + file_ext_obj):
+    source_file = folders['APEX'] + os.path.basename(target_file)
+    if os.path.exists(source_file):
+      shutil.copyfile(source_file, target_file)
+
   # get list of files in correct order
   buckets = []
   for target_dir in sorted(patch_folders.values()):
