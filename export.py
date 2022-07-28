@@ -615,6 +615,13 @@ if args['patch']:
         if type in patch_store and hash_new == hash_old:
           continue
 
+        # ignore changed tables in 20/, they will need a manual patch in 30/
+        if type == 'tables' and hash_old == '':
+          target_file = patch_folders['changes'] + today_date + '_' + os.path.basename(file)
+          # copy object to manual patch folder to notify user a manual change is needed
+          if not os.path.exists(target_file):
+            shutil.copyfile(file, target_file)
+          continue
 
         # check file hash and compare it with hash in rollout.log
         if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
