@@ -576,7 +576,7 @@ if 'app' in args and args['app'] in apex_apps:
 #
 # PREPARE PATCH
 #
-if args['patch']:
+if (args['patch'] or args['rollout']):
   print()
   print('PREPARING PATCH:')
   print('----------------')
@@ -697,63 +697,23 @@ if args['patch']:
 
 
 
-
 #
-# PREVIEW/CONFIRM ROLLOUT
+# CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
-if (args['rollout'] or args['patch']):
+if args['rollout']:
   print()
-  if args['rollout']:
-    print('ROLLOUT CONFIRMED:')
-    print('------------------')
-  else:
-    print('ROLLOUT PREVIEW: (files changed since last rollout)')
-    print('----------------')
-
-  # go thru existing files
-  diff        = {}
-  hashed      = []
-  extra_dirs  = {
-    'MANUALLY': patch_folders['changes'] + '/',  # add manual scripts to run them just once
-  }
-  files_to_hash = {**folders, **extra_dirs}
-  for (type, path) in files_to_hash.items():
-    # skip some folders
-    if type in ('APEX', 'PACKAGE BODY'):
-      continue
-    #
-    files = glob.glob(path + '*.sql')
-    for file in files:
-      # calculate file hash
-      hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
-      file = file.replace(git_target, '')
-      file = file.replace(patch_folders['changes'], '../' + patch_folders['changes'].split('/')[-1])  # add patch files
-      #
-      hashed.append('{:<45} | {}'.format(file, hash))
-
-      # show differences
-      hash_old = hashed_old.get(file, '')
-      if hash != hash_old:
-        type = [k for k, v in folders.items() if v == git_target + os.path.dirname(file) + '/']
-        if len(type):
-          if not (type[0] in diff):
-            diff[type[0]] = []
-          diff[type[0]].append([file, hash_old])
-
-  # show differences
-  for type, files in diff.items():
-    for i, (file, hash) in enumerate(sorted(files)):
-      flag = '<- CHECK' if (type == 'TABLE' and hash != '') else ''
-      print('{:>20} | {:<36}{}'.format(type if i == 0 else '', file.replace('\\', '/').split('/')[1], flag))
+  print('ROLLOUT CONFIRMED:')
+  print('------------------')
 
   # store hashes for next patch
-  if args['rollout']:
-    with open(rollout_log, 'w') as h:
-      h.write('\n'.join(sorted(hashed)))
+  with open(rollout_log, 'w') as h:
+    content = []
+    for (file, hash) in hashed_new.items():
+      content.append('{:<56} | {}'.format(file, hash))
+    h.write('\n'.join(sorted(content)) + '\n')
   #
   print()
 
 print('TIME:', round(timeit.default_timer() - start_timer, 2))
 print('\n')
-
 
