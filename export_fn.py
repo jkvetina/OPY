@@ -418,7 +418,7 @@ def get_job_fixed(object_name, obj, conn):
 
 
 
-def clean_apex_files(folders):
+def clean_apex_files(folders, authz_schemes):
   # remove timestamps from all apex files
   apex_dir = folders['APEX']
   files = glob.glob(apex_dir + '/**/*.sql', recursive = True)
@@ -426,9 +426,15 @@ def clean_apex_files(folders):
   for file in files:
     content = ''
     with open(file, 'r') as h:
+      # make changes in Git minimal
       content = h.read()
       content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", content)
       content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", content)
+
+      # show auth scheme name, not just the id
+      for (auth_id, auth_name) in authz_schemes.items():
+        search  = '.id({})\n'.format(auth_id)
+        content = content.replace(search, '{}  -- {}\n'.format(search.strip(), auth_name))
     #
     with open(file, 'w') as h:
       h.write(content)

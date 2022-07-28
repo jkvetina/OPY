@@ -437,6 +437,12 @@ if 'app' in args and args['app'] in apex_apps:
     print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
     print()
 
+  # get auth schemes
+  authz_schemes = {}
+  data = conn.fetch_assoc(query_apex_authz_schemes, app_id = args['app'])
+  for row in data:
+    authz_schemes[row.auth_id] = row.auth_name
+
   # prepare requests (multiple exports)
   request_conn = ''
   requests = []
@@ -538,7 +544,7 @@ if 'app' in args and args['app'] in apex_apps:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(folders)
+      clean_apex_files(folders, authz_schemes)
   #
   print()
   print()

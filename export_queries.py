@@ -82,6 +82,14 @@ WHERE :recent IS NULL
     AND (:object_type = 'JOB' OR :object_type IS NULL)
 ORDER BY 1, 2"""
 
+# get APEX security (authorization) schemes names
+query_apex_authz_schemes = """
+SELECT
+    a.authorization_scheme_id       AS auth_id,
+    a.authorization_scheme_name     AS auth_name
+FROM apex_application_authorization a
+WHERE a.application_id = :app_id"""
+
 # get table comments
 query_table_comments = """
 SELECT m.table_name, m.comments
