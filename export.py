@@ -581,14 +581,51 @@ if args['patch']:
   print('PREPARING PATCH:')
   print('----------------')
 
-  # remove target files
+  # remove target patch files
   for file in [patch_today, patch_zip]:
     if os.path.exists(file):
       os.remove(file)
 
+  # get list of files in correct order
+  buckets = []
+  for target_dir in sorted(patch_folders.values()):
+    # go thru patch template files
+    type        = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
+    object_type = ''
+    files_todo  = [[type, object_type, sorted(glob.glob(target_dir + file_ext_obj))]]
+
+    # go thru database objects in requested order
+    if type in patch_map:
+      for object_type in patch_map[type]:
+        if object_type == 'PACKAGE BODY':   # in the same folder as specification
+          continue
+        if object_type in folders:
+          files_path = folders[object_type] + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
+          files_todo.append([type, object_type, sorted(glob.glob(files_path))])
+
+    # pass only changed files
+    for (type, object_type, files) in files_todo:
+      files_changed = []
+      for file in files:
+        short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
+        hash_old    = hashed_old.get(short_file, '')
+        hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+
+        # ignore unchanged files in some folders
+        if type in patch_store and hash_new == hash_old:
+          continue
 
 
+        # check file hash and compare it with hash in rollout.log
+        if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
+          files_changed.append(file)
 
+        # store hash even for manual patch files
+        if (type in patch_store or object_type != ''):
+          hashed_new[short_file] = hash_new
+      #
+      if len(files_changed):
+        buckets.append([type, object_type, files_changed])
 
   #
   # CONTINUE WITH PATCH
