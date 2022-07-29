@@ -251,7 +251,34 @@ if args['recent'] != 0:
 #
 changelog_files = {}
 if len(data_objects):
-  print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
+  if args['feature']:
+    # let user confirm before deleting database/ files in the branch
+    print('When you are using the -files mode, all your files in the database/ folder')
+    print('excluding the apex/ folder will be deleted and then just the recently changed')
+    print('objects will be pulled from the database.')
+    print()
+    print('You are suppose to be in your feature branch and to have all your changes')
+    print('in the branch commited before proceeding.')
+    print()
+    #
+    while True:
+      response = input('Do You Want To Continue? ')
+      if response in ('y', 'Y'):
+        # delete all object files except APEX
+        for object_type in objects_sorted:
+          if os.path.exists(folders[object_type]):
+            shutil.rmtree(folders[object_type])
+        break  # exit the infinite loop
+      else:
+        print()
+        sys.exit()
+    #
+    print()
+    print('--')
+    print('-- OVERVIEW:')
+    print('--')
+  else:
+    print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
   recent_type = ''
   for (i, row) in enumerate(data_objects):
@@ -281,12 +308,14 @@ if len(data_objects):
       print('#\n')
       continue
     #
-    if args['verbose']:
-      obj_type    = object_type if object_type != recent_type else ''
-      obj_name    = object_name if len(object_name) <= 30 else object_name[0:27] + '...'
-      obj_length  = len(obj) if obj else ''
-      obj_check   = '< NAME' if obj and len(object_name) > 30 else ''
-      print('{:>20} | {:<30} {:>8} {}'.format(obj_type, obj_name, obj_length, obj_check))
+    if args['verbose'] or args['feature']:
+      print('{}{:>20} | {:<30} {:>8} | {:>8}'.format(*[
+        '--' if args['feature'] else '',
+        object_type if object_type != recent_type else '',
+        object_name if len(object_name) <= 30 else object_name[0:27] + '...',
+        obj.count('\n') + 1,
+        len(obj) if obj and not args['feature'] else ''
+      ]))
       recent_type = object_type
     else:
       perc = (i + 1) / len(data_objects)
@@ -321,7 +350,9 @@ if len(data_objects):
       changelog_files[object_type] = []
     changelog_files[object_type].append(file)
   #
-  if not args['verbose']:
+  if args['feature']:
+    print('--')
+  elif not args['verbose']:
     print()
   print()
 
