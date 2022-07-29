@@ -268,7 +268,7 @@ if len(data_objects):
         # delete all object files except APEX
         for object_type in objects_sorted:
           if os.path.exists(folders[object_type]):
-            shutil.rmtree(folders[object_type])
+            shutil.rmtree(folders[object_type], ignore_errors = False, onerror = None)
         break  # exit the infinite loop
       else:
         print()
@@ -469,7 +469,7 @@ if len(all_apps):
 if 'app' in args and args['app'] in apex_apps:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
-    shutil.rmtree(apex_temp_dir)
+    shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
   os.makedirs(apex_temp_dir)
 
   # prep target dir
@@ -477,7 +477,7 @@ if 'app' in args and args['app'] in apex_apps:
     # delete folder to remove obsolete objects only on full export
     apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
     if os.path.exists(apex_dir_app):
-      shutil.rmtree(apex_dir_app)
+      shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
   #
   if not os.path.exists(apex_dir):
     os.makedirs(apex_dir)
@@ -660,7 +660,7 @@ if 'app' in args and args['app'] in apex_apps:
 
   # cleanup
   if os.path.exists(apex_temp_dir):
-    shutil.rmtree(apex_temp_dir)
+    shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
 
 
