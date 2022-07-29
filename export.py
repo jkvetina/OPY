@@ -276,7 +276,7 @@ if len(data_objects):
     print()
     print('--')
     print('-- OVERVIEW:')
-    print('--')
+    print('-- --------- {:42} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   else:
     print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
