@@ -765,19 +765,21 @@ if (args['patch'] or args['rollout']):
             print(content)
         #
         last_type = object_type
-      print('{:20} |'.format(''))
+      #
+      if not args['debug']:
+        print('{:20} |'.format(''))
 
-    # create binary to whatever purpose
-    if args['zip']:
-      with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
-        zip.write(patch_today)
+  # create binary to whatever purpose
+  if args['zip']:
+    with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
+      zip.write(patch_today)
 
-    # summary
-    print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_today), os.path.getsize(patch_today)))
-    #
-    if args['zip']:
-      print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_zip), os.path.getsize(patch_zip)))
-    print()
+  # summary
+  print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_today), os.path.getsize(patch_today)))
+  #
+  if args['zip']:
+    print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_zip), os.path.getsize(patch_zip)))
+  print()
 
 
 
