@@ -437,11 +437,20 @@ if 'app' in args and args['app'] in apex_apps:
     print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
     print()
 
-  # get auth schemes
-  authz_schemes = {}
-  data = conn.fetch_assoc(query_apex_authz_schemes, app_id = args['app'])
-  for row in data:
-    authz_schemes[row.auth_id] = row.auth_name
+  # get component names, because the id itself wont tell you much
+  apex_replacements_plan = {
+    'AUTHZ' : query_apex_authz_schemes,
+    'LOV'   : query_apex_lov_names,
+  }
+  apex_replacements = {}
+  for (type, query) in apex_replacements_plan.items():
+    if not (type in apex_replacements):
+      apex_replacements[type] = {}
+    #
+    rows = conn.fetch(query, app_id = args['app'])
+    for data in rows:
+      (component_id, component_name) = data
+      apex_replacements[type][component_id] = component_name
 
   # prepare requests (multiple exports)
   request_conn = ''
@@ -544,7 +553,7 @@ if 'app' in args and args['app'] in apex_apps:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(folders, authz_schemes)
+      clean_apex_files(folders, apex_replacements)
   #
   print()
   print()

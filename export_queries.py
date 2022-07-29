@@ -90,6 +90,14 @@ SELECT
 FROM apex_application_authorization a
 WHERE a.application_id = :app_id"""
 
+# get APEX names for List of Values
+query_apex_lov_names = """
+SELECT
+    l.lov_id,
+    l.list_of_values_name AS lov_name
+FROM apex_application_lovs l
+WHERE l.application_id = :app_id"""
+
 # get table comments
 query_table_comments = """
 SELECT m.table_name, m.comments
