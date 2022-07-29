@@ -363,11 +363,9 @@ if len(data_objects):
     print(line)
   elif not args['verbose']:
     print()
+  #
+  changelog_content.append('')
   print()
-
-  # store to the file too
-  with open(patch_today, 'w', encoding = 'utf-8') as z:
-    z.write('\n'.join(changelog_content) + '\n')
 
 
 
@@ -377,13 +375,23 @@ if len(data_objects):
 if args['feature']:
   for type in objects_sorted:
     if type in changelog_files:
-      print('--')
-      print('--', type)
-      print('--')
+      line = '--\n-- {}\n--'.format(type)
+      changelog_content.append(line)
+      print(line)
+      #
       for file in changelog_files[type]:
-        print('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
+        line = '@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/'))
+        changelog_content.append(line)
+        print(line)
+      #
+      changelog_content.append('')
       print()
   print()
+
+  # store to the file too
+  with open(patch_today, 'w', encoding = 'utf-8') as z:
+    z.write('\n'.join(changelog_content) + '\n')
+  #
   sys.exit()  # for file list this is everything you need
 
 
