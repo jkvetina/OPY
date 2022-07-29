@@ -275,9 +275,9 @@ if len(data_objects):
         sys.exit()
     #
     print()
-    print('--')
-    print('-- OVERVIEW:')
-    print('-- --------- {:42} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+    print('/**')
+    print('OVERVIEW:')
+    print('---------{:44} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   else:
     print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
@@ -287,9 +287,9 @@ if len(data_objects):
 
     # make sure we have target folders ready
     if not (object_type in folders):
-      if (args['debug']):
+      if args['debug']:
         print('#')
-        print('# OBJECT_TYPE_NOT_SUPPOERTED:', object_type)
+        print('# OBJECT_TYPE_NOT_SUPPORTED:', object_type)
         print('#\n')
       continue
     #
@@ -310,8 +310,7 @@ if len(data_objects):
       continue
     #
     if args['verbose'] or args['feature']:
-      print('{}{:>20} | {:<30} {:>8} | {:>8}'.format(*[
-        '--' if args['feature'] else '',
+      print('{:>20} | {:<30} {:>8} | {:>8}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,
@@ -352,7 +351,7 @@ if len(data_objects):
     changelog_files[object_type].append(file)
   #
   if args['feature']:
-    print('--')
+    print('*/')
   elif not args['verbose']:
     print()
   print()
