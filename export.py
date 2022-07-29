@@ -314,7 +314,7 @@ if len(data_objects):
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,
-        len(obj) if obj and not args['feature'] else ''
+        len(obj) if obj else ''
       ]))
       recent_type = object_type
     else:
@@ -368,7 +368,7 @@ if args['feature']:
       print('--', type)
       print('--')
       for file in changelog_files[type]:
-        print('@@./"{}"'.format(file.replace(args['target'], '').lstrip('/')))
+        print('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
       print()
   print()
   sys.exit()  # for file list this is everything you need
