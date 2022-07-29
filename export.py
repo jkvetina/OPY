@@ -37,9 +37,9 @@ if 'name' in args:
 for db_conf in conn_files:
   if os.path.exists(db_conf):
     with open(db_conf, 'rb') as f:
-      conn_bak = pickle.load(f)
-      if args['target'] == None and 'target' in conn_bak:  # overwrite target from pickle file
-        args['target'] = conn_bak['target']
+      connection = pickle.load(f)
+      if args['target'] == None and 'target' in connection:  # overwrite target from pickle file
+        args['target'] = connection['target']
       break
 
 # check args
@@ -139,32 +139,32 @@ apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
 #
 # CONNECT TO DATABASE
 #
-conn      = Oracle(conn_bak)
+conn      = Oracle(connection)
 data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
 req_today = data[0].today  # calculate date from recent arg
 schema    = data[0].curr_user
 
 # find wallet
 wallet_file = ''
-if 'wallet' in conn_bak:
-  wallet_file = conn_bak['wallet']
-elif 'name' in conn_bak:
-  wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), conn_bak['name'])
+if 'wallet' in connection:
+  wallet_file = connection['wallet']
+elif 'name' in connection:
+  wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), connection['name'])
   if not os.path.exists(wallet_file):
-    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), conn_bak['name'])
+    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), connection['name'])
     if not os.path.exists(wallet_file):
       wallet_file = ''
 #
 print('CONNECTING:')
 print('-----------')
 print('    SOURCE | {}@{}/{}{}'.format(
-  conn_bak['user'],
-  conn_bak.get('host', ''),
-  conn_bak.get('service', ''),
-  conn_bak.get('sid', '')))
+  connection['user'],
+  connection.get('host', ''),
+  connection.get('service', ''),
+  connection.get('sid', '')))
 #
 if wallet_file != '':
-  print('    WALLET | {}'.format(conn_bak['wallet'].replace(common_root, '~ ')))
+  print('    WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
 #
 print('           | {}'.format(db_conf.replace(common_root, '~ ')))
 print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
@@ -447,7 +447,7 @@ if args['csv']:
 #
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
-all_apps  = conn.fetch_assoc(query_apex_applications, schema = conn_bak['user'].upper())
+all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
 apex_apps = {}
 #
 if len(all_apps):
@@ -521,11 +521,21 @@ if 'app' in args and args['app'] in apex_apps:
   # prepare requests (multiple exports)
   request_conn = ''
   requests = []
-  if wallet_file != '' and 'wallet' in conn_bak:
+  if wallet_file != '' and 'wallet' in connection:
     request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
-    request_conn += 'connect {}/"{}"@{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['service'])
+    request_conn += 'connect {}/"{}"@{}\n'.format(*[
+      connection['user'],
+      connection['pwd'],
+      connection['service']
+    ])
   else:
-    request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(conn_bak['user'], conn_bak['pwd'], conn_bak['host'], conn_bak['port'], conn_bak['sid'])
+    request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(*[
+      connection['user'],
+      connection['pwd'],
+      connection['host'],
+      connection['port'],
+      connection['sid']
+    ])
   #
   if args['recent'] > 0 and os.name != 'nt':
     # partial export, get list of changed objects since that, show it to user
