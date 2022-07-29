@@ -251,7 +251,7 @@ if args['recent'] != 0:
 # EXPORT OBJECTS
 #
 changelog_files = {}
-changelog_content = ''
+changelog_content = []
 #
 if len(data_objects):
   if args['feature']:
