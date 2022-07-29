@@ -17,6 +17,7 @@ parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names du
 parser.add_argument('-d', '-debug',   '--debug',    help = '',                                          nargs = '?', default = False, const = True)
 parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',                             nargs = '?', default = False, const = True)
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
+parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just hanged files',    nargs = '?', default = False, const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
@@ -248,6 +249,7 @@ if args['recent'] != 0:
 #
 # EXPORT OBJECTS
 #
+changelog_files = {}
 if len(data_objects):
   print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
@@ -313,10 +315,32 @@ if len(data_objects):
     #
     with open(file, 'w', encoding = 'utf-8') as h:
       h.write(obj + '\n\n')
+
+    # add to a list for a quick patching
+    if not (object_type in changelog_files):
+      changelog_files[object_type] = []
+    changelog_files[object_type].append(file)
   #
   if not args['verbose']:
     print()
   print()
+
+
+
+#
+# SHOW LIST OF CHANGED FILES
+#
+if args['feature']:
+  for type in objects_sorted:
+    if type in changelog_files:
+      print('--')
+      print('--', type)
+      print('--')
+      for file in changelog_files[type]:
+        print('@@./"{}"'.format(file.replace(args['target'], '').lstrip('/')))
+      print()
+  print()
+  sys.exit()  # for file list this is everything you need
 
 
 
