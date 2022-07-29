@@ -83,6 +83,12 @@ folders = {
   'GRANT'             : git_target + 'grants/',
   'APEX'              : git_target + 'apex/',
 }
+objects_sorted = [
+  'SYNONYM', 'SEQUENCE', 'TABLE', 'INDEX',
+  'MATERIALIZED VIEW', 'VIEW',
+  'FUNCTION', 'PROCEDURE', 'PACKAGE', 'PACKAGE BODY',
+  'TRIGGER', 'JOB'
+]
 
 # map objects to patch folders
 patch_map = {
@@ -215,8 +221,13 @@ if args['recent'] != 0:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
   print('-----------------                                      ------------')
+
+  # retrieve objects in specific order
+  sort = ''
+  for (i, object_type) in enumerate(objects_sorted):
+    sort += 'WHEN \'{}\' THEN {}'.format(object_type, i)
   #
-  data_objects = conn.fetch_assoc(query_objects, object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
+  data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
   summary = {}
   for row in data_objects:
     if not (row.object_type) in summary:

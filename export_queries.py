@@ -28,6 +28,10 @@ ORDER BY NVL(a.r#, c.r#)"""
 
 # objects to process
 query_objects = """
+SELECT
+    object_type,
+    object_name
+FROM (
 SELECT DISTINCT o.object_type, o.object_name
 FROM user_objects o
 WHERE 1 = 1
@@ -80,7 +84,10 @@ SELECT 'JOB' AS object_type, j.job_name AS object_name
 FROM user_scheduler_jobs j
 WHERE :recent IS NULL
     AND (:object_type = 'JOB' OR :object_type IS NULL)
-ORDER BY 1, 2"""
+)
+ORDER BY
+    CASE object_type {}ELSE 999 END,
+    object_name"""
 
 # get APEX security (authorization) schemes names
 query_apex_authz_schemes = """
