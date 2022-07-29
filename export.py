@@ -251,6 +251,8 @@ if args['recent'] != 0:
 # EXPORT OBJECTS
 #
 changelog_files = {}
+changelog_content = ''
+#
 if len(data_objects):
   if args['feature']:
     # let user confirm before deleting database/ files in the branch
@@ -274,10 +276,13 @@ if len(data_objects):
         print()
         sys.exit()
     #
+    changelog_content.append('/**')
+    changelog_content.append('OVERVIEW:')
+    changelog_content.append('---------{:44} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+    #
     print()
-    print('/**')
-    print('OVERVIEW:')
-    print('---------{:44} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+    for line in changelog_content:
+      print(line)
   else:
     print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
   #
@@ -310,12 +315,14 @@ if len(data_objects):
       continue
     #
     if args['verbose'] or args['feature']:
-      print('{:>20} | {:<30} {:>8} | {:>8}'.format(*[
+      line = '{:>20} | {:<30} {:>8} | {:>8}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,
         len(obj) if obj else ''
-      ]))
+      ])
+      changelog_content.append(line)
+      print(line)
       recent_type = object_type
     else:
       perc = (i + 1) / len(data_objects)
@@ -351,10 +358,16 @@ if len(data_objects):
     changelog_files[object_type].append(file)
   #
   if args['feature']:
-    print('*/')
+    line = '*/'
+    changelog_content.append(line)
+    print(line)
   elif not args['verbose']:
     print()
   print()
+
+  # store to the file too
+  with open(patch_today, 'w', encoding = 'utf-8') as z:
+    z.write('\n'.join(changelog_content) + '\n')
 
 
 
