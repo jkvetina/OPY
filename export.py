@@ -48,7 +48,7 @@ if args['debug']:
   print('-----')
   for (key, value) in args.items():
     if not (key in ('pwd', 'wallet_pwd')):
-      print('{:>8} = {}'.format(key, value))
+      print('{:>10} = {}'.format(key, value))
   print('')
 
 # check target
