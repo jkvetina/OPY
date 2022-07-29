@@ -646,6 +646,7 @@ if (args['patch'] or args['rollout']):
 
         # ignore changed tables in 20/, they will need a manual patch in 30/
         if type == 'tables' and hash_old == '':
+          hashed_new[short_file] = hash_new
           target_file = patch_folders['changes'] + today_date + '_' + os.path.basename(file)
           # copy object to manual patch folder to notify user a manual change is needed
           if not os.path.exists(target_file):
