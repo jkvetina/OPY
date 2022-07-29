@@ -741,11 +741,12 @@ if (args['patch'] or args['rollout']):
         short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
 
         # show progress to user
-        print('{:>20} |    {:<40}'.format(*[
-          object_type if object_type != last_type else '',
-          os.path.basename(short_file)
-          #os.path.getsize(file)
-        ]))
+        if not args['debug']:
+          print('{:>20} |    {:<40}'.format(*[
+            object_type if object_type != last_type else '',
+            os.path.basename(short_file)
+            #os.path.getsize(file)
+          ]))
 
         # retrieve file content
         if object_type == 'DATA' and file.endswith('.csv'):
@@ -757,11 +758,10 @@ if (args['patch'] or args['rollout']):
 
         # dont copy file, just append target patch file
         if content != None and len(content):
-          z.write('--\n')
-          z.write('-- ' + file + '\n')
-          z.write('--\n')
-          z.write(content.rstrip().rstrip('/'))
-          z.write('\n/\n\n')
+          content = '--\n-- {}\n--\n{}\n/\n\n'.format(short_file, content.rstrip().rstrip('/'))
+          #
+          if args['debug']:
+            print(content)
         #
         last_type = object_type
       print('{:20} |'.format(''))
