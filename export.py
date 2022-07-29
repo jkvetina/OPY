@@ -66,7 +66,8 @@ if (args['target'] == None or len(args['target']) == 0):
 #
 
 # target folders by object types
-git_target = os.path.abspath(args['target'] + '/database') + '/'
+git_target  = os.path.abspath(args['target'] + '/database') + '/'
+git_root    = os.path.normpath(git_target + '../')
 folders = {
   'TABLE'             : git_target + 'tables/',
   'VIEW'              : git_target + 'views/',
@@ -702,7 +703,7 @@ if (args['patch'] or args['rollout']):
     for (type, object_type, files) in files_todo:
       files_changed = []
       for file in files:
-        short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
+        short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
         hash_old    = hashed_old.get(short_file, '')
         hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
 
@@ -737,7 +738,7 @@ if (args['patch'] or args['rollout']):
       #
       last_type = ''
       for file in files:
-        short_file  = file.replace(os.path.normpath(git_target + '../') + '/', '')
+        short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
 
         # show progress to user
         print('{:>20} |    {:<40}'.format(*[

@@ -1,4 +1,4 @@
-import sys, re, traceback, glob, csv
+import sys, os, re, traceback, glob, csv
 from export_queries import *
 
 
@@ -443,7 +443,7 @@ def clean_apex_files(folders, apex_replacements):
 
 
 def get_merge_from_csv(csv_file, conn):
-  table_name  = csv_file.split('/')[-1].replace('.csv', '').lower()
+  table_name  = os.path.basename(csv_file).replace('.csv', '').lower()
   columns     = []
   csv_select  = []
   all_rows    = []
