@@ -501,7 +501,7 @@ if 'app' in args and args['app'] in apex_apps:
       os.remove(apex_tmp)
 
     # cleanup files after each loop
-    clean_apex_files(folders)
+    clean_apex_files(folders, apex_replacements)
 
   else:
     # for normal platforms
