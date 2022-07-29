@@ -199,7 +199,7 @@ for file in glob.glob(os.path.dirname(patch_manually) + '/' + file_ext_obj):
 # create new patch file for manual changes (ALTER statements, related data changes...)
 if args['patch']:
   if not os.path.exists(patch_manually):
-    with open(patch_manually, 'w') as f:
+    with open(patch_manually, 'w', encoding = 'utf-8') as f:
       f.write('')
 
 # get old hashes
@@ -557,7 +557,7 @@ if 'app' in args and args['app'] in apex_apps:
       content += request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app']) + '\n\r'
 
     # create temp file
-    with open(apex_tmp, 'w') as f:
+    with open(apex_tmp, 'w', encoding = 'utf-8') as f:
       f.write(content + 'exit;')
     #
     process = 'sql /nolog @apex.tmp'
@@ -731,7 +731,7 @@ if (args['patch'] or args['rollout']):
         buckets.append([type, object_type, files_changed])
 
   # open target file and write new content there
-  with open(patch_today, 'w') as z:
+  with open(patch_today, 'w', encoding = 'utf-8') as z:
     for (type, object_type, files) in buckets:
       print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
@@ -751,7 +751,7 @@ if (args['patch'] or args['rollout']):
           content = get_merge_from_csv(file, conn)  # convert CSV files to MERGE
         else:
           # retrieve object content
-          with open(file, 'r') as h:
+          with open(file, 'r', encoding = 'utf-8') as h:
             content = h.read()
 
         # dont copy file, just append target patch file
@@ -788,7 +788,7 @@ if args['rollout']:
   print('------------------')
 
   # store hashes for next patch
-  with open(rollout_log, 'w') as h:
+  with open(rollout_log, 'w', encoding = 'utf-8') as h:
     content = []
     for (file, hash) in hashed_new.items():
       content.append('{:<56} | {}'.format(file, hash))
