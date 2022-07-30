@@ -17,7 +17,7 @@ parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names du
 parser.add_argument('-d', '-debug',   '--debug',    help = '',                                          nargs = '?', default = False, const = True)
 parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',                             nargs = '?', default = False, const = True)
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
-parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just hanged files',    nargs = '?', default = False, const = True)
+parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just changed files',   nargs = '?', default = False, const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
@@ -648,7 +648,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
 #
 # PREPARE PATCH
 #
-if args['patch']:
+if args['patch'] and not args['feature']:
   print()
   print('PREPARING PATCH:')
   print('----------------')
@@ -793,7 +793,7 @@ if args['patch']:
 #
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
-if args['rollout']:
+if args['rollout'] and not args['feature']:
   print()
   print('ROLLOUT CONFIRMED:')
   print('------------------')
