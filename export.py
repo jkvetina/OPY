@@ -126,8 +126,9 @@ patch_folders = {
 }
 patch_store     = ('changes', 'apex')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
-file_ext_obj    = '*.sql'
-file_ext_csv    = '*.csv'
+file_ext_obj    = '.sql'
+file_ext_csv    = '.csv'
+file_ext_spec   = '.spec.sql'
 
 # apex folders
 apex_dir        = folders['APEX']
@@ -194,7 +195,7 @@ for (type, dir) in patch_folders.items():
     os.makedirs(dir)
 
 # delete old empty patch files
-for file in glob.glob(os.path.dirname(patch_manually) + '/' + file_ext_obj):
+for file in glob.glob(os.path.dirname(patch_manually) + '/*' + file_ext_obj):
   if os.path.getsize(file) == 0:
     os.remove(file)
 
@@ -710,7 +711,7 @@ if args['patch']:
 
   # refresh current apps (keep app placeholders in patch/apex dir if you want them to be part of the patch)
   # so if you have multiple apps exported, you probably dont want to include all of them in patch
-  for target_file in glob.glob(patch_folders['apex'] + file_ext_obj):
+  for target_file in glob.glob(patch_folders['apex'] + '/*' + file_ext_obj):
     source_file = folders['APEX'] + os.path.basename(target_file)
     if os.path.exists(source_file):
       shutil.copyfile(source_file, target_file)
@@ -721,7 +722,7 @@ if args['patch']:
     # go thru patch template files
     type        = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
     object_type = ''
-    files_todo  = [[type, object_type, sorted(glob.glob(target_dir + file_ext_obj))]]
+    files_todo  = [[type, object_type, sorted(glob.glob(target_dir + '/*' + file_ext_obj))]]
 
     # go thru database objects in requested order
     if type in patch_map:
@@ -729,7 +730,7 @@ if args['patch']:
         if object_type == 'PACKAGE BODY':   # in the same folder as specification
           continue
         if object_type in folders:
-          files_path = folders[object_type] + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
+          files_path = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
           files_todo.append([type, object_type, sorted(glob.glob(files_path))])
 
     # pass only changed files
@@ -785,7 +786,7 @@ if args['patch']:
           ]))
 
         # retrieve file content
-        if object_type == 'DATA' and file.endswith('.csv'):
+        if object_type == 'DATA' and file.endswith(file_ext_csv):
           content = get_merge_from_csv(file, conn)  # convert CSV files to MERGE
         else:
           # retrieve object content
