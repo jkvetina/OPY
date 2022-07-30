@@ -109,6 +109,7 @@ patch_root      = os.path.normpath(git_target + '../patches')
 patch_done      = os.path.normpath(git_target + '../patches_done')
 patch_today     = '{}/patch_{}.sql'.format(patch_done, today_date)
 patch_zip       = '{}/patch_{}.zip'.format(patch_done, today_date)
+patch_log       = '{}/{}'.format(patch_done, 'patch.log')
 rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
 common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 #
@@ -206,12 +207,12 @@ if args['patch']:
 # get old hashes
 hashed_old = {}
 if os.path.exists(rollout_log):
-  f = open(rollout_log, 'r')
-  for line in f.readlines():
-    (file, hash) = line.split('|')
-    hashed_old[file.strip()] = hash.strip()
+  with open(rollout_log, 'r', encoding = 'utf-8') as f:
+    for line in f.readlines():
+      (file, hash) = line.split('|')
+      hashed_old[file.strip()] = hash.strip()
 #
-hashed_new = hashed_old.copy()
+hashed_new = {}
 
 
 
@@ -688,7 +689,7 @@ if 'app' in args and args['app'] in apex_apps:
 #
 # PREPARE PATCH
 #
-if (args['patch'] or args['rollout']):
+if args['patch']:
   print()
   print('PREPARING PATCH:')
   print('----------------')
@@ -804,6 +805,14 @@ if (args['patch'] or args['rollout']):
     with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
       zip.write(patch_today)
 
+  # store new hashes for rollout
+  content = []
+  with open(patch_log, 'w', encoding = 'utf-8') as h:
+    for (file, hash) in hashed_new.items():
+      content.append('{:<56} | {}'.format(file, hash))
+    content = '\n'.join(sorted(content)) + '\n'
+    h.write(content)
+
   # summary
   print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_today), os.path.getsize(patch_today)))
   #
@@ -823,10 +832,21 @@ if args['rollout']:
 
   # store hashes for next patch
   with open(rollout_log, 'w', encoding = 'utf-8') as h:
+    # get files and hashes from patch.log file and overwrite old hashes
+    if os.path.exists(patch_log):
+      with open(patch_log, 'r', encoding = 'utf-8') as f:
+        for line in f.readlines():
+          (file, hash) = line.split('|')
+          hashed_old[file.strip()] = hash.strip()
+    #
     content = []
-    for (file, hash) in hashed_new.items():
+    for (file, hash) in hashed_old.items():
       content.append('{:<56} | {}'.format(file, hash))
     h.write('\n'.join(sorted(content)) + '\n')
+
+    # cleanup
+    if os.path.exists(patch_log):
+      os.remove(patch_log)
   #
   print()
 
