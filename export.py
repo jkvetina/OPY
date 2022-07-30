@@ -758,7 +758,7 @@ if args['patch']:
           files_changed.append(file)
 
         # store hash even for manual patch files
-        if (type in patch_store or object_type != ''):
+        if (type in patch_store or object_type != '') and hash_new != hash_old:
           hashed_new[short_file] = hash_new
       #
       if len(files_changed):
