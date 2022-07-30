@@ -330,33 +330,6 @@ if len(data_objects):
 
 
 #
-# SHOW LIST OF CHANGED FILES
-#
-if args['feature']:
-  for type in objects_sorted:
-    if type in changelog_files:
-      line = '--\n-- {}\n--'.format(type)
-      changelog_content.append(line)
-      print(line)
-      #
-      for file in changelog_files[type]:
-        line = '@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/'))
-        changelog_content.append(line)
-        print(line)
-      #
-      changelog_content.append('')
-      print()
-  print()
-
-  # store to the file too
-  with open(patch_today, 'w', encoding = 'utf-8') as z:
-    z.write('\n'.join(changelog_content) + '\n')
-  #
-  sys.exit()  # for file list this is everything you need
-
-
-
-#
 # EXPORT DATA
 #
 if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
@@ -820,4 +793,45 @@ if args['rollout'] and not args['feature']:
 
 print('TIME:', round(timeit.default_timer() - start_timer, 2))
 print('\n')
+
+
+
+#
+# SHOW LIST OF CHANGED FILES
+#
+if args['feature'] and not args['patch'] and not args['rollout']:
+  print()
+  print('CREATING FEATURE BRANCH STYLE PATCH:')
+  print('------------------------------------')
+  print()
+
+  # find all unchanged files, sorted by object type
+  content = []
+  for type in objects_sorted:
+    file_found = False
+    for file in sorted(glob.glob(folders[type] + '/*' + file_ext_obj)):
+      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      hash_old    = hashed_old.get(short_file, '')
+      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+      #
+      if hash_new != hash_old:
+        # append type header when first file is found
+        if not file_found:
+          content.append('--\n-- {}\n--'.format(type))
+        file_found = True
+        #
+        content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
+    #
+    if file_found:
+      content.append('')
+  #
+  content = '\n'.join(content) + '\n'
+
+  # store to the file too
+  with open(patch_today, 'w', encoding = 'utf-8') as z:
+    z.write(content)
+  #
+  #
+  print(content)
+
 
