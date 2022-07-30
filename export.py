@@ -206,13 +206,15 @@ if args['patch']:
 
 # get old hashes
 hashed_old = {}
+hashed_new = {}   # files/objects changed since last rollout
+#
 if os.path.exists(rollout_log):
   with open(rollout_log, 'r', encoding = 'utf-8') as f:
     for line in f.readlines():
-      (file, hash) = line.split('|')
+      (hash, file) = line.split('|')
+      if '/' in hash:
+        hash, file = file, hash  # swap columns for backward compatibility
       hashed_old[file.strip()] = hash.strip()
-#
-hashed_new = {}
 
 
 
@@ -814,9 +816,9 @@ if args['patch']:
   # store new hashes for rollout
   content = []
   with open(patch_log, 'w', encoding = 'utf-8') as h:
-    for (file, hash) in hashed_new.items():
-      content.append('{:<56} | {}'.format(file, hash))
-    content = '\n'.join(sorted(content)) + '\n'
+    for file in sorted(hashed_new.keys()):
+      content.append('{} | {}'.format(hashed_new[file], file))
+    content = '\n'.join(content) + '\n'
     h.write(content)
 
   # summary
@@ -845,13 +847,13 @@ if args['rollout']:
     if os.path.exists(patch_log):
       with open(patch_log, 'r', encoding = 'utf-8') as f:
         for line in f.readlines():
-          (file, hash) = line.split('|')
+          (hash, file) = line.split('|')
           hashed_old[file.strip()] = hash.strip()
     #
     content = []
-    for (file, hash) in hashed_old.items():
-      content.append('{:<56} | {}'.format(file, hash))
-    h.write('\n'.join(sorted(content)) + '\n')
+    for file in sorted(hashed_old.keys()):
+      content.append('{} | {}'.format(hashed_old[file], file))
+    h.write('\n'.join(content) + '\n')
 
     # cleanup
     if os.path.exists(patch_log):
