@@ -254,41 +254,12 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 #
 # EXPORT OBJECTS
 #
-changelog_files = {}
-changelog_content = []
-#
 if len(data_objects):
-  if args['feature']:
-    # let user confirm before deleting database/ files in the branch
-    print('When you are using the -files mode, all your files in the database/ folder')
-    print('excluding the apex/ folder will be deleted and then just the recently changed')
-    print('objects will be pulled from the database.')
-    print()
-    print('You are suppose to be in your feature branch and to have all your changes')
-    print('in the branch commited before proceeding.')
-    print()
-    #
-    while True:
-      response = input('Do You Want To Continue? ')
-      if response in ('y', 'Y'):
-        # delete all object files except APEX
-        for object_type in objects_sorted:
-          if os.path.exists(folders[object_type]):
-            shutil.rmtree(folders[object_type], ignore_errors = False, onerror = None)
-        break  # exit the infinite loop
-      else:
-        print()
-        sys.exit()
-    #
-    changelog_content.append('/**')
-    changelog_content.append('OVERVIEW:')
-    changelog_content.append('---------{:44} {:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
-    #
-    print()
-    for line in changelog_content:
-      print(line)
+  if args['verbose']:
+    print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
+    print('------------------ {:34} {:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
   else:
-    print('EXPORTING OBJECTS: ({}){}'.format(len(data_objects), '\n------------------' if args['verbose'] else ''))
+    print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
   #
   recent_type = ''
   for (i, row) in enumerate(data_objects):
@@ -306,27 +277,23 @@ if len(data_objects):
     if not (os.path.isdir(folder)):
       os.makedirs(folder)
     #
-    extra = ''
-    if object_type == 'PACKAGE':
-      extra = '.spec'
+    file_ext  = file_ext_obj if object_type != 'PACKAGE' else file_ext_spec
+    obj       = get_object(conn, object_type, object_name)
+    file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
     #
-    obj   = get_object(conn, object_type, object_name)
-    file  = '{}{}{}.sql'.format(folder, object_name.lower(), extra)
     if obj == None and args['debug']:
       print('#')
       print('# OBJECT_EMPTY:', object_type, object_name)
       print('#\n')
       continue
     #
-    if args['verbose'] or args['feature']:
-      line = '{:>20} | {:<30} {:>8} | {:>10}'.format(*[
+    if args['verbose']:
+      print('{:>20} | {:<30} {:>8} | {:>10}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,                                                    # count lines
         len(obj) if obj else ''                                                 # count bytes
-      ])
-      changelog_content.append(line)
-      print(line)
+      ]))
       recent_type = object_type
     else:
       perc = (i + 1) / len(data_objects)
@@ -355,20 +322,9 @@ if len(data_objects):
     #
     with open(file, 'w', encoding = 'utf-8') as h:
       h.write(obj + '\n\n')
-
-    # add to a list for a quick patching
-    if not (object_type in changelog_files):
-      changelog_files[object_type] = []
-    changelog_files[object_type].append(file)
   #
-  if args['feature']:
-    line = '*/'
-    changelog_content.append(line)
-    print(line)
-  elif not args['verbose']:
+  if not args['verbose']:
     print()
-  #
-  changelog_content.append('')
   print()
 
 
