@@ -222,7 +222,7 @@ if os.path.exists(rollout_log):
 # PREVIEW OBJECTS
 #
 data_objects = []
-if args['recent'] != 0:
+if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature']:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
   print('-----------------                                      ------------')
@@ -402,7 +402,7 @@ if args['feature']:
 #
 # EXPORT DATA
 #
-if args['csv']:
+if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
   if not (os.path.isdir(folders['DATA'])):
     os.makedirs(folders['DATA'])
   #
@@ -474,7 +474,7 @@ if args['csv']:
 all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
 apex_apps = {}
 #
-if len(all_apps):
+if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature']:
   header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
   #
   print()
@@ -490,7 +490,7 @@ if len(all_apps):
 #
 # EXPORT APEX APP
 #
-if 'app' in args and args['app'] in apex_apps:
+if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature']:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
