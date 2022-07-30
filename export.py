@@ -279,7 +279,7 @@ if len(data_objects):
     #
     changelog_content.append('/**')
     changelog_content.append('OVERVIEW:')
-    changelog_content.append('---------{:44} {:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+    changelog_content.append('---------{:44} {:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
     #
     print()
     for line in changelog_content:
@@ -316,11 +316,11 @@ if len(data_objects):
       continue
     #
     if args['verbose'] or args['feature']:
-      line = '{:>20} | {:<30} {:>8} | {:>8}'.format(*[
+      line = '{:>20} | {:<30} {:>8} | {:>10}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
-        obj.count('\n') + 1,
-        len(obj) if obj else ''
+        obj.count('\n') + 1,                                                    # count lines
+        len(obj) if obj else ''                                                 # count bytes
       ])
       changelog_content.append(line)
       print(line)
@@ -763,18 +763,21 @@ if args['patch']:
         buckets.append([type, object_type, files_changed])
 
   # open target file and write new content there
+  count_lines = 0
   with open(patch_today, 'w', encoding = 'utf-8') as z:
+    last_type = ''
     for (type, object_type, files) in buckets:
-      print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
+      if type != last_type:
+        print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
-      last_type = ''
+      last_object_type = ''
       for file in files:
         short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
 
         # show progress to user
         if not args['debug']:
           print('{:>20} |    {:<40}'.format(*[
-            object_type if object_type != last_type else '',
+            object_type if object_type != last_object_type else '',
             os.path.basename(short_file)
             #os.path.getsize(file)
           ]))
@@ -791,14 +794,17 @@ if args['patch']:
         if content != None and len(content):
           content = '--\n-- {}\n--\n{}\n/\n\n'.format(short_file, content.rstrip().rstrip('/'))
           z.write(content)
+          count_lines += content.count('\n')
           #
           if args['debug']:
             print(content)
         #
-        last_type = object_type
+        last_object_type = object_type
       #
       if not args['debug']:
         print('{:20} |'.format(''))
+      #
+      last_type = type
 
   # create binary to whatever purpose
   if args['zip']:
@@ -814,10 +820,13 @@ if args['patch']:
     h.write(content)
 
   # summary
-  print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_today), os.path.getsize(patch_today)))
+  print('{:54}{:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
+  print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
   #
   if args['zip']:
-    print('{:>20} | {} {:>12}'.format('', os.path.basename(patch_zip), os.path.getsize(patch_zip)))
+    print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
+  #
+  print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
   print()
 
 
