@@ -11,6 +11,53 @@ http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-app
 
 <br />
 
+### Typical commands
+
+#### Exporting
+
+Export database objects since today midnight
+python export.py -n PROJECT -r 1
+
+Export database objects since yesteray midnight
+python export.py -n PROJECT -r 2
+
+Export database objects since tomorrow (to get objects overview, but dont export anything)
+python export.py -n PROJECT -r 0
+
+Export all database objects
+python export.py -n PROJECT
+
+Export all tables (or other object types - PACKAGE, VIEW...)
+python export.py -n PROJECT -t TABLE
+
+Export all tables changed today
+python export.py -n PROJECT -t TABLE -r 1
+
+Export data from all tables listed in data/ as CSV files
+python export.py -n PROJECT -csv
+
+Export all database objects and APEX application 100
+python export.py -n PROJECT -a 100
+
+Export just the APEX application 100
+python export.py -n PROJECT -r 0 -a 100
+
+Export APEX application 100, but just changes made today
+python export.py -n PROJECT -r 1 -a 100
+
+#### Patching
+
+Create patch from changed files (against rollout.log)
+python export.py -n PROJECT -patch
+
+Create patch as a feature branch from changed files (against rollout.log)
+python export.py -n PROJECT -feature
+
+Mark recently created patch as executed (merge files in patch to rollout.log)
+python export.py -n PROJECT -rollout
+
+<br />
+
 ## Connect to database
 
 #### Connect to database with SID or service name
