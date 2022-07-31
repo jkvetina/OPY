@@ -142,49 +142,56 @@ apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
 #
 # CONNECT TO DATABASE
 #
-conn      = Oracle(connection)
-data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
-req_today = data[0].today  # calculate date from recent arg
-schema    = data[0].curr_user
+if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+  conn      = Oracle(connection)
+  data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
+  req_today = data[0].today  # calculate date from recent arg
+  schema    = data[0].curr_user
 
-# find wallet
-wallet_file = ''
-if 'wallet' in connection:
-  wallet_file = connection['wallet']
-elif 'name' in connection:
-  wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), connection['name'])
-  if not os.path.exists(wallet_file):
-    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), connection['name'])
+  # find wallet
+  wallet_file = ''
+  if 'wallet' in connection:
+    wallet_file = connection['wallet']
+  elif 'name' in connection:
+    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), connection['name'])
     if not os.path.exists(wallet_file):
-      wallet_file = ''
-#
-print('CONNECTING:')
-print('-----------')
-print('    SOURCE | {}@{}/{}{}'.format(
-  connection['user'],
-  connection.get('host', ''),
-  connection.get('service', ''),
-  connection.get('sid', '')))
-#
-if wallet_file != '':
-  print('    WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
-#
-print('           | {}'.format(db_conf.replace(common_root, '~ ')))
-print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
-print()
-
-# get versions
-if args['verbose']:
-  try:
-    version_apex  = conn.fetch_value(query_version_apex)
-    version_db    = conn.fetch_value(query_version_db)
-  except Exception:
-    version_apex  = version_apex or ''
-    version_db    = conn.fetch_value(query_version_db_old)
+      wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), connection['name'])
+      if not os.path.exists(wallet_file):
+        wallet_file = ''
   #
-  print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
-  print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
+  print('CONNECTING:')
+  print('-----------')
+  print('    SOURCE | {}@{}/{}{}'.format(
+    connection['user'],
+    connection.get('host', ''),
+    connection.get('service', ''),
+    connection.get('sid', '')))
+  #
+  if wallet_file != '':
+    print('    WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
+  #
+  print('           | {}'.format(db_conf.replace(common_root, '~ ')))
+  print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
   print()
+
+  # get versions
+  if args['verbose']:
+    try:
+      version_apex  = conn.fetch_value(query_version_apex)
+      version_db    = conn.fetch_value(query_version_db)
+    except Exception:
+      version_apex  = version_apex or ''
+      version_db    = conn.fetch_value(query_version_db_old)
+    #
+    print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
+    print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
+    print()
+
+
+
+#
+# PREP FOLDERS AND GET OLD HASHES
+#
 
 # create basic dirs
 for dir in [git_target, patch_root, patch_done]:
