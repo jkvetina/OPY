@@ -142,7 +142,7 @@ apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
 #
 # CONNECT TO DATABASE
 #
-if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+if not args['rollout'] and not args['feature'] and not args['delete']:
   conn      = Oracle(connection)
   data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
