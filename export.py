@@ -348,9 +348,9 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
   ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
   #
   print()
-  print('EXPORT TABLES DATA: ({})'.format(len(files)))
+  print('EXPORT DATA TO CSV: ({})'.format(len(files)))
   if args['verbose']:
-    print('-------------------')
+    print('------------------- {:12} {:>8} | {:>10} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(files)):
     try:
@@ -390,10 +390,18 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 
     # show progress
     if args['verbose']:
+      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      hash_old    = hashed_old.get(short_file, '')
+      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
       #
       # @TODO: compare hash_old with hash
       #
-      print('  {:30} {:>8}'.format(table_name, len(data)))
+      print('  {:30} {:>8} | {:>10} {}'.format(*[
+        table_name,
+        len(data),                # lines
+        os.path.getsize(file),    # bytes
+        '| NEW' if hash_old == '' else '| CHANGED' if hash_new != hash_old else ''
+      ]))
     else:
       perc = (i + 1) / len(files)
       dots = int(70 * perc)
@@ -730,7 +738,11 @@ if args['patch'] and not args['feature']:
 
         # retrieve file content
         if object_type == 'DATA' and file.endswith(file_ext_csv):
-          content = get_merge_from_csv(file, conn)  # convert CSV files to MERGE
+          # convert CSV files to MERGE
+          content = get_merge_from_csv(file, conn)
+
+          # add CSV file to patch.log
+          hashed_new[short_file] = hashlib.md5(open(file, 'rb').read()).hexdigest()
         else:
           # retrieve object content
           with open(file, 'r', encoding = 'utf-8') as h:
