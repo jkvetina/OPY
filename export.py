@@ -19,6 +19,7 @@ parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',     
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
 parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just changed files',   nargs = '?', default = False, const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
+parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',  nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 args['app']     = int(args['app']     or 0)
@@ -223,7 +224,7 @@ if os.path.exists(rollout_log):
 # PREVIEW OBJECTS
 #
 data_objects = []
-if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature']:
+if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
   print('-----------------                                      ------------')
@@ -332,7 +333,7 @@ if len(data_objects):
 #
 # EXPORT DATA
 #
-if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
+if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
   if not (os.path.isdir(folders['DATA'])):
     os.makedirs(folders['DATA'])
   #
@@ -404,7 +405,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
 apex_apps = {}
 #
-if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature']:
+if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
   header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
   #
   print()
@@ -420,7 +421,7 @@ if len(all_apps) and not args['patch'] and not args['rollout'] and not args['fea
 #
 # EXPORT APEX APP
 #
-if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature']:
+if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
@@ -766,7 +767,7 @@ if args['patch'] and not args['feature']:
 #
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
-if args['rollout'] and not args['feature']:
+if args['rollout'] and not args['feature'] and not args['delete']:
   print()
   print('ROLLOUT CONFIRMED:')
   print('------------------')
@@ -824,14 +825,55 @@ if args['feature'] and not args['patch'] and not args['rollout']:
     #
     if file_found:
       content.append('')
-  #
-  content = '\n'.join(content) + '\n'
 
   # store to the file too
+  content = '\n'.join(content) + '\n'
   with open(patch_today, 'w', encoding = 'utf-8') as z:
     z.write(content)
   #
   #
   print(content)
 
+
+
+#
+# DELETE UNCHANGED FILES
+#
+if args['delete']:
+  print()
+  print('DELETE UNCHANGED FILES:')
+  print('-----------------------')
+  print()
+
+  # delete all database object files except APEX
+  files_to_delete = []
+  for type in objects_sorted:
+    file_found = False
+    for file in sorted(glob.glob(folders[type] + '/*.*')):
+      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      hash_old    = hashed_old.get(short_file, '')
+      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+      #
+      if hash_new == hash_old:
+        if not file_found:
+          print(type)
+        #
+        files_to_delete.append(file)
+        file_found = True
+        print('  {}'.format(short_file))
+    #
+    if file_found:
+      print()
+
+  # let user confirm and then remove files
+  if len(files_to_delete):
+    while True:
+      response = input('Do you want to continue? ')
+      if response in ('y', 'Y'):
+        for file in files_to_delete:
+          os.remove(file)
+        break  # exit the infinite loop
+      else:
+        print()
+        sys.exit()
 
