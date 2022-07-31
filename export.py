@@ -814,7 +814,14 @@ if args['feature'] and not args['patch'] and not args['rollout']:
       short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
       hash_old    = hashed_old.get(short_file, '')
       hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
-      #
+
+      # check package spec vs body (in the same dir)
+      if type == 'PACKAGE BODY' and file.endswith(file_ext_spec):   # ignore package spec in body dir
+        continue
+      if type == 'PACKAGE' and not file.endswith(file_ext_spec):    # ignore package body in spec dir
+        continue
+
+      # process only changed files
       if hash_new != hash_old:
         # append type header when first file is found
         if not file_found:
