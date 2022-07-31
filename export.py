@@ -617,6 +617,11 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
+# show timer after all db queries are done
+if len(data_objects) or args['app'] > 0 or args['app']:
+  print('TIME:', round(timeit.default_timer() - start_timer, 2))
+  print('\n')
+
 
 
 #
@@ -791,9 +796,6 @@ if args['rollout'] and not args['feature'] and not args['delete']:
       os.remove(patch_log)
   #
   print()
-
-print('TIME:', round(timeit.default_timer() - start_timer, 2))
-print('\n')
 
 
 
