@@ -402,19 +402,20 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 #
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
-all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
 apex_apps = {}
-#
-if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
-  header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+  all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   #
-  print()
-  print(header + '\n' + '-' * len(header))
-  print('                                                  | PAGES | LAST CHANGE AT')
-  for row in all_apps:
-    apex_apps[row.application_id] = row
-    print('{:>10} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
-  print()
+  if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+    header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+    #
+    print()
+    print(header + '\n' + '-' * len(header))
+    print('                                                  | PAGES | LAST CHANGE AT')
+    for row in all_apps:
+      apex_apps[row.application_id] = row
+      print('{:>10} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+    print()
 
 
 
