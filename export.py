@@ -418,7 +418,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete'] and (not args['csv'] or args['app']):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   #
   if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
@@ -634,7 +634,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
 # show timer after all db queries are done
-if len(data_objects) or args['app'] > 0 or args['app']:
+if len(data_objects) or args['app'] > 0 or args['app'] or args['csv']:
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
