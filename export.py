@@ -443,12 +443,10 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
   os.makedirs(apex_temp_dir)
 
-  # prep target dir
-  if args['recent'] <= 0:
-    # delete folder to remove obsolete objects only on full export
-    apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
-    if os.path.exists(apex_dir_app):
-      shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
+  # delete folder to remove obsolete objects only on full export
+  apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
+  if os.path.exists(apex_dir_app):
+    shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
   #
   if not os.path.exists(apex_dir):
     os.makedirs(apex_dir)
@@ -507,18 +505,17 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       connection['port'],
       connection['sid']
     ])
-  #
+
+  # always do full APEX export, but when -r > 0 then show changed components
   if args['recent'] > 0 and os.name != 'nt':
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
-    requests.append('apex export -dir {dir} -applicationid {app_id} -changesSince {since} -nochecksum -expType EMBEDDED_CODE')
-    requests.append('apex export -dir {dir_temp} -applicationid {app_id} -split -expComponents {changed}')
-  else:
-    # export app in several formats
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-    requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args['app']].workspace_id))
+
+  # export full app in several formats
+  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args['app']].workspace_id))
   #
   #-expOriginalIds -> strange owner and app_id
   #
