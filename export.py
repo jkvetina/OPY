@@ -548,7 +548,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       os.remove(apex_tmp)
 
     # cleanup files after each loop
-    clean_apex_files(folders, apex_replacements)
+    clean_apex_files(args['app'], folders['APEX'], apex_replacements)
 
   else:
     # for normal platforms
@@ -600,7 +600,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(folders, apex_replacements)
+      clean_apex_files(args['app'], folders['APEX'], apex_replacements)
   #
   print()
   print()
