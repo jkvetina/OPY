@@ -265,7 +265,8 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 if len(data_objects):
   if args['verbose']:
     print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
-    print('------------------ {:34} {:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
+    print('------------------')
+    print('{:54}{:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
   else:
     print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
   #
@@ -426,10 +427,10 @@ if not args['patch'] and not args['rollout'] and not args['feature'] and not arg
     #
     print()
     print(header + '\n' + '-' * len(header))
-    print('                                                  | PAGES | LAST CHANGE AT')
+    print('{:<52}PAGES | LAST CHANGE AT'.format(''))
     for row in all_apps:
       apex_apps[row.application_id] = row
-      print('{:>10} | {:<36} | {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+      print('{:>10} | {:<38} {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
     print()
 
 
