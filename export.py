@@ -225,6 +225,10 @@ if os.path.exists(rollout_log):
         hash, file = file, hash  # swap columns for backward compatibility
       hashed_old[file.strip()] = hash.strip()
 
+# split tables into buckets
+tables_changed  = []
+tables_added    = []
+
 
 
 #
@@ -289,7 +293,8 @@ if len(data_objects):
     file_ext  = file_ext_obj if object_type != 'PACKAGE' else file_ext_spec
     obj       = get_object(conn, object_type, object_name)
     file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
-    #
+
+    # check object
     if obj == None and args['debug']:
       print('#')
       print('# OBJECT_EMPTY:', object_type, object_name)
@@ -695,13 +700,22 @@ if args['patch'] and not args['feature']:
           continue
 
         # ignore changed tables in 20/, they will need a manual patch in 30/
-        if type == 'tables' and hash_old == '':
-          hashed_new[short_file] = hash_new
-          target_file = patch_folders['changes'] + today_date + '_' + os.path.basename(file)
-          # copy object to manual patch folder to notify user a manual change is needed
-          if not os.path.exists(target_file):
-            shutil.copyfile(file, target_file)
-          continue
+        if type == 'tables':
+          # sort tables
+          if object_type == 'TABLE':
+            table_name = os.path.basename(short_file).split('.')[0].upper()
+            if hash_old == '':
+              tables_added.append(table_name)
+            elif hash_new != hash_old:
+              tables_changed.append(table_name)
+          #
+          if hash_old == '':  # new table
+            hashed_new[short_file] = hash_new
+            target_file = patch_folders['changes'] + today_date + '_' + os.path.basename(file)
+            # copy object to manual patch folder to notify user a manual change is needed
+            if not os.path.exists(target_file):
+              shutil.copyfile(file, target_file)
+            continue
 
         # check file hash and compare it with hash in rollout.log
         if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
