@@ -329,3 +329,78 @@ WHEN NOT MATCHED THEN
         {all_values}
     );\n"""
 
+# table dependencies
+query_tables_dependencies = """
+WITH d AS (
+    SELECT
+        c.table_name,
+        LISTAGG(r.table_name, ', ') WITHIN GROUP (ORDER BY r.table_name) AS references
+    FROM user_constraints c
+    JOIN user_constraints r
+        ON r.constraint_name    = c.r_constraint_name
+        AND r.owner             = c.owner
+    WHERE c.constraint_type     = 'R'
+        AND c.owner             = c.r_owner
+        AND c.status            = 'ENABLED'
+    GROUP BY c.table_name
+)
+SELECT
+    u.table_name,
+    NULL                AS references
+FROM user_tables u
+LEFT JOIN d
+    ON d.table_name     = u.table_name
+LEFT JOIN user_mviews m
+    ON m.mview_name     = u.table_name
+WHERE d.table_name      IS NULL
+    AND m.mview_name    IS NULL
+    AND u.table_name    NOT LIKE '%\\__$' ESCAPE '\\'
+UNION ALL
+SELECT
+    d.table_name,
+    d.references
+FROM d
+ORDER BY 1"""
+
+# sorted table order
+query_tables_sorted = """
+WITH r AS (
+    SELECT
+        s.table_name            AS table_name,
+        d.table_name            AS referenced_table
+    FROM user_constraints s
+    JOIN user_constraints d
+        ON d.constraint_name    = s.r_constraint_name
+    WHERE s.constraint_type     = 'R'
+    ORDER BY 1, 2
+),
+t (lvl, table_name) AS (        -- recursive with clause
+    SELECT
+        1                       AS lvl,
+        u.object_name           AS table_name
+    FROM user_objects u
+    WHERE u.object_type         = 'TABLE'  -- ignore mviews
+    UNION ALL
+    --
+    SELECT
+        t.lvl + 1               AS lvl,
+        u.object_name           AS table_name
+    FROM t
+    JOIN user_objects u
+        ON u.object_name        != t.table_name
+        AND EXISTS (
+            SELECT 1
+            FROM r
+            WHERE r.table_name          = u.object_name
+                AND r.referenced_table  = t.table_name
+        )
+     WHERE u.object_type        = 'TABLE'
+        AND t.lvl               <= 20
+)
+SELECT
+    MAX(t.lvl)    AS dependency_level,
+    t.table_name
+FROM t
+GROUP BY t.table_name
+ORDER BY MAX(t.lvl), t.table_name"""
+

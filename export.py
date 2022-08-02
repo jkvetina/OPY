@@ -802,6 +802,48 @@ if args['patch'] and not args['feature']:
 
 
 #
+# SHOW CHANGED/NEW TABLES AS A MAP
+#
+if (('type' in args and args['type'] == 'TABLE') or args['patch']):
+  # get order good for deployment
+  tables_sorted = []
+  for row in conn.fetch_assoc(query_tables_sorted):
+    tables_sorted.append(row.table_name)
+
+  # get table references
+  references = {}
+  for row in conn.fetch_assoc(query_tables_dependencies):
+    references[row.table_name] = row.references.replace(' ', '').split(',') if row.references else []
+
+  # show only some tables
+  filter_tables = tables_changed + tables_added
+  print()
+  print('SORTED TABLE REFERENCES: ({}{})'.format(str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '', len(references)))
+  print('------------------------')
+  #
+  recent_parent = ''
+  for table_name in tables_sorted:
+    if (not table_name in references or (not (table_name in filter_tables) and len(filter_tables))):
+      continue
+    #
+    if not len(references[table_name]):
+      print('  {:>30} |'.format(table_name))
+    #
+    curr_parent = table_name
+    for referenced_table in references[table_name]:
+      if (referenced_table == table_name or (not (table_name in filter_tables) and len(filter_tables))):
+        continue
+      #
+      if curr_parent != recent_parent:
+        print('  {:>30} |'.format(curr_parent))
+        recent_parent = curr_parent
+      print('  {:>30} | {}'.format('', referenced_table))
+    recent_parent = curr_parent
+  print()
+
+
+
+#
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
 if args['rollout'] and not args['feature'] and not args['delete']:
