@@ -394,7 +394,7 @@ t (lvl, table_name) AS (        -- recursive with clause
             WHERE r.table_name          = u.object_name
                 AND r.referenced_table  = t.table_name
         )
-     WHERE u.object_type        = 'TABLE'
+    WHERE u.object_type         = 'TABLE'
         AND t.lvl               <= 20
 )
 SELECT

@@ -807,19 +807,38 @@ if args['patch'] and not args['feature']:
 if (('type' in args and args['type'] == 'TABLE') or args['patch']):
   # get order good for deployment
   tables_sorted = []
-  for row in conn.fetch_assoc(query_tables_sorted):
-    tables_sorted.append(row.table_name)
+  try:
+    data = conn.fetch_assoc(query_tables_sorted)
+    for row in data:
+      tables_sorted.append(row.table_name)
+  except Exception:
+    print('#')
+    print('# CYCLE_DETECTED_MOST_LIKELY')
+    print('#')
+    #print(traceback.format_exc())
+    print(sys.exc_info()[2])
+    print()
 
   # get table references
   references = {}
   for row in conn.fetch_assoc(query_tables_dependencies):
     references[row.table_name] = row.references.replace(' ', '').split(',') if row.references else []
 
+  # if query for getting sorted tables failed, use alphabetic order
+  sorted_flag = True
+  if not len(tables_sorted):
+    tables_sorted = sorted(references.keys())
+    sorted_flag = False
+
   # show only some tables
   filter_tables = tables_changed + tables_added
   print()
-  print('SORTED TABLE REFERENCES: ({}{})'.format(str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '', len(references)))
-  print('------------------------')
+  print('{}TABLE REFERENCES: ({}{})'.format(*[
+    'SORTED ' if sorted_flag else '',
+    str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '',
+    len(references)
+  ]))
+  print('{}------------------------'.format('-' * (len('SORTED ') if sorted_flag else 0)))
   #
   recent_parent = ''
   for table_name in tables_sorted:
