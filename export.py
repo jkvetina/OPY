@@ -716,13 +716,9 @@ if args['patch'] and not args['feature']:
               tables_added.append(table_name)
             elif hash_new != hash_old:
               tables_changed.append(table_name)
-          #
-          if hash_old == '':  # new table
-            hashed_new[short_file] = hash_new
-            continue
-          #
-          # ^is this needed ???
-          #
+
+              # dont put changed table on the patch list
+              continue
 
         # check file hash and compare it with hash in rollout.log
         if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
