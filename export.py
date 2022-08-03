@@ -433,15 +433,16 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 apex_apps = {}
 if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete'] and (not args['csv'] or args['app']):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
+  for row in all_apps:
+    apex_apps[row.application_id] = row
   #
-  if len(all_apps) and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
-    header    = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+  if len(all_apps) and not args['app'] and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+    header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
     #
     print()
     print(header + '\n' + '-' * len(header))
     print('{:<52}PAGES | LAST CHANGE AT'.format(''))
     for row in all_apps:
-      apex_apps[row.application_id] = row
       print('{:>10} | {:<38} {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
     print()
 
@@ -483,7 +484,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
     print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
     print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
-    print()
+  print()
 
   # get component names, because the id itself wont tell you much
   apex_replacements_plan = {
