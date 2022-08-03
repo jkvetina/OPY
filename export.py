@@ -763,6 +763,12 @@ if args['patch'] and not args['feature']:
           with open(file, 'r', encoding = 'utf-8') as r:
             content = r.read()
 
+          # drop changed view first due to grant issues
+          # drop MVW so we can actually create it again
+          if object_type in ('VIEW', 'MATERIALIZED VIEW'):
+            object_name = os.path.basename(short_file).split('.')[0]
+            content = 'DROP {} {};\n--\n'.format(object_type, object_name) + content
+
         # dont copy file, just append target patch file
         if content != None and len(content):
           content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
