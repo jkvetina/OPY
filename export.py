@@ -138,6 +138,11 @@ apex_temp_dir   = apex_dir + 'temp/'  # temp file for partial APEX exports
 apex_ws_files   = apex_dir + 'workspace_files/'
 apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
 
+# cleanup junk files created on Mac probably by iCloud sync
+path = apex_dir + '**/* [0-9].*'
+for file in glob.glob(path, recursive = True):
+  os.remove(file)
+
 
 
 #
