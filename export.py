@@ -127,6 +127,7 @@ patch_folders = {
 }
 patch_store     = ('changes', 'apex')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
+patch_tables    = patch_folders['changes'] + today_date + '_tables.sql'  # file to notify users about table changes
 file_ext_obj    = '.sql'
 file_ext_csv    = '.csv'
 file_ext_spec   = '.spec.sql'
@@ -655,6 +656,8 @@ if args['patch'] and not args['feature']:
   for file in [patch_today, patch_zip]:
     if os.path.exists(file):
       os.remove(file)
+  if os.path.exists(patch_tables):
+    os.remove(patch_tables)
 
   # if APEX app is requested, then copy it to APEX patch dir
   if 'app' in args and args['app'] in apex_apps:
@@ -711,10 +714,6 @@ if args['patch'] and not args['feature']:
           #
           if hash_old == '':  # new table
             hashed_new[short_file] = hash_new
-            target_file = patch_folders['changes'] + today_date + '_' + os.path.basename(file)
-            # copy object to manual patch folder to notify user a manual change is needed
-            if not os.path.exists(target_file):
-              shutil.copyfile(file, target_file)
             continue
 
         # check file hash and compare it with hash in rollout.log
@@ -807,6 +806,8 @@ if args['patch'] and not args['feature']:
 if (('type' in args and args['type'] == 'TABLE') or args['patch']):
   # get order good for deployment
   tables_sorted = []
+  table_notes   = []
+  #
   try:
     data = conn.fetch_assoc(query_tables_sorted)
     for row in data:
@@ -846,7 +847,7 @@ if (('type' in args and args['type'] == 'TABLE') or args['patch']):
       continue
     #
     if not len(references[table_name]):
-      print('  {:>30} |'.format(table_name))
+      table_notes.append('  {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
     #
     curr_parent = table_name
     for referenced_table in references[table_name]:
@@ -854,11 +855,17 @@ if (('type' in args and args['type'] == 'TABLE') or args['patch']):
         continue
       #
       if curr_parent != recent_parent:
-        print('  {:>30} |'.format(curr_parent))
+        table_notes.append('  {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
         recent_parent = curr_parent
-      print('  {:>30} | {}'.format('', referenced_table))
+      table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
     recent_parent = curr_parent
-  print()
+  #
+  content = '\n'.join(table_notes) + '\n'
+  print(content)
+
+  # write patch file to notify user about changed tables
+  with open(patch_tables, 'w', encoding = 'utf-8') as w:
+    w.write('/*\n{}*/\n'.format(content))
 
 
 
