@@ -851,7 +851,7 @@ if (('type' in args and args['type'] == 'TABLE') or args['patch']):
     #
     curr_parent = table_name
     for referenced_table in references[table_name]:
-      if (referenced_table == table_name or (not (table_name in filter_tables) and len(filter_tables))):
+      if (referenced_table == table_name or (not (referenced_table in filter_tables) and len(filter_tables))):
         continue
       #
       if curr_parent != recent_parent:
