@@ -858,17 +858,20 @@ if args['patch'] and not args['feature']:
       #
       curr_parent = table_name
       for referenced_table in references[table_name]:
-        if (referenced_table == table_name or (not (referenced_table in filter_tables) and len(filter_tables))):
+        if not (referenced_table in filter_tables) and len(filter_tables):
           continue
         #
         if curr_parent != recent_parent:
           table_notes.append('  {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
           recent_parent = curr_parent
-        table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
+        #
+        if referenced_table != recent_parent:
+          table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
       recent_parent = curr_parent
     #
     content = '\n'.join(table_notes) + '\n'
     print(content)
+    print()
 
     # write patch file to notify user about changed tables
     if len(table_notes):
