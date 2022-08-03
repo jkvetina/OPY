@@ -274,12 +274,10 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 # EXPORT OBJECTS
 #
 if len(data_objects):
+  print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
   if args['verbose']:
-    print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
     print('------------------')
-    print('{:54}{:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
-  else:
-    print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
+    print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   #
   recent_type = ''
   for (i, row) in enumerate(data_objects):
@@ -311,11 +309,12 @@ if len(data_objects):
       continue
     #
     if args['verbose']:
-      print('{:>20} | {:<30} {:>8} | {:>10}'.format(*[
+      print('{:>20} | {:<30} {:>8} | {:>8} {}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,                                                    # count lines
-        len(obj) if obj else ''                                                 # count bytes
+        len(obj) if obj else '',                                                # count bytes
+        'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
       ]))
       recent_type = object_type
     else:
@@ -365,7 +364,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
   print()
   print('EXPORT DATA TO CSV: ({})'.format(len(files)))
   if args['verbose']:
-    print('------------------- {:12} {:>8} | {:>10} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
+    print('------------------- {:12} {:>8} | {:>8} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(files)):
     try:
@@ -407,7 +406,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
     if args['verbose']:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       #
-      print('  {:30} {:>8} | {:>10} {}'.format(*[
+      print('  {:30} {:>8} | {:>8} {}'.format(*[
         table_name,
         len(data),                # lines
         os.path.getsize(file),    # bytes
@@ -698,6 +697,9 @@ if args['patch'] and not args['feature']:
     # pass only changed files
     for (type, object_type, files) in files_todo:
       files_changed = []
+      #
+      # @TODO: presort tables
+      #
       for file in files:
         short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
@@ -718,6 +720,9 @@ if args['patch'] and not args['feature']:
           if hash_old == '':  # new table
             hashed_new[short_file] = hash_new
             continue
+          #
+          # ^is this needed ???
+          #
 
         # check file hash and compare it with hash in rollout.log
         if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
@@ -785,6 +790,9 @@ if args['patch'] and not args['feature']:
 
   # store new hashes for rollout
   content = []
+  #
+  # @TODO: patch log named from argument value
+  #
   with open(patch_log, 'w', encoding = 'utf-8') as w:
     for file in sorted(hashed_new.keys()):
       content.append('{} | {}'.format(hashed_new[file], file))
@@ -792,13 +800,13 @@ if args['patch'] and not args['feature']:
     w.write(content)
 
   # summary
-  print('{:54}{:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
-  print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
+  print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+  print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
   #
   if args['zip']:
-    print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
+    print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
   #
-  print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
+  print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
   print()
 
   #
@@ -867,12 +875,13 @@ if args['patch'] and not args['feature']:
     #
     content = '\n'.join(table_notes) + '\n'
     print(content)
-    print()
 
     # write patch file to notify user about changed tables
     if len(table_notes):
       with open(patch_tables, 'w', encoding = 'utf-8') as w:
         w.write('/*\n{}*/\n'.format(content))
+  #
+  print()
 
 
 
