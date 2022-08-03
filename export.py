@@ -149,7 +149,7 @@ for file in glob.glob(path, recursive = True):
 #
 # CONNECT TO DATABASE
 #
-if not args['rollout'] and not args['feature'] and not args['delete']:
+if not args['rollout'] and not args['delete']:
   conn      = Oracle(connection)
   data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
@@ -677,6 +677,7 @@ if args['patch'] and not args['feature']:
     if os.path.exists(source_file):
       shutil.copyfile(source_file, target_file)
 
+if (args['patch'] or args['feature']):
   # get list of files in correct order
   buckets = []
   for target_dir in sorted(patch_folders.values()):
@@ -731,6 +732,7 @@ if args['patch'] and not args['feature']:
       if len(files_changed):
         buckets.append([type, object_type, files_changed])
 
+if args['patch'] and not args['feature']:
   # open target file and write new content there
   count_lines = 0
   with open(patch_today, 'w', encoding = 'utf-8') as z:
@@ -811,10 +813,12 @@ if args['patch'] and not args['feature']:
   print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
   print()
 
-  #
-  # SHOW CHANGED/NEW TABLES AS A MAP
-  #
 
+
+#
+# SHOW CHANGED/NEW TABLES AS A MAP
+#
+if (args['patch'] or args['feature']):
   # get order good for deployment
   tables_sorted = []
   table_notes   = []
@@ -883,7 +887,8 @@ if args['patch'] and not args['feature']:
       with open(patch_tables, 'w', encoding = 'utf-8') as w:
         w.write('/*\n{}*/\n'.format(content))
   #
-  print()
+  if not args['feature']:
+    print()
 
 
 
@@ -925,8 +930,8 @@ if args['rollout'] and not args['feature'] and not args['delete']:
 #
 if args['feature'] and not args['patch'] and not args['rollout']:
   print()
-  print('CREATING FEATURE BRANCH STYLE PATCH:')
-  print('------------------------------------')
+  print('CREATING FEATURE BRANCH PATCH:')
+  print('------------------------------')
   print()
 
   # find all unchanged files, sorted by object type
