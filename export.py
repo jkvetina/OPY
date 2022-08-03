@@ -15,6 +15,7 @@ parser.add_argument('-a', '-app',     '--app',      help = 'APEX application')
 parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ dor to CSV files',   nargs = '?', default = False, const = True)
 parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',           nargs = '?', default = False, const = True)
 parser.add_argument('-d', '-debug',   '--debug',    help = '',                                          nargs = '?', default = False, const = True)
+parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',     nargs = '?', default = False, const = True)
 parser.add_argument(      '-patch',   '--patch',    help = 'Prepare patch',                             nargs = '?', default = False, const = True)
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
 parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just changed files',   nargs = '?', default = False, const = True)
@@ -181,7 +182,7 @@ if not args['rollout'] and not args['feature'] and not args['delete']:
   print()
 
   # get versions
-  if args['verbose']:
+  if args['info']:
     try:
       version_apex  = conn.fetch_value(query_version_apex)
       version_db    = conn.fetch_value(query_version_db)
@@ -474,7 +475,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
   print('        NAME | {}'.format(apex.app_name))
   #
-  if args['verbose']:
+  if args['info']:
     print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
     print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
     print()
