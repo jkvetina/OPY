@@ -901,8 +901,10 @@ if args['rollout'] and not args['feature'] and not args['delete']:
     if os.path.exists(patch_log):
       with open(patch_log, 'r', encoding = 'utf-8') as r:
         for line in r.readlines():
-          (hash, file) = line.split('|')
-          hashed_old[file.strip()] = hash.strip()
+          if '|' in line:
+            (hash, file) = line.split('|')
+            hashed_old[file.strip()] = hash.strip()
+            print(file.strip())
     #
     content = []
     for file in sorted(hashed_old.keys()):
@@ -913,6 +915,7 @@ if args['rollout'] and not args['feature'] and not args['delete']:
     if os.path.exists(patch_log):
       os.remove(patch_log)
   #
+  print()
   print()
 
 
