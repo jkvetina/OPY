@@ -875,11 +875,11 @@ if args['patch'] and not args['feature']:
           table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
       recent_parent = curr_parent
     #
-    content = '\n'.join(table_notes) + '\n'
-    print(content)
-
-    # write patch file to notify user about changed tables
     if len(table_notes):
+      content = '\n'.join(table_notes) + '\n'
+      print(content)
+
+      # write patch file to notify user about changed tables
       with open(patch_tables, 'w', encoding = 'utf-8') as w:
         w.write('/*\n{}*/\n'.format(content))
   #
