@@ -1,5 +1,14 @@
-import sys, os, re, traceback, glob, csv
+import sys, os, re, traceback, glob, csv, hashlib
 from export_queries import *
+
+
+
+def get_file_details(file, git_root, hashed_old):
+  short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+  hash_old    = hashed_old.get(short_file, '')
+  hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+  #
+  return (short_file, hash_old, hash_new)
 
 
 

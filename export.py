@@ -300,6 +300,8 @@ if len(data_objects):
     file_ext  = file_ext_obj if object_type != 'PACKAGE' else file_ext_spec
     obj       = get_object(conn, object_type, object_name)
     file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
+    #
+    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
     # check object
     if obj == None and args['debug']:
@@ -403,11 +405,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 
     # show progress
     if args['verbose']:
-      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-      hash_old    = hashed_old.get(short_file, '')
-      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
-      #
-      # @TODO: compare hash_old with hash
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       #
       print('  {:30} {:>8} | {:>10} {}'.format(*[
         table_name,
@@ -701,9 +699,7 @@ if args['patch'] and not args['feature']:
     for (type, object_type, files) in files_todo:
       files_changed = []
       for file in files:
-        short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-        hash_old    = hashed_old.get(short_file, '')
-        hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
         # ignore unchanged files in some folders
         if type in patch_store and hash_new == hash_old:
@@ -744,7 +740,7 @@ if args['patch'] and not args['feature']:
       #
       last_object_type = ''
       for file in files:
-        short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
         # show progress to user
         if not args['debug']:
@@ -924,9 +920,7 @@ if args['feature'] and not args['patch'] and not args['rollout']:
   for type in objects_sorted:
     file_found = False
     for file in sorted(glob.glob(folders[type] + '/*' + file_ext_obj)):
-      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-      hash_old    = hashed_old.get(short_file, '')
-      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
       # check package spec vs body (in the same dir)
       if type == 'PACKAGE BODY' and file.endswith(file_ext_spec):   # ignore package spec in body dir
