@@ -37,8 +37,8 @@ if 'name' in args:
 #
 for db_conf in conn_files:
   if os.path.exists(db_conf):
-    with open(db_conf, 'rb') as f:
-      connection = pickle.load(f)
+    with open(db_conf, 'rb') as b:
+      connection = pickle.load(b)
       if args['target'] == None and 'target' in connection:  # overwrite target from pickle file
         args['target'] = connection['target']
       break
@@ -210,16 +210,16 @@ for file in glob.glob(os.path.dirname(patch_manually) + '/*' + file_ext_obj):
 # create new patch file for manual changes (ALTER statements, related data changes...)
 if args['patch']:
   if not os.path.exists(patch_manually):
-    with open(patch_manually, 'w', encoding = 'utf-8') as f:
-      f.write('')
+    with open(patch_manually, 'w', encoding = 'utf-8') as w:
+      w.write('')
 
 # get old hashes
 hashed_old = {}
 hashed_new = {}   # files/objects changed since last rollout
 #
 if os.path.exists(rollout_log):
-  with open(rollout_log, 'r', encoding = 'utf-8') as f:
-    for line in f.readlines():
+  with open(rollout_log, 'r', encoding = 'utf-8') as r:
+    for line in r.readlines():
       (hash, file) = line.split('|')
       if '/' in hash:
         hash, file = file, hash  # swap columns for backward compatibility
@@ -334,8 +334,8 @@ if len(data_objects):
     if obj.rstrip('/') != obj:
       obj = obj.rstrip('/').rstrip() + '\n/'
     #
-    with open(file, 'w', encoding = 'utf-8') as h:
-      h.write(obj + '\n\n')
+    with open(file, 'w', encoding = 'utf-8') as w:
+      w.write(obj + '\n\n')
   #
   if not args['verbose']:
     print()
@@ -541,8 +541,8 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       content += request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app']) + '\n\r'
 
     # create temp file
-    with open(apex_tmp, 'w', encoding = 'utf-8') as f:
-      f.write(content + 'exit;')
+    with open(apex_tmp, 'w', encoding = 'utf-8') as w:
+      w.write(content + 'exit;')
     #
     process = 'sql /nolog @apex.tmp'
     result  = subprocess.run(process, shell = True, capture_output = True, text = True)
@@ -757,8 +757,8 @@ if args['patch'] and not args['feature']:
           hashed_new[short_file] = hashlib.md5(open(file, 'rb').read()).hexdigest()
         else:
           # retrieve object content
-          with open(file, 'r', encoding = 'utf-8') as h:
-            content = h.read()
+          with open(file, 'r', encoding = 'utf-8') as r:
+            content = r.read()
 
         # dont copy file, just append target patch file
         if content != None and len(content):
@@ -783,11 +783,11 @@ if args['patch'] and not args['feature']:
 
   # store new hashes for rollout
   content = []
-  with open(patch_log, 'w', encoding = 'utf-8') as h:
+  with open(patch_log, 'w', encoding = 'utf-8') as w:
     for file in sorted(hashed_new.keys()):
       content.append('{} | {}'.format(hashed_new[file], file))
     content = '\n'.join(content) + '\n'
-    h.write(content)
+    w.write(content)
 
   # summary
   print('{:54}{:>8} | {:>10}'.format('', 'LINES', 'BYTES'))
@@ -871,18 +871,18 @@ if args['rollout'] and not args['feature'] and not args['delete']:
   print('------------------')
 
   # store hashes for next patch
-  with open(rollout_log, 'w', encoding = 'utf-8') as h:
+  with open(rollout_log, 'w', encoding = 'utf-8') as w:
     # get files and hashes from patch.log file and overwrite old hashes
     if os.path.exists(patch_log):
-      with open(patch_log, 'r', encoding = 'utf-8') as f:
-        for line in f.readlines():
+      with open(patch_log, 'r', encoding = 'utf-8') as r:
+        for line in r.readlines():
           (hash, file) = line.split('|')
           hashed_old[file.strip()] = hash.strip()
     #
     content = []
     for file in sorted(hashed_old.keys()):
       content.append('{} | {}'.format(hashed_old[file], file))
-    h.write('\n'.join(content) + '\n')
+    w.write('\n'.join(content) + '\n')
 
     # cleanup
     if os.path.exists(patch_log):
