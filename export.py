@@ -707,18 +707,18 @@ if args['patch'] and not args['feature']:
         if type in patch_store and hash_new == hash_old:
           continue
 
-        # ignore changed tables in 20/, they will need a manual patch in 30/
-        if type == 'tables':
-          # sort tables
-          if object_type == 'TABLE':
-            table_name = os.path.basename(short_file).split('.')[0].upper()
-            if hash_old == '':
-              tables_added.append(table_name)
-            elif hash_new != hash_old:
-              tables_changed.append(table_name)
+        # special treatment for tables
+        if type == 'tables' and object_type == 'TABLE':
+          table_name = os.path.basename(short_file).split('.')[0].upper()
+          if hash_old == '':
+            # add new tables to the list
+            tables_added.append(table_name)
+          elif hash_new != hash_old:
+            # ignore changed tables, they will need a manual patch
+            tables_changed.append(table_name)
 
-              # dont put changed table on the patch list
-              continue
+            # dont put changed table on the patch list
+            continue
 
         # check file hash and compare it with hash in rollout.log
         if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
