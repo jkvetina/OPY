@@ -765,7 +765,7 @@ if args['patch'] and not args['feature']:
 
         # dont copy file, just append target patch file
         if content != None and len(content):
-          content = '--\n-- {}\n--\n{}\n/\n\n'.format(short_file, content.rstrip().rstrip('/'))
+          content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
           z.write(content)
           count_lines += content.count('\n')
           #
