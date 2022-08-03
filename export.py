@@ -550,7 +550,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       w.write(content + 'exit;')
     #
     process = 'sql /nolog @apex.tmp'
-    result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+    result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
     #
     if os.path.exists(apex_tmp):
       os.remove(apex_tmp)
@@ -564,7 +564,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     for (i, request) in enumerate(requests):
       request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
-      result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+      result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
       output  = result.stdout.strip()
 
       # check output for recent APEX changes
