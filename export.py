@@ -805,12 +805,10 @@ if args['patch'] and not args['feature']:
   print('{:>20} | {:30} {:>8} | {:>10}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
   print()
 
+  #
+  # SHOW CHANGED/NEW TABLES AS A MAP
+  #
 
-
-#
-# SHOW CHANGED/NEW TABLES AS A MAP
-#
-if (('type' in args and args['type'] == 'TABLE') or args['patch']):
   # get order good for deployment
   tables_sorted = []
   table_notes   = []
@@ -840,39 +838,42 @@ if (('type' in args and args['type'] == 'TABLE') or args['patch']):
 
   # show only some tables
   filter_tables = tables_changed + tables_added
-  print()
-  print('{}TABLE REFERENCES: ({}{})'.format(*[
-    'SORTED ' if sorted_flag else '',
-    str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '',
-    len(references)
-  ]))
-  print('{}------------------------'.format('-' * (len('SORTED ') if sorted_flag else 0)))
   #
-  recent_parent = ''
-  for table_name in tables_sorted:
-    if (not table_name in references or (not (table_name in filter_tables) and len(filter_tables))):
-      continue
+  if len(filter_tables):
+    print()
+    print('TABLE REFERENCES FOR NEW/CHANGED TABLES: ({}{}) {}'.format(*[
+      str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '',
+      len(references),
+      '- NOT SORTED' if not sorted_flag else ''
+    ]))
+    print('----------------------------------------')
     #
-    if not len(references[table_name]):
-      table_notes.append('  {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
-    #
-    curr_parent = table_name
-    for referenced_table in references[table_name]:
-      if (referenced_table == table_name or (not (referenced_table in filter_tables) and len(filter_tables))):
+    recent_parent = ''
+    for table_name in tables_sorted:
+      if (not table_name in references or (not (table_name in filter_tables) and len(filter_tables))):
         continue
       #
-      if curr_parent != recent_parent:
-        table_notes.append('  {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
-        recent_parent = curr_parent
-      table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
-    recent_parent = curr_parent
-  #
-  content = '\n'.join(table_notes) + '\n'
-  print(content)
+      if not len(references[table_name]):
+        table_notes.append('  {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
+      #
+      curr_parent = table_name
+      for referenced_table in references[table_name]:
+        if (referenced_table == table_name or (not (referenced_table in filter_tables) and len(filter_tables))):
+          continue
+        #
+        if curr_parent != recent_parent:
+          table_notes.append('  {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
+          recent_parent = curr_parent
+        table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
+      recent_parent = curr_parent
+    #
+    content = '\n'.join(table_notes) + '\n'
+    print(content)
 
-  # write patch file to notify user about changed tables
-  with open(patch_tables, 'w', encoding = 'utf-8') as w:
-    w.write('/*\n{}*/\n'.format(content))
+    # write patch file to notify user about changed tables
+    if len(table_notes):
+      with open(patch_tables, 'w', encoding = 'utf-8') as w:
+        w.write('/*\n{}*/\n'.format(content))
 
 
 
