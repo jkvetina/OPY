@@ -951,6 +951,14 @@ if args['feature'] and not args['patch'] and not args['rollout']:
     if file_found:
       content.append('')
 
+  # append APEX app
+  apex_apps = glob.glob(patch_folders['apex'] + '/*' + file_ext_obj)
+  if len(apex_apps):
+    content.append('--\n-- APEX\n--')
+    for file in apex_apps:
+      content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
+    content.append('')
+
   # store to the file too
   content = '\n'.join(content) + '\n'
   with open(patch_today, 'w', encoding = 'utf-8') as z:
