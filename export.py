@@ -918,39 +918,6 @@ if (args['patch'] or args['feature']):
 
 
 #
-# CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
-#
-if args['rollout'] and not args['feature'] and not args['delete']:
-  print()
-  print('ROLLOUT CONFIRMED:')
-  print('------------------')
-
-  # store hashes for next patch
-  with open(rollout_log, 'w', encoding = 'utf-8') as w:
-    # get files and hashes from patch.log file and overwrite old hashes
-    if os.path.exists(patch_log):
-      with open(patch_log, 'r', encoding = 'utf-8') as r:
-        for line in r.readlines():
-          if '|' in line:
-            (hash, file) = line.split('|')
-            hashed_old[file.strip()] = hash.strip()
-            print(file.strip())
-    #
-    content = []
-    for file in sorted(hashed_old.keys()):
-      content.append('{} | {}'.format(hashed_old[file], file))
-    w.write('\n'.join(content) + '\n')
-
-    # cleanup
-    if os.path.exists(patch_log):
-      os.remove(patch_log)
-  #
-  print()
-  print()
-
-
-
-#
 # SHOW LIST OF CHANGED FILES
 #
 if args['feature'] and not args['patch'] and not args['rollout']:
@@ -991,6 +958,39 @@ if args['feature'] and not args['patch'] and not args['rollout']:
   #
   #
   print(content)
+
+
+
+#
+# CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
+#
+if args['rollout'] and not args['feature'] and not args['delete']:
+  print()
+  print('ROLLOUT CONFIRMED:')
+  print('------------------')
+
+  # store hashes for next patch
+  with open(rollout_log, 'w', encoding = 'utf-8') as w:
+    # get files and hashes from patch.log file and overwrite old hashes
+    if os.path.exists(patch_log):
+      with open(patch_log, 'r', encoding = 'utf-8') as r:
+        for line in r.readlines():
+          if '|' in line:
+            (hash, file) = line.split('|')
+            hashed_old[file.strip()] = hash.strip()
+            print(file.strip())
+    #
+    content = []
+    for file in sorted(hashed_old.keys()):
+      content.append('{} | {}'.format(hashed_old[file], file))
+    w.write('\n'.join(content) + '\n')
+
+    # cleanup
+    if os.path.exists(patch_log):
+      os.remove(patch_log)
+  #
+  print()
+  print()
 
 
 
