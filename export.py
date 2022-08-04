@@ -732,6 +732,11 @@ if (args['patch'] or args['feature']):
       if len(files_changed):
         buckets.append([type, object_type, files_changed])
 
+      # pass changed tables so we can show then on the screen
+      files_changed = []
+      if type == 'changes' and len(tables_changed):
+        buckets.append([type, 'TABLE', tables_changed])
+
 if args['patch'] and not args['feature']:
   # open target file and write new content there
   count_lines = 0
@@ -743,14 +748,32 @@ if args['patch'] and not args['feature']:
       #
       last_object_type = ''
       for file in files:
-        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+        short_file, hash_old, hash_new = file, '', ''
+        file_exists = os.path.exists(file)
+        if file_exists:
+          short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+
+        # show file with/for table changes
+        if type == 'changes' and len(tables_changed):
+          print('{:>20} > {:40}  | {}'.format('', os.path.basename(patch_tables), 'MANUALLY'))
 
         # show progress to user
         if not args['debug']:
-          print('{:>20} |    {:<40}'.format(*[
+          if type == 'apex' and file_exists and '.' in file:
+            object_type = 'APEX'
+          #
+          object_name = os.path.basename(short_file)
+          status      = ''
+          if object_type != '':
+            object_name = object_name.split('.')[0].upper()
+            status      = '| MANUALLY' if not file_exists else '| NEW' if hash_old == '' else '| CHANGED'
+          #
+          print('{:>20} {} {}{:<40}{}'.format(*[
             object_type if object_type != last_object_type else '',
-            os.path.basename(short_file)
-            #os.path.getsize(file)
+            '>' if not file_exists else '+' if '.' in object_name else '|',
+            '  ' if object_type != '' else '',
+            object_name,
+            status
           ]))
 
         # retrieve file content
@@ -759,8 +782,10 @@ if args['patch'] and not args['feature']:
           content = get_merge_from_csv(file, conn)
 
           # add CSV file to patch.log
-          hashed_new[short_file] = hashlib.md5(open(file, 'rb').read()).hexdigest()
-        else:
+          if file_exists:
+            hashed_new[short_file] = hashlib.md5(open(file, 'rb').read()).hexdigest()
+          #
+        elif file_exists:
           # retrieve object content
           with open(file, 'r', encoding = 'utf-8') as r:
             content = r.read()
