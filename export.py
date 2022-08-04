@@ -829,13 +829,13 @@ if args['patch'] and not args['feature']:
     w.write(content)
 
   # summary
-  print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
-  print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
+  print('{:56}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
+  print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
   #
   if args['zip']:
-    print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
+    print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
   #
-  print('{:>20} | {:30} {:>8} | {:>8}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
+  print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
   print()
 
 
@@ -889,7 +889,7 @@ if (args['patch'] or args['feature']):
         continue
       #
       if not len(references[table_name]):
-        table_notes.append('  {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
+        table_notes.append(' {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
       #
       curr_parent = table_name
       for referenced_table in references[table_name]:
@@ -897,11 +897,11 @@ if (args['patch'] or args['feature']):
           continue
         #
         if curr_parent != recent_parent:
-          table_notes.append('  {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
+          table_notes.append(' {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
           recent_parent = curr_parent
         #
         if referenced_table != recent_parent:
-          table_notes.append('  {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
+          table_notes.append(' {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
       recent_parent = curr_parent
     #
     if len(table_notes):
