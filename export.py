@@ -101,7 +101,7 @@ patch_map = {
   'objects'   : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
   'jobs'      : ['JOB'],
   'data'      : ['DATA'],
-  'apex'      : ['APEX'],
+  'apex'      : [],
 }
 
 # some variables
