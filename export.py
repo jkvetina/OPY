@@ -747,14 +747,14 @@ if args['patch'] and not args['feature']:
         print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
       last_object_type = ''
-      for file in files:
+      for (i, file) in enumerate(files):
         short_file, hash_old, hash_new = file, '', ''
         file_exists = os.path.exists(file)
         if file_exists:
           short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
         # show file with/for table changes
-        if type == 'changes' and len(tables_changed):
+        if type == 'changes' and len(tables_changed) and i == 0:
           print('{:>20} > {:40}  | {}'.format('', os.path.basename(patch_tables), 'MANUALLY'))
 
         # show progress to user
