@@ -986,11 +986,17 @@ if args['rollout'] and not args['feature'] and not args['delete']:
           if '|' in line:
             (hash, file) = line.split('|')
             hashed_old[file.strip()] = hash.strip()
-            print(file.strip())
     #
     content = []
     for file in sorted(hashed_old.keys()):
-      content.append('{} | {}'.format(hashed_old[file], file))
+      short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      #
+      if os.file.exists(file):
+        content.append('{} | {}'.format(hashed_old[file], file))
+        print('  [+] {}'.format(short_file))
+      else:
+        print('  [-] {}'.format(short_file))
+    #
     w.write('\n'.join(content) + '\n')
 
     # cleanup
