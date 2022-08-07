@@ -15,54 +15,54 @@ http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-app
 
 #### Exporting
 
-Export database objects since today midnight
+Export database objects since today midnight\
 python export.py -n PROJECT -r 1
 
-Export database objects since today midnight and show each object name
+Export database objects since today midnight and show each object name\
 python export.py -n PROJECT -r 1 -v
 
-Export database objects since yesteray midnight
+Export database objects since yesteray midnight\
 python export.py -n PROJECT -r 2
 
-Export database objects since tomorrow (to get objects overview, but dont export anything)
+Export database objects since tomorrow (to get objects overview, but dont export anything)\
 python export.py -n PROJECT -r 0
 
-Export all database objects
+Export all database objects\
 python export.py -n PROJECT
 
-Export all tables (or other object types - PACKAGE, VIEW...)
+Export all tables (or other object types - PACKAGE, VIEW...)\
 python export.py -n PROJECT -t TABLE
 
-Export all tables changed today and show each table name
+Export all tables changed today and show each table name\
 python export.py -n PROJECT -t TABLE -r 1 -v
 
-Export data from all tables listed in data/ as CSV files
+Export data from all tables listed in data/ as CSV files\
 python export.py -n PROJECT -r 0 -csv
 
-Export data from all tables listed in data/ as CSV files and show more details
+Export data from all tables listed in data/ as CSV files and show more details\
 python export.py -n PROJECT -r 0 -csv -v
 
-Export all database objects and APEX application 100
+Export all database objects and APEX application 100\
 python export.py -n PROJECT -a 100
 
-Export just the APEX application 100
+Export just the APEX application 100\
 python export.py -n PROJECT -r 0 -a 100
 
-Export APEX application 100, but just changes made today
+Export APEX application 100, but just changes made today\
 python export.py -n PROJECT -r 1 -a 100
 
 #### Patching
 
-Create patch from changed files (against rollout.log)
+Create patch from changed files (against rollout.log)\
 python export.py -n PROJECT -patch
 
-Create patch as a feature branch from changed files (against rollout.log)
+Create patch as a feature branch from changed files (against rollout.log)\
 python export.py -n PROJECT -feature
 
-Mark recently created patch as executed (merge files in patch to rollout.log)
+Mark recently created patch as executed (merge files in patch to rollout.log)\
 python export.py -n PROJECT -rollout
 
-Delete all unchanged files (so you can have just changed files)
+Delete all unchanged files (so you can have just changed files)\
 python export.py -n PROJECT -delete
 
 <br />
