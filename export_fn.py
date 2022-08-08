@@ -6,6 +6,7 @@ from export_queries import *
 def get_file_details(file, git_root, hashed_old):
   short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
   hash_old    = hashed_old.get(short_file, '')
+  hash_new    = ''
   if os.path.exists(file):
     hash_new  = hashlib.md5(open(os.path.normpath(file), 'rb').read()).hexdigest()
   #
