@@ -262,8 +262,11 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
   all_objects = conn.fetch_assoc(query_summary)
   print('                     | CHANGED |   TOTAL')  # fetch data first
   for row in all_objects:
-    check = '' if row.object_type in folders else '<--'  # mark not supported object types
-    print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+    if row.object_count:
+      check = '' if row.object_type in folders else '<--'  # mark not supported object types
+      print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+    else:
+      print('{:>58}{}{:>4}'.format(row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
   #
   print('                             ^')  # to highlight affected objects
   print()
