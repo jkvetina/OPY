@@ -678,13 +678,30 @@ if args['patch'] and not args['feature']:
       shutil.copyfile(source_file, target_file)
 
 if (args['patch'] or args['feature']):
+  # get order good for deployment
+  tables_sorted = []
+  table_notes   = []
+  #
+  try:
+    data = conn.fetch_assoc(query_tables_sorted)
+    for row in data:
+      tables_sorted.append(row.table_name)
+  except Exception:
+    print('#')
+    print('# CYCLE_DETECTED_MOST_LIKELY')
+    print('#')
+    #print(traceback.format_exc())
+    print(sys.exc_info()[2])
+    print()
+
   # get list of files in correct order
   buckets = []
   for target_dir in sorted(patch_folders.values()):
     # go thru patch template files
     type        = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
     object_type = ''
-    files_todo  = [[type, object_type, sorted(glob.glob(target_dir + '/*' + file_ext_obj))]]
+    files       = glob.glob(target_dir + '/*' + file_ext_obj)
+    files_todo  = [[type, object_type, sorted(files)]]
 
     # go thru database objects in requested order
     if type in patch_map:
@@ -692,15 +709,18 @@ if (args['patch'] or args['feature']):
         if object_type == 'PACKAGE BODY':   # in the same folder as specification
           continue
         if object_type in folders:
-          files_path = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
-          files_todo.append([type, object_type, sorted(glob.glob(files_path))])
+          files_path  = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
+          files       = sorted(glob.glob(files_path))
+
+          # sort tables to be in installable order
+          if object_type == 'TABLE':
+            files = get_files_sorted(files, tables_sorted)
+          #
+          files_todo.append([type, object_type, files])
 
     # pass only changed files
     for (type, object_type, files) in files_todo:
       files_changed = []
-      #
-      # @TODO: presort tables
-      #
       for file in files:
         short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
@@ -844,22 +864,6 @@ if args['patch'] and not args['feature']:
 # SHOW CHANGED/NEW TABLES AS A MAP
 #
 if (args['patch'] or args['feature']):
-  # get order good for deployment
-  tables_sorted = []
-  table_notes   = []
-  #
-  try:
-    data = conn.fetch_assoc(query_tables_sorted)
-    for row in data:
-      tables_sorted.append(row.table_name)
-  except Exception:
-    print('#')
-    print('# CYCLE_DETECTED_MOST_LIKELY')
-    print('#')
-    #print(traceback.format_exc())
-    print(sys.exc_info()[2])
-    print()
-
   # get table references
   references = {}
   for row in conn.fetch_assoc(query_tables_dependencies):
@@ -929,8 +933,15 @@ if args['feature'] and not args['patch'] and not args['rollout']:
   # find all unchanged files, sorted by object type
   content = []
   for type in objects_sorted:
-    file_found = False
-    for file in sorted(glob.glob(folders[type] + '/*' + file_ext_obj)):
+    file_found  = False
+    files       = sorted(glob.glob(folders[type] + '/*' + file_ext_obj))
+
+    # sort tables in installable order
+    if type == 'TABLE':
+      files = get_files_sorted(files, tables_sorted)
+
+    # process files
+    for file in files:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
       # check package spec vs body (in the same dir)

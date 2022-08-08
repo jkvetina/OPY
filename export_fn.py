@@ -18,7 +18,7 @@ def get_files_sorted(files, sorted_objects):
   out_files = []
   for object_name in sorted_objects:
     for file in files:
-      if os.path.basename(file) == object_name:
+      if os.path.basename(file).split('.')[0].upper() == object_name:
         if not (file in out_files):
           out_files.append(file)
 
