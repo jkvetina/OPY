@@ -752,9 +752,11 @@ if (args['patch'] or args['feature']):
 if args['patch'] and not args['feature']:
   # open target file and write new content there
   count_lines = 0
-  with open(patch_today, 'w', encoding = 'utf-8') as z:
+  with open(patch_today, 'w', encoding = 'utf-8') as w:
     last_type = ''
     for (type, object_type, files) in buckets:
+      if type == 'apex':
+        continue
       if type != last_type:
         print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
@@ -811,7 +813,7 @@ if args['patch'] and not args['feature']:
         # dont copy file, just append target patch file
         if content != None and len(content):
           content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
-          z.write(content)
+          w.write(content)
           count_lines += content.count('\n')
           #
           if args['debug']:
@@ -823,6 +825,16 @@ if args['patch'] and not args['feature']:
         print('{:20} |'.format(''))
       #
       last_type = type
+
+  # store APEX files in separated files
+  for (type, object_type, files) in buckets:
+    if type == 'apex':
+      for file in files:
+        with open(file, 'r', encoding = 'utf-8') as r:
+          content = r.read()
+          apex_file = patch_today.replace(file_ext_obj, '.') + os.path.basename(file)
+          with open(apex_file, 'w', encoding = 'utf-8') as w:
+            w.write(content)
 
   # create binary to whatever purpose
   if args['zip']:
@@ -954,7 +966,7 @@ if args['feature'] and not args['patch'] and not args['rollout']:
     if file_found:
       content.append('')
 
-  # append APEX app
+  # append files for APEX app
   apex_apps = glob.glob(patch_folders['apex'] + '/*' + file_ext_obj)
   if len(apex_apps):
     content.append('--\n-- APEX\n--')
@@ -962,11 +974,10 @@ if args['feature'] and not args['patch'] and not args['rollout']:
       content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
     content.append('')
 
-  # store to the file too
+  # copy objects to the patch file
   content = '\n'.join(content) + '\n'
-  with open(patch_today, 'w', encoding = 'utf-8') as z:
-    z.write(content)
-  #
+  with open(patch_today, 'w', encoding = 'utf-8') as w:
+    w.write(content)
   #
   print(content)
 
