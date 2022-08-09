@@ -521,7 +521,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     ])
 
   # always do full APEX export, but when -r > 0 then show changed components
-  if args['recent'] > 0 and os.name != 'nt':
+  if args['recent'] > 0:
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
@@ -542,33 +542,23 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   #
 
   # export APEX stuff
-  if os.name == 'nt':
-    # for Windows create one script, full export only
-    content = request_conn + '\n\r'
-    for request in requests:
-      content += request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app']) + '\n\r'
-
-    # create temp file
-    with open(apex_tmp, 'w', encoding = 'utf-8') as w:
-      w.write(content + 'exit;')
-    #
-    process = 'sql /nolog @apex.tmp'
-    result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
-    #
-    if os.path.exists(apex_tmp):
-      os.remove(apex_tmp)
-
-    # cleanup files after each loop
-    clean_apex_files(args['app'], folders['APEX'], apex_replacements)
-
-  else:
-    # for normal platforms
+  if 1 == 1:
     changed = []
     for (i, request) in enumerate(requests):
       request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
-      process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)
+      process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
+
+      # for Windows create temp file
+      if os.name == 'nt':
+        process = 'sql /nolog @' + apex_tmp
+        with open(apex_tmp, 'w', encoding = 'utf-8') as w:
+          w.write(request + '\nexit;')
+
       result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
       output  = result.stdout.strip()
+
+      if os.name == 'nt' and os.path.exists(apex_tmp):
+        os.remove(apex_tmp)
 
       # check output for recent APEX changes
       if ' -list' in request:
