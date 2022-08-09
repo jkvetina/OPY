@@ -542,66 +542,65 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   #
 
   # export APEX stuff
-  if 1 == 1:
-    changed = []
-    for (i, request) in enumerate(requests):
-      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
-      process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
+  changed = []
+  for (i, request) in enumerate(requests):
+    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
+    process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
-      # for Windows create temp file
-      if os.name == 'nt':
-        process = 'sql /nolog @' + apex_tmp
-        with open(apex_tmp, 'w', encoding = 'utf-8') as w:
-          w.write(request + '\nexit;')
+    # for Windows create temp file
+    if os.name == 'nt':
+      process = 'sql /nolog @' + apex_tmp
+      with open(apex_tmp, 'w', encoding = 'utf-8') as w:
+        w.write(request + '\nexit;')
 
-      result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
-      output  = result.stdout.strip()
+    result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
+    output  = result.stdout.strip()
 
-      if os.name == 'nt' and os.path.exists(apex_tmp):
-        os.remove(apex_tmp)
+    if os.name == 'nt' and os.path.exists(apex_tmp):
+      os.remove(apex_tmp)
 
-      # check output for recent APEX changes
-      if ' -list' in request:
-        lines   = output.split('\n')
-        objects = {}
-        changed = []
-        if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
-          for line in lines[7:]:
-            if line.startswith('Disconnected'):
-              break
-            line_date   = line[0:16].strip()
-            line_object = line[17:57].strip()
-            line_type   = line_object.split(':')[0]
-            line_name   = line[57:].strip()
-            #
-            if not (line_type in objects):
-              objects[line_type] = []
-            objects[line_type].append(line_name)
-            changed.append(line_object)
+    # check output for recent APEX changes
+    if ' -list' in request:
+      lines   = output.split('\n')
+      objects = {}
+      changed = []
+      if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
+        for line in lines[7:]:
+          if line.startswith('Disconnected'):
+            break
+          line_date   = line[0:16].strip()
+          line_object = line[17:57].strip()
+          line_type   = line_object.split(':')[0]
+          line_name   = line[57:].strip()
           #
-          print()
-          print('CHANGES SINCE {}: ({})'.format(req_today, len(changed)))
-          print('-------------------------')
-          for obj_type, obj_names in objects.items():
-            for (j, name) in enumerate(sorted(obj_names)):
-              print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
-          print()
-        changed = ' '.join(changed)
-
-      # show progress
-      if args['debug']:
+          if not (line_type in objects):
+            objects[line_type] = []
+          objects[line_type].append(line_name)
+          changed.append(line_object)
+        #
         print()
-        print(process)
+        print('CHANGES SINCE {}: ({})'.format(req_today, len(changed)))
+        print('-------------------------')
+        for obj_type, obj_names in objects.items():
+          for (j, name) in enumerate(sorted(obj_names)):
+            print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
         print()
-        print(output)
-      else:
-        perc = (i + 1) / len(requests)
-        dots = int(70 * perc)
-        sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-        sys.stdout.flush()
+      changed = ' '.join(changed)
 
-      # cleanup files after each loop
-      clean_apex_files(args['app'], folders['APEX'], apex_replacements)
+    # show progress
+    if args['debug']:
+      print()
+      print(process)
+      print()
+      print(output)
+    else:
+      perc = (i + 1) / len(requests)
+      dots = int(70 * perc)
+      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+      sys.stdout.flush()
+
+    # cleanup files after each loop
+    clean_apex_files(args['app'], folders['APEX'], apex_replacements)
   #
   print()
   print()
