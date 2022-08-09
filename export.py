@@ -241,7 +241,9 @@ tables_added    = []
 #
 # PREVIEW OBJECTS
 #
-data_objects = []
+data_objects  = []
+count_objects = 0
+#
 if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
@@ -258,6 +260,8 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
     if not (row.object_type) in summary:
       summary[row.object_type] = 0
     summary[row.object_type] += 1
+    if row.object_type in folders:
+      count_objects += 1
   #
   all_objects = conn.fetch_assoc(query_summary)
   print('                     | CHANGED |   TOTAL')  # fetch data first
@@ -277,7 +281,7 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 # EXPORT OBJECTS
 #
 if len(data_objects):
-  print('EXPORTING OBJECTS: ({})'.format(len(data_objects)))
+  print('EXPORTING OBJECTS: ({})'.format(count_objects))
   if args['verbose']:
     print('------------------')
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
