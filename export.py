@@ -750,6 +750,8 @@ if (args['patch'] or args['feature']):
         buckets.append([type, 'TABLE', tables_changed])
 
 if args['patch'] and not args['feature']:
+  patch_files = []
+
   # open target file and write new content there
   count_lines = 0
   with open(patch_today, 'w', encoding = 'utf-8') as w:
@@ -825,6 +827,8 @@ if args['patch'] and not args['feature']:
         print('{:20} |'.format(''))
       #
       last_type = type
+    #
+    patch_files.append([patch_today, count_lines])
 
   # store APEX files in separated files
   for (type, object_type, files) in buckets:
@@ -835,31 +839,31 @@ if args['patch'] and not args['feature']:
           apex_file = patch_today.replace(file_ext_obj, '.') + os.path.basename(file)
           with open(apex_file, 'w', encoding = 'utf-8') as w:
             w.write(content)
+            patch_files.append([apex_file, content.count('\n')])
 
   # create binary to whatever purpose
   if args['zip']:
     with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
       zip.write(patch_today)
+      patch_files.append([patch_zip, ''])
 
   # store new hashes for rollout
   content = []
-  #
-  # @TODO: patch log named from argument value
-  #
   with open(patch_log, 'w', encoding = 'utf-8') as w:
     for file in sorted(hashed_new.keys()):
       content.append('{} | {}'.format(hashed_new[file], file))
     content = '\n'.join(content) + '\n'
     w.write(content)
+    patch_files.append([patch_log, 0])
 
-  # summary
+  # summary, list created files
   print('{:56}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
-  print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_today), count_lines + 1, os.path.getsize(patch_today)))
-  #
-  if args['zip']:
-    print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_zip), '', os.path.getsize(patch_zip)))
-  #
-  print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(patch_log), content.count('\n') + 1, os.path.getsize(patch_log)))
+  for (file, count_lines) in patch_files:
+    if count_lines == 0:
+      count_lines = content.count('\n') + 1
+    elif count_lines > 0:
+      count_lines += 1
+    print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(file), count_lines, os.path.getsize(file)))
   print()
 
 
