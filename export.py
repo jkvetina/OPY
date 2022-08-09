@@ -267,8 +267,15 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
   print('                     | CHANGED |   TOTAL')  # fetch data first
   for row in all_objects:
     if row.object_count:
-      check = '' if row.object_type in folders else '<--'  # mark not supported object types
-      print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(row.object_type, summary.get(row.object_type, ''), row.object_count, check, row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+      print('{:>20} | {:>7} | {:>7} {:<4} {:>12}{}{:>4}'.format(*[
+        row.object_type,
+        summary.get(row.object_type, ''),
+        row.object_count,
+        '' if row.object_type in folders else '<--',  # mark not supported object types
+        row.constraint_type or '',
+        ' | ' if row.constraint_type else '',
+        row.constraint_count or ''
+      ]))
     else:
       print('{:>58}{}{:>4}'.format(row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
   #
@@ -280,7 +287,7 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 #
 # EXPORT OBJECTS
 #
-if len(data_objects):
+if count_objects:
   print('EXPORTING OBJECTS: ({})'.format(count_objects))
   if args['verbose']:
     print('------------------')
@@ -325,7 +332,7 @@ if len(data_objects):
       ]))
       recent_type = object_type
     else:
-      perc = (i + 1) / len(data_objects)
+      perc = (i + 1) / count_objects
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
@@ -638,7 +645,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
 # show timer after all db queries are done
-if len(data_objects) or args['app'] > 0 or args['app'] or args['csv']:
+if count_objects or args['app'] > 0 or args['app'] or args['csv']:
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
