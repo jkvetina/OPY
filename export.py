@@ -864,7 +864,7 @@ if args['patch'] and not args['feature']:
 #
 # SHOW CHANGED/NEW TABLES AS A MAP
 #
-if (args['patch'] or args['feature']):
+if (args['patch'] or args['feature']) and args['verbose']:
   # get table references
   references = {}
   for row in conn.fetch_assoc(query_tables_dependencies):
