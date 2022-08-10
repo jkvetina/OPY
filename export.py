@@ -674,12 +674,13 @@ if (args['patch'] or args['feature']):
     for row in data:
       tables_sorted.append(row.table_name)
   except Exception:
-    print('#')
-    print('# CYCLE_DETECTED_MOST_LIKELY')
-    print('#')
-    #print(traceback.format_exc())
-    print(sys.exc_info()[2])
-    print()
+    if args['debug']:
+      print('#')
+      print('# CYCLE_DETECTED_MOST_LIKELY')
+      print('#')
+      #print(traceback.format_exc())
+      print(sys.exc_info()[2])
+      print()
 
   # get list of files in correct order
   buckets = []
