@@ -409,19 +409,27 @@ query_grants_made = """
 SELECT
     t.type,
     t.table_name,
-    APEX_STRING.FORMAT('GRANT %0 ON %1 TO %2;', t.privs, RPAD(LOWER(t.table_name), 30), LOWER(t.grantee)) AS sql
+    APEX_STRING.FORMAT (
+        'GRANT %0 ON %1 TO %2%3;',
+        t.privs,
+        RPAD(LOWER(t.table_name), 30),
+        LOWER(t.grantee),
+        CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
+    ) AS sql
 FROM (
     SELECT
         t.type,
         t.table_name,
         LISTAGG(DISTINCT t.privilege, ', ') WITHIN GROUP (ORDER BY NULL)        AS privs,
-        LISTAGG(DISTINCT t.grantee, ', ')   WITHIN GROUP (ORDER BY t.grantee)   AS grantee
+        LISTAGG(DISTINCT t.grantee, ', ')   WITHIN GROUP (ORDER BY t.grantee)   AS grantee,
+        t.grantable
     FROM user_tab_privs_made t
     WHERE t.grantor     = USER
         AND t.type      NOT IN ('USER')
     GROUP BY
         t.type,
-        t.table_name
+        t.table_name,
+        t.grantable
 ) t
 ORDER BY 1, 2, 3"""
 
