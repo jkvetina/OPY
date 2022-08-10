@@ -234,9 +234,22 @@ def clean_view(lines, schema):
   lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
   lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
+  lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*BEQUEATH', ' BEQUEATH')     # remove columns
   lines[0] = lines[0].replace(' ()  AS', ' AS')                             # fix some views
+  lines[0] = lines[0].replace('  ', ' ')
   lines[0] = fix_simple_name(lines[0], schema)
   lines[1] = lines[1].lstrip()
+
+  # fix SELECT *, convert it to columns each on one line
+  for (i, line) in enumerate(lines):
+    #line = replace(line, r'([^\.]\.)?["]([^"]+)["](,?)', r'\n    \1\2\3')
+    new_line = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), line)   # fix uppercased names
+    if new_line != line:
+      line = replace(new_line, r'([^\.]\.)?([^,]+)(,?)', r'\n    \1\2\3')         # split to lines
+      lines[i] = '    ' + line.lstrip()
+      if '    SELECT ' in lines[i]:
+        lines[i] = lines[i].replace('    SELECT ', 'SELECT\n    ')  # fix SELECT t.* on same line
+  #
   lines[len(lines) - 1] += ';'
   #
   return lines
