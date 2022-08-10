@@ -831,7 +831,11 @@ if args['patch'] and not args['feature']:
 
         # dont copy file, just append target patch file
         if len(content):
-          content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
+          if object_type == 'SYNONYM':
+            content = content.rstrip().split(' FOR ')
+            content = '{:<57} FOR {}\n'.format(content[0], content[1])
+          else:
+            content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
           w.write(content)
           count_lines += content.count('\n')
           #
