@@ -243,12 +243,14 @@ def clean_view(lines, schema):
   # fix SELECT *, convert it to columns each on one line
   for (i, line) in enumerate(lines):
     #line = replace(line, r'([^\.]\.)?["]([^"]+)["](,?)', r'\n    \1\2\3')
-    new_line = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), line)   # fix uppercased names
-    if new_line != line:
-      line = replace(new_line, r'([^\.]\.)?([^,]+)(,?)', r'\n    \1\2\3')         # split to lines
-      lines[i] = '    ' + line.lstrip()
-      if '    SELECT ' in lines[i]:
-        lines[i] = lines[i].replace('    SELECT ', 'SELECT\n    ')  # fix SELECT t.* on same line
+    check_line = (replace(replace(line.strip(), 'SELECT\s*', '', re.I), '\s+FROM', '\nFROM', re.I) + '\n').split('\n')[0]
+    if not (' ' in check_line):
+      new_line = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), line)   # fix uppercased names
+      if new_line != line:
+        line = replace(new_line, r'([^\.]\.)?([^,]+)(,?)', r'\n    \1\2\3')         # split to lines
+        lines[i] = '    ' + line.lstrip()
+        if '    SELECT ' in lines[i].upper():
+          lines[i] = replace(lines[i], '    (SELECT) ', r'\1\n    ', re.I)  # fix SELECT t.* on same line
   #
   lines[len(lines) - 1] += ';'
   #
