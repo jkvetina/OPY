@@ -847,6 +847,13 @@ if args['patch'] and not args['feature']:
     #
     patch_files.append([patch_today, count_lines])
 
+    # append GRANTs
+    if os.path.exists(grants_file):
+      with open(grants_file, 'r', encoding = 'utf-8') as r:
+        content = r.read()
+        w.write(content)
+        count_lines += content.count('\n')
+
   # store APEX files in separated patch files
   for file in glob.glob(folders['APEX'] + '/f*' + file_ext_obj):
     short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
@@ -988,6 +995,12 @@ if args['feature'] and not args['patch'] and not args['rollout']:
     #
     if file_found:
       content.append('')
+
+  # append GRANTs
+  if os.path.exists(grants_file):
+    content.append('--\n-- GRANTS\n--')
+    content.append('@@"./{}"'.format(os.path.normpath(grants_file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
+    content.append('')
 
   # append APEX files
   changed_files = []
