@@ -963,11 +963,16 @@ if args['feature'] and not args['patch'] and not args['rollout']:
     if file_found:
       content.append('')
 
-  # append files for APEX app
-  apex_apps = glob.glob(patch_folders['apex'] + '/*' + file_ext_obj)
-  if len(apex_apps):
+  # append APEX files
+  changed_files = []
+  for file in glob.glob(folders['APEX'] + '/f*' + file_ext_obj):
+    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+    if hash_old != hash_new:
+      changed_files.append(file)
+  #
+  if len(changed_files):
     content.append('--\n-- APEX\n--')
-    for file in apex_apps:
+    for file in changed_files:
       content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
     content.append('')
 
