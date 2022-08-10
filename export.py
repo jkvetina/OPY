@@ -101,7 +101,6 @@ patch_map = {
   'objects'   : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
   'jobs'      : ['JOB'],
   'data'      : ['DATA'],
-  'apex'      : [],
 }
 
 # some variables
@@ -124,9 +123,8 @@ patch_folders = {
   'cleanup'   : patch_root + '/60_cleanup/',
   'data'      : patch_root + '/70_data/',
   'finally'   : patch_root + '/80_finally/',
-  'apex'      : patch_root + '/90_apex/',
 }
-patch_store     = ('changes', 'apex')   # store hashes for files in these folders
+patch_store     = ('changes')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
 patch_tables    = patch_folders['changes'] + today_date + '_tables.sql'  # file to notify users about table changes
 file_ext_obj    = '.sql'
@@ -666,20 +664,6 @@ if args['patch'] and not args['feature']:
   if os.path.exists(patch_tables):
     os.remove(patch_tables)
 
-  # if APEX app is requested, then copy it to APEX patch dir
-  if 'app' in args and args['app'] in apex_apps:
-    source_file = '{}/f{}.sql'.format(folders['APEX'], args['app'])
-    target_file = patch_folders['apex'] + os.path.basename(source_file)
-    if os.path.exists(source_file) and not os.path.exists(target_file):
-      shutil.copyfile(source_file, target_file)
-
-  # refresh current apps (keep app placeholders in patch/apex dir if you want them to be part of the patch)
-  # so if you have multiple apps exported, you probably dont want to include all of them in patch
-  for target_file in glob.glob(patch_folders['apex'] + '/*' + file_ext_obj):
-    source_file = folders['APEX'] + os.path.basename(target_file)
-    if os.path.exists(source_file):
-      shutil.copyfile(source_file, target_file)
-
 if (args['patch'] or args['feature']):
   # get order good for deployment
   tables_sorted = []
@@ -768,13 +752,12 @@ if args['patch'] and not args['feature']:
   with open(patch_today, 'w', encoding = 'utf-8') as w:
     last_type = ''
     for (type, object_type, files) in buckets:
-      if type == 'apex':
-        continue
       if type != last_type:
         print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
       #
       last_object_type = ''
       for (i, file) in enumerate(files):
+        content = ''
         short_file, hash_old, hash_new = file, '', ''
         file_exists = os.path.exists(file)
         if file_exists:
@@ -786,9 +769,6 @@ if args['patch'] and not args['feature']:
 
         # show progress to user
         if not args['debug']:
-          if type == 'apex' and file_exists and '.' in file:
-            object_type = 'APEX'
-          #
           object_name = os.path.basename(short_file)
           status      = ''
           if object_type != '':
@@ -824,7 +804,7 @@ if args['patch'] and not args['feature']:
             content = 'DROP {} {};\n--\n'.format(object_type, object_name) + content
 
         # dont copy file, just append target patch file
-        if content != None and len(content):
+        if len(content):
           content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
           w.write(content)
           count_lines += content.count('\n')
@@ -841,16 +821,16 @@ if args['patch'] and not args['feature']:
     #
     patch_files.append([patch_today, count_lines])
 
-  # store APEX files in separated files
-  for (type, object_type, files) in buckets:
-    if type == 'apex':
-      for file in files:
-        with open(file, 'r', encoding = 'utf-8') as r:
-          content = r.read()
-          apex_file = patch_today.replace(file_ext_obj, '.') + os.path.basename(file)
-          with open(apex_file, 'w', encoding = 'utf-8') as w:
-            w.write(content)
-            patch_files.append([apex_file, content.count('\n')])
+  # store APEX files in separated patch files
+  for file in glob.glob(folders['APEX'] + '/f*' + file_ext_obj):
+    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+    target_file = patch_today.replace(file_ext_obj, '.' + os.path.basename(file))
+    #
+    if hash_old != hash_new:
+      if os.path.exists(target_file):
+        os.remove(target_file)
+      shutil.copyfile(file, target_file)
+      patch_files.append([target_file, ''])
 
   # create binary to whatever purpose
   if args['zip']:
@@ -870,7 +850,9 @@ if args['patch'] and not args['feature']:
   # summary, list created files
   print('{:56}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   for (file, count_lines) in patch_files:
-    if count_lines == 0:
+    if count_lines == '':
+      pass
+    elif count_lines == 0:
       count_lines = content.count('\n') + 1
     elif count_lines > 0:
       count_lines += 1
