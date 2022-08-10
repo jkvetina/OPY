@@ -437,6 +437,28 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 
 
 #
+# EXPORT GRANTS
+#
+all_grants  = conn.fetch_assoc(query_grants_made)
+last_type   = ''
+content     = []
+#
+for row in all_grants:
+  if last_type != row.type:
+    content.append('\n--\n-- {}\n--'.format(row.type))
+  content.append(row.sql)
+  last_type = row.type
+content = '{}\n\n'.format('\n'.join(content).lstrip())
+#
+file = '{}{}.sql'.format(folders['GRANT'],connection['user'].split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'])
+if not os.path.exists(os.path.dirname(file)):
+  os.makedirs(os.path.dirname(file))
+with open(file, 'w', encoding = 'utf-8') as w:
+  w.write(content)
+
+
+
+#
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
