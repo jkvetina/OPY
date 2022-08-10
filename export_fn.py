@@ -130,6 +130,16 @@ def clean_table(lines, schema):
       lines[i] = lines[i].replace('" )', '"\n)')
       lines[i] = lines[i].replace('TIMESTAMP\' ', 'TIMESTAMP \'')
 
+    # remove auto sequence
+    if ' AS IDENTITY' in lines[i]:
+      lines[i] = lines[i].replace(' NOORDER', '')
+      lines[i] = lines[i].replace(' NOCYCLE', '')
+      lines[i] = lines[i].replace(' NOCACHE', '')
+      lines[i] = lines[i].replace(' MINVALUE 1 MAXVALUE 9999999999999999999999999999', '')
+      lines[i] = lines[i].replace(' INCREMENT BY 1', '')
+      lines[i] = lines[i].replace(' START WITH 1', '')
+      lines[i] = lines[i].replace('  ', ' ').replace('  ', ' ')
+
   # fix column alignment
   lines = '\n'.join(lines).split('\n')
   for (i, line) in enumerate(lines):
