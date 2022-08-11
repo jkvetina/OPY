@@ -519,17 +519,24 @@ if not args['rollout']:
 apex_apps = {}
 if not args['patch'] and not args['rollout'] and not args['feature'] and (not args['csv'] or args['app']):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
-  for row in all_apps:
-    apex_apps[row.application_id] = row
+  workspace = ''
   #
-  if len(all_apps) and not args['app'] and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
-    header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(all_apps[0].workspace)
+  for row in all_apps:
+    if args['lock']:
+      if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
+        continue  # show only keeped apps
+    apex_apps[row.application_id] = row
+    if workspace == '':
+      workspace = row.workspace
+  #
+  if apex_apps != {} and not args['app'] and not args['patch'] and not args['rollout'] and not args['feature']:
+    header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(workspace)
     #
     print()
     print(header + '\n' + '-' * len(header))
     print('{:<52}PAGES | LAST CHANGE AT'.format(''))
-    for row in all_apps:
-      print('{:>10} | {:<38} {:>5} | {}'.format(row.application_id, row.application_name[0:36], row.pages, row.last_updated_on))
+    for (app_id, row) in apex_apps.items():
+      print('{:>10} | {:<38} {:>5} | {}'.format(app_id, row.application_name[0:36], row.pages, row.last_updated_on))
     print()
 
 
