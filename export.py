@@ -21,6 +21,7 @@ parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done
 parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just changed files',   nargs = '?', default = False, const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',  nargs = '?', default = False, const = True)
+parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',    nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 args['app']     = int(args['app']     or 0)
@@ -112,6 +113,7 @@ patch_today     = '{}/patch_{}.sql'.format(patch_done, today_date)
 patch_zip       = '{}/patch_{}.zip'.format(patch_done, today_date)
 patch_log       = '{}/{}'.format(patch_done, 'patch.log')
 rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
+locked_log      = '{}/{}'.format(patch_done, 'lock.log')
 common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 #
 patch_folders = {
@@ -237,6 +239,17 @@ if os.path.exists(rollout_log):
 tables_changed  = []
 tables_added    = []
 
+# process just files in the locked.log file
+locked_objects  = []
+if args['lock']:
+  # get list of locked objects
+  if os.path.exists(locked_log):
+    with open(locked_log, 'r', encoding = 'utf-8') as r:
+      for short_file in r.readlines():
+        short_file = short_file.strip()
+        if len(short_file) > 1 and not (short_file in locked_objects):
+          locked_objects.append(short_file)
+
 
 
 #
@@ -289,9 +302,16 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 # EXPORT OBJECTS
 #
 if count_objects:
-  print('EXPORTING OBJECTS: ({})'.format(count_objects))
+  if args['lock']:
+    count_objects = len(locked_objects)
+    print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
+    if args['verbose']:
+      print('-------------------------')
+  else:
+    print('EXPORTING OBJECTS: ({})'.format(count_objects))
+    if args['verbose']:
+      print('------------------')
   if args['verbose']:
-    print('------------------')
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   #
   recent_type = ''
@@ -306,17 +326,28 @@ if count_objects:
         print('#\n')
       continue
     #
-    folder = folders[object_type]
-    if not (os.path.isdir(folder)):
-      os.makedirs(folder)
-    #
+    folder    = folders[object_type]
     file_ext  = file_ext_obj if object_type != 'PACKAGE' else file_ext_spec
-    obj       = get_object(conn, object_type, object_name)
     file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
-    #
+
+    # prepare short_file before we even create the file
     short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
+    # check locked objects
+    if args['lock']:
+      if not (short_file in locked_objects):
+        if hash_old == '':
+          # add new files to the list
+          locked_objects.append(short_file)
+        else:
+          continue  # skip files not on the list
+
+    # make sure we have target folders ready
+    if not (os.path.isdir(folder)):
+      os.makedirs(folder)
+
     # check object
+    obj = get_object(conn, object_type, object_name)
     if obj == None and args['debug']:
       print('#')
       print('# OBJECT_EMPTY:', object_type, object_name)
@@ -363,6 +394,12 @@ if count_objects:
   if not args['verbose']:
     print()
   print()
+
+  # update locked file
+  if args['lock']:
+    content = '\n'.join(sorted(locked_objects)) + '\n'
+    with open(locked_log, 'w', encoding = 'utf-8') as w:
+      w.write(content)
 
 
 
