@@ -114,7 +114,7 @@ patch_today     = '{}/patch_{}.sql'.format(patch_done, today_date)
 patch_zip       = '{}/patch_{}.zip'.format(patch_done, today_date)
 patch_log       = '{}/{}'.format(patch_done, 'patch.log')
 rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
-locked_log      = '{}/{}'.format(patch_done, 'lock.log')
+locked_log      = '{}/{}'.format(patch_done, 'locked.log')
 common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
 #
 patch_folders = {
@@ -254,7 +254,7 @@ if args['lock']:
   # add all existing files to the locked log
   if args['curr']:
     for type in objects_sorted:
-      for file in sorted(glob.glob(folders[type] + '/*.*')):
+      for file in sorted(glob.glob(folders[type] + '/*' + file_ext_obj)):
         short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
         if not (short_file in locked_objects):
           locked_objects.append(short_file)
