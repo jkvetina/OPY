@@ -433,3 +433,85 @@ FROM (
 ) t
 ORDER BY 1, 2, 3"""
 
+# overwrite for old databases not supporting LISTAGG DISTINCT
+query_grants_made = """
+WITH t AS (
+    SELECT
+        t.type,
+        t.table_name,
+        t.grantable,
+        t.grantee,
+        t.privilege
+    FROM user_tab_privs_made t
+    WHERE t.grantor     = USER
+        AND t.type      NOT IN ('USER')
+),
+g AS (
+    SELECT
+        t.type,
+        t.table_name,
+        t.grantable,
+        LISTAGG(t.grantee, ', ') WITHIN GROUP (ORDER BY t.grantee) AS grantee
+    FROM (
+        SELECT
+            t.type,
+            t.table_name,
+            t.grantable,
+            t.grantee
+        FROM t
+        GROUP BY
+            t.type,
+            t.table_name,
+            t.grantable,
+            t.grantee
+    ) t
+    GROUP BY
+        t.type,
+        t.table_name,
+        t.grantable
+),
+p AS (
+    SELECT
+        t.type,
+        t.table_name,
+        t.grantable,
+        LISTAGG(t.privilege, ', ') WITHIN GROUP (ORDER BY NULL) AS privs
+    FROM (
+        SELECT
+            t.type,
+            t.table_name,
+            t.grantable,
+            t.privilege
+        FROM t
+        GROUP BY
+            t.type,
+            t.table_name,
+            t.grantable,
+            t.privilege
+    ) t
+    GROUP BY
+        t.type,
+        t.table_name,
+        t.grantable
+)
+SELECT DISTINCT
+    t.type,
+    t.table_name,
+    APEX_STRING.FORMAT (
+        'GRANT %0 ON %1 TO %2%3;',
+        p.privs,
+        RPAD(LOWER(t.table_name), 30),
+        LOWER(g.grantee),
+        CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
+    ) AS sql
+FROM t
+JOIN g
+    ON g.type           = t.type
+    AND g.table_name    = t.table_name
+    AND g.grantable     = t.grantable
+JOIN p
+    ON p.type           = t.type
+    AND p.table_name    = t.table_name
+    AND p.grantable     = t.grantable
+ORDER BY 1, 2, 3"""
+
