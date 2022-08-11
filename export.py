@@ -153,7 +153,7 @@ for file in glob.glob(path, recursive = True):
 curr_schema = connection['user'].split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user']
 grants_file = '{}{}.sql'.format(folders['GRANT'], curr_schema)
 #
-if not args['rollout'] and not args['delete']:
+if not args['rollout']:
   conn      = Oracle(connection)
   data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
@@ -267,7 +267,7 @@ if args['lock']:
 data_objects  = []
 count_objects = 0
 #
-if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature']:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
   print('-----------------                                      ------------')
@@ -421,7 +421,7 @@ if count_objects:
 #
 # EXPORT DATA
 #
-if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
   if not (os.path.isdir(folders['DATA'])):
     os.makedirs(folders['DATA'])
   #
@@ -494,7 +494,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 #
 # EXPORT GRANTS
 #
-if not args['rollout'] and not args['delete']:
+if not args['rollout']:
   all_grants  = conn.fetch_assoc(query_grants_made)
   last_type   = ''
   content     = []
@@ -517,7 +517,7 @@ if not args['rollout'] and not args['delete']:
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete'] and (not args['csv'] or args['app']):
+if not args['patch'] and not args['rollout'] and not args['feature'] and (not args['csv'] or args['app']):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   for row in all_apps:
     apex_apps[row.application_id] = row
@@ -537,7 +537,7 @@ if not args['patch'] and not args['rollout'] and not args['feature'] and not arg
 #
 # EXPORT APEX APP
 #
-if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature'] and not args['delete']:
+if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature']:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
@@ -1091,7 +1091,7 @@ if args['feature'] and not args['patch'] and not args['rollout']:
 #
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
-if args['rollout'] and not args['feature'] and not args['delete']:
+if args['rollout'] and not args['feature']:
   print()
   print('ROLLOUT CONFIRMED:')
   print('------------------')
@@ -1131,43 +1131,14 @@ if args['rollout'] and not args['feature'] and not args['delete']:
 
 
 #
-# DELETE UNCHANGED FILES
+# DELETE UNLOCKED FILES
 #
-if args['delete']:
-  print()
-  print('DELETE UNCHANGED FILES:')
-  print('-----------------------')
-  print()
-
+if args['lock'] and args['delete']:
   # delete all database object files except APEX
-  files_to_delete = []
   for type in objects_sorted:
-    file_found = False
     for file in sorted(glob.glob(folders[type] + '/*.*')):
-      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-      hash_old    = hashed_old.get(short_file, '')
-      hash_new    = hashlib.md5(open(file, 'rb').read()).hexdigest()
-      #
-      if hash_new == hash_old:
-        if not file_found:
-          print(type)
-        #
-        files_to_delete.append(file)
-        file_found = True
-        print('  {}'.format(short_file))
-    #
-    if file_found:
-      print()
-
-  # let user confirm and then remove files
-  if len(files_to_delete):
-    while True:
-      response = input('Do you want to continue? ')
-      if response in ('y', 'Y'):
-        for file in files_to_delete:
-          os.remove(file)
-        break  # exit the infinite loop
-      else:
-        print()
-        sys.exit()
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      if not (short_file in locked_objects):
+        #print('  {}'.format(short_file))
+        os.remove(file)
 
