@@ -500,6 +500,14 @@ if not args['rollout']:
   content     = []
   #
   for row in all_grants:
+    # limit to objects on the locked.log
+    object_file = '{}{}{}'.format(folders[row.type], row.table_name.lower(), file_ext_obj)
+    short_file, hash_old, hash_new = get_file_details(object_file, git_root, hashed_old)
+    #
+    if args['lock'] and not short_file in locked_objects:
+      continue
+
+    # show object type header
     if last_type != row.type:
       content.append('\n--\n-- {}\n--'.format(row.type))
     content.append(row.sql)
