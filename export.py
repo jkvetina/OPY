@@ -689,6 +689,10 @@ if args['patch'] and not args['feature']:
   if os.path.exists(patch_tables):
     os.remove(patch_tables)
 
+  # cleanup old patches
+  for file in glob.glob(patch_done + '/*' + file_ext_obj):
+    os.remove(file)
+
 if (args['patch'] or args['feature']):
   # get order good for deployment
   tables_sorted = []
