@@ -501,11 +501,15 @@ if not args['rollout']:
   #
   for row in all_grants:
     # limit to objects on the locked.log
-    object_file = '{}{}{}'.format(folders[row.type], row.table_name.lower(), file_ext_obj)
-    short_file, hash_old, hash_new = get_file_details(object_file, git_root, hashed_old)
-    #
-    if args['lock'] and not short_file in locked_objects:
-      continue
+    if args['lock']:
+      if not row.type in folders:  # skip unsupported object types
+        continue
+      #
+      object_file = '{}{}{}'.format(folders[row.type], row.table_name.lower(), file_ext_obj)
+      short_file, hash_old, hash_new = get_file_details(object_file, git_root, hashed_old)
+      #
+      if not short_file in locked_objects:
+        continue
 
     # show object type header
     if last_type != row.type:
