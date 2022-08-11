@@ -378,8 +378,8 @@ if count_objects:
         flag
       ]))
       recent_type = object_type
-    else:
-      perc = (i + 1) / count_objects
+    elif count_objects > 0:
+      perc = min((i + 1) / count_objects, 1)
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
