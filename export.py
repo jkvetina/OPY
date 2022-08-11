@@ -22,6 +22,7 @@ parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',  nargs = '?', default = False, const = True)
 parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',    nargs = '?', default = False, const = True)
+parser.add_argument(      '-curr',    '--curr',     help = 'Use current files as the locked.log',       nargs = '?', default = False, const = True)
 #
 args = vars(parser.parse_args())
 args['app']     = int(args['app']     or 0)
@@ -248,6 +249,14 @@ if args['lock']:
       for short_file in r.readlines():
         short_file = short_file.strip()
         if len(short_file) > 1 and not (short_file in locked_objects):
+          locked_objects.append(short_file)
+
+  # add all existing files to the locked log
+  if args['curr']:
+    for type in objects_sorted:
+      for file in sorted(glob.glob(folders[type] + '/*.*')):
+        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+        if not (short_file in locked_objects):
           locked_objects.append(short_file)
 
 
