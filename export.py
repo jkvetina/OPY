@@ -334,11 +334,14 @@ if count_objects:
     short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
     # check locked objects
+    flag = ''
     if args['lock']:
+      flag = ' '  # dont show regular flags
       if not (short_file in locked_objects):
         if hash_old == '':
           # add new files to the list
           locked_objects.append(short_file)
+          flag = '[+]'
         else:
           continue  # skip files not on the list
 
@@ -355,12 +358,15 @@ if count_objects:
       continue
     #
     if args['verbose']:
+      if flag == '':
+        flag = 'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
+      #
       print('{:>20} | {:<30} {:>8} | {:>8} {}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
         obj.count('\n') + 1,                                                    # count lines
         len(obj) if obj else '',                                                # count bytes
-        'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
+        flag
       ]))
       recent_type = object_type
     else:
