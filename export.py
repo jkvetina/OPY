@@ -719,8 +719,6 @@ if (args['patch'] or args['feature']):
     # go thru database objects in requested order
     if type in patch_map:
       for object_type in patch_map[type]:
-        if object_type == 'PACKAGE BODY':   # in the same folder as specification
-          continue
         if object_type in folders:
           files_path  = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
           files       = sorted(glob.glob(files_path))
@@ -736,6 +734,12 @@ if (args['patch'] or args['feature']):
       files_changed = []
       for file in files:
         short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+
+        # check package spec vs body (in the same dir)
+        if object_type == 'PACKAGE BODY' and file.endswith(file_ext_spec):   # ignore package spec in body dir
+          continue
+        if object_type == 'PACKAGE' and not file.endswith(file_ext_spec):    # ignore package body in spec dir
+          continue
 
         # ignore unchanged files in some folders
         if type in patch_store and hash_new == hash_old:
