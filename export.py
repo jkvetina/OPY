@@ -410,11 +410,11 @@ if count_objects:
     print()
   print()
 
-  # update locked file
-  if args['lock']:
-    content = '\n'.join(sorted(locked_objects)) + '\n'
-    with open(locked_log, 'w', encoding = 'utf-8') as w:
-      w.write(content)
+# update locked file
+if args['lock']:
+  content = '\n'.join(sorted(locked_objects)) + '\n'
+  with open(locked_log, 'w', encoding = 'utf-8') as w:
+    w.write(content)
 
 
 
