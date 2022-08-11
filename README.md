@@ -62,8 +62,17 @@ Create patch as a feature branch from changed files (against rollout.log)\
 Mark recently created patch as executed (merge files in patch to rollout.log)\
 ```python export.py -n PROJECT -rollout```
 
-Delete all unchanged files (so you can have just changed files)\
-```python export.py -n PROJECT -delete```
+Export only locked objects (files in locked.log)\
+```python export.py -n PROJECT -lock```
+
+Export only locked objects (files in locked.log) changed today\
+```python export.py -n PROJECT -lock -v -r 1```
+
+Create locked.log file from existing files\
+```python export.py -n PROJECT -lock -curr -r 0```
+
+Delete all files not listed on locked.log list\
+```python export.py -n PROJECT -lock -delete```
 
 <br />
 
