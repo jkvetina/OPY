@@ -420,7 +420,7 @@ FROM (
     SELECT
         t.type,
         t.table_name,
-        LISTAGG(DISTINCT t.privilege, ', ') WITHIN GROUP (ORDER BY NULL)        AS privs,
+        LISTAGG(DISTINCT t.privilege, ', ') WITHIN GROUP (ORDER BY t.privilege) AS privs,
         LISTAGG(DISTINCT t.grantee, ', ')   WITHIN GROUP (ORDER BY t.grantee)   AS grantee,
         t.grantable
     FROM user_tab_privs_made t
@@ -475,7 +475,7 @@ p AS (
         t.type,
         t.table_name,
         t.grantable,
-        LISTAGG(t.privilege, ', ') WITHIN GROUP (ORDER BY NULL) AS privs
+        LISTAGG(t.privilege, ', ') WITHIN GROUP (ORDER BY t.privilege) AS privs
     FROM (
         SELECT
             t.type,
