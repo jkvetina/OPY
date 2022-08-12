@@ -347,7 +347,10 @@ if count_objects:
       if not (short_file in locked_objects):
         if hash_old == '':
           # add new files to the list
-          locked_objects.append(short_file)
+          #locked_objects.append(short_file)
+          # get them, but dont add on locked.log list
+          # you can either -delete them
+          # or keep them with following -lock call
           flag = '[+]'
         else:
           continue  # skip files not on the list
