@@ -202,6 +202,7 @@ if not args['rollout']:
 #
 # PREP FOLDERS AND GET OLD HASHES
 #
+
 # create basic dirs
 for dir in [git_target, patch_root, patch_done]:
   if not os.path.exists(dir):
@@ -243,6 +244,7 @@ tables_added    = []
 #
 # PREP LOCKED FILES
 #
+
 # process just files in the locked.log file
 locked_objects  = []
 if os.path.exists(locked_log):
@@ -685,9 +687,11 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       with open(apex_tmp, 'w', encoding = 'utf-8') as w:
         w.write(request + '\nexit;')
 
+    # run SQLcl and capture the output
     result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
     output  = result.stdout.strip()
 
+    # for Windows remove temp file
     if os.name == 'nt' and os.path.exists(apex_tmp):
       os.remove(apex_tmp)
 
