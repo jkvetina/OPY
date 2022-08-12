@@ -13,7 +13,7 @@ http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-app
 
 ### Typical commands
 
-#### Exporting
+#### Exporting all/recent objects
 
 Export database objects since today midnight\
 ```python export.py -n PROJECT -r 1```
@@ -51,6 +51,17 @@ Export just the APEX application 100\
 Export APEX application 100, but just changes made today\
 ```python export.py -n PROJECT -r 1 -a 100```
 
+#### Exporting locked objects
+
+Mark all current files as locked (create locked.log, then export just these objects)\
+```python export.py -n PROJECT -lock```
+
+Delete all files not listed on locked.log list\
+```python export.py -n PROJECT -lock -delete```
+
+Export only locked objects changed today (when locked.log file exists)\
+```python export.py -n PROJECT -v -r 1```
+
 #### Patching
 
 Create patch from changed files (against rollout.log)\
@@ -61,18 +72,6 @@ Create patch as a feature branch from changed files (against rollout.log)\
 
 Mark recently created patch as executed (merge files in patch to rollout.log)\
 ```python export.py -n PROJECT -rollout```
-
-Export only locked objects (files in locked.log)\
-```python export.py -n PROJECT -lock```
-
-Export only locked objects (files in locked.log) changed today\
-```python export.py -n PROJECT -lock -v -r 1```
-
-Create locked.log file from existing files\
-```python export.py -n PROJECT -lock -curr -r 0```
-
-Delete all files not listed on locked.log list\
-```python export.py -n PROJECT -lock -delete```
 
 <br />
 
