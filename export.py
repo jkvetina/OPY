@@ -309,7 +309,7 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 # EXPORT OBJECTS
 #
 if count_objects:
-  if args['lock']:
+  if (len(locked_objects) or args['lock']):
     count_objects = len(locked_objects)
     print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
     if args['verbose']:
@@ -342,7 +342,7 @@ if count_objects:
 
     # check locked objects
     flag = ''
-    if args['lock']:
+    if (len(locked_objects) or args['lock']):
       flag = ' '  # dont show regular flags
       if not (short_file in locked_objects):
         if hash_old == '':
@@ -409,7 +409,7 @@ if count_objects:
   print()
 
 # update locked file
-if args['lock']:
+if (len(locked_objects) or args['lock']):
   content = '\n'.join(sorted(locked_objects)) + '\n'
   with open(locked_log, 'w', encoding = 'utf-8') as w:
     w.write(content)
@@ -499,7 +499,7 @@ if not args['rollout']:
   #
   for row in all_grants:
     # limit to objects on the locked.log
-    if args['lock']:
+    if (len(locked_objects) or args['lock']):
       if not row.type in folders:  # skip unsupported object types
         continue
       #
@@ -532,7 +532,7 @@ if not args['patch'] and not args['rollout'] and not args['feature'] and (not ar
   workspace = ''
   #
   for row in all_apps:
-    if args['lock']:
+    if (len(locked_objects) or args['lock']):
       if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
         continue  # show only keeped apps
     apex_apps[row.application_id] = row
