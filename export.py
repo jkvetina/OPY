@@ -238,16 +238,20 @@ if os.path.exists(rollout_log):
 tables_changed  = []
 tables_added    = []
 
+
+
+#
+# PREP LOCKED FILES
+#
 # process just files in the locked.log file
 locked_objects  = []
-if args['lock']:
-  # get list of locked objects
-  if os.path.exists(locked_log):
-    with open(locked_log, 'r', encoding = 'utf-8') as r:
-      for short_file in r.readlines():
-        short_file = short_file.strip()
-        if len(short_file) > 1 and not (short_file in locked_objects):
-          locked_objects.append(short_file)
+if os.path.exists(locked_log):
+  with open(locked_log, 'r', encoding = 'utf-8') as r:
+    # get list of locked objects
+    for short_file in r.readlines():
+      short_file = short_file.strip()
+      if len(short_file) > 1 and not (short_file in locked_objects):
+        locked_objects.append(short_file)
 
 if args['lock'] and not args['delete']:
   # add all existing files to the locked log
