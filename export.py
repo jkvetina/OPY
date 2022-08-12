@@ -371,6 +371,8 @@ if count_objects:
       if flag == '':
         flag = 'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
       #
+      if object_type != recent_type and recent_type != '':
+        print('{:>20} |'.format(''))
       print('{:>20} | {:<30} {:>8} | {:>8} {}'.format(*[
         object_type if object_type != recent_type else '',
         object_name if len(object_name) <= 30 else object_name[0:27] + '...',
