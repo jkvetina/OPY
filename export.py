@@ -253,6 +253,13 @@ if os.path.exists(locked_log):
       if len(short_file) > 1 and not (short_file in locked_objects):
         locked_objects.append(short_file)
 
+      # remove not existing files
+      if args['delete']:
+        file = os.path.normpath(git_root + '/' + short_file)
+        if not os.path.exists(file):
+          print('REMOVING', short_file)
+          locked_objects.remove(short_file)
+#
 if args['lock'] and not args['delete']:
   # add all existing files to the locked log
   for type in objects_sorted:
