@@ -424,19 +424,18 @@ if count_objects:
     print()
   print()
 
-# update locked file
+
+
+#
+# UPDATE LOCKED FILE
+#
 if (len(locked_objects) or args['lock']):
   content = '\n'.join(sorted(locked_objects)) + '\n'
   with open(locked_log, 'w', encoding = 'utf-8') as w:
     w.write(content)
 
-
-
-#
-# DELETE UNLOCKED FILES
-#
+# delete all database object files except APEX
 if args['lock'] and args['delete']:
-  # delete all database object files except APEX
   for type in objects_sorted:
     for file in sorted(glob.glob(folders[type] + '/*.*')):
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
