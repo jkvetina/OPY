@@ -433,6 +433,20 @@ if (len(locked_objects) or args['lock']):
 
 
 #
+# DELETE UNLOCKED FILES
+#
+if args['lock'] and args['delete']:
+  # delete all database object files except APEX
+  for type in objects_sorted:
+    for file in sorted(glob.glob(folders[type] + '/*.*')):
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      if not (short_file in locked_objects):
+        #print('  {}'.format(short_file))
+        os.remove(file)
+
+
+
+#
 # EXPORT DATA
 #
 if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
@@ -1160,18 +1174,4 @@ if args['rollout'] and not args['feature']:
   #
   print()
   print()
-
-
-
-#
-# DELETE UNLOCKED FILES
-#
-if args['lock'] and args['delete']:
-  # delete all database object files except APEX
-  for type in objects_sorted:
-    for file in sorted(glob.glob(folders[type] + '/*.*')):
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-      if not (short_file in locked_objects):
-        #print('  {}'.format(short_file))
-        os.remove(file)
 
