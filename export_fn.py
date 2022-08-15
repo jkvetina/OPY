@@ -472,7 +472,7 @@ def get_job_fixed(object_name, obj, conn):
 
 
 
-def clean_apex_files(app_id, folder, apex_replacements):
+def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
   # remove timestamps from all apex files (related to the exported app)
   path  = '{}f{}/**/*.sql'.format(folder, app_id)
   files = sorted(glob.glob(path, recursive = True))
@@ -489,6 +489,10 @@ def clean_apex_files(app_id, folder, apex_replacements):
       new_content = old_content
       new_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", new_content)
       new_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", new_content)
+
+      # replace default authentication
+      if default_authentication and len(default_authentication):
+        new_content = re.sub(r",p_authentication_id=>wwv_flow_api.id[(]([\d]+)[)]", ',p_authentication_id=>wwv_flow_api.id({})'.format(default_authentication), new_content)
 
       # convert component id to names
       for (type, components) in apex_replacements.items():
