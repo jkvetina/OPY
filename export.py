@@ -358,7 +358,7 @@ if count_objects:
     if (len(locked_objects) or args['lock']):
       flag = ' '  # dont show regular flags
       if not (short_file in locked_objects):
-        if hash_old == '':
+        if hash_old == '' and not args['lock']:
           # add new files to the list
           #locked_objects.append(short_file)
           # get them, but dont add on locked.log list
