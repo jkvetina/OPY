@@ -678,6 +678,10 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   # @TODO: export app+ws files + decode
   #
 
+  # trade progress for speed, creating all the JVM is so expensive
+  if not args['debug']:
+    requests = ['\n'.join(requests)]
+
   # export APEX stuff
   apex_tmp = apex_tmp.replace('#', '{}'.format(args['app']))  # allow to export multiple apps at the same time
   changed = []
