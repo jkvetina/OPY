@@ -115,7 +115,6 @@ patch_log       = '{}/{}'.format(patch_done, 'patch.log')
 rollout_log     = '{}/{}'.format(patch_done, 'rollout.log')
 locked_log      = '{}/{}'.format(patch_done, 'locked.log')
 common_root     = os.path.commonprefix([db_conf, git_target]) or '\\//\\//\\//'
-auth_file       = '{}/default_authentication.#.txt'.format(patch_done)
 #
 patch_folders = {
   'init'      : patch_root + '/10_init/',
@@ -637,11 +636,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       apex_replacements[type][component_id] = component_name
 
   # overwrite default AuthN scheme for the application based on file
-  default_authentication = ''
-  auth_file = auth_file.replace('#', 'f{}'.format(args['app']))
-  if os.path.exists(auth_file):
-    with open(auth_file, 'r', encoding = 'utf-8') as r:
-      default_authentication = r.read().strip()
+  default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = args['app'])
 
   # prepare requests (multiple exports)
   request_conn = ''

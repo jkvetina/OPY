@@ -97,6 +97,13 @@ SELECT
 FROM apex_application_authorization a
 WHERE a.application_id = :app_id"""
 
+# get authentication scheme marked as PROD default
+query_apex_authn_default_scheme = """
+SELECT NVL(MAX(a.authentication_scheme_id), 0) AS scheme_id
+FROM apex_application_auth a
+WHERE a.application_id                  = :app_id
+    AND a.authentication_scheme_name    LIKE '%PROD_DEFAULT'"""
+
 # get APEX names for List of Values
 query_apex_lov_names = """
 SELECT

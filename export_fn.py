@@ -491,7 +491,7 @@ def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
       new_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", new_content)
 
       # replace default authentication
-      if default_authentication and len(default_authentication):
+      if default_authentication > 0:
         new_content = re.sub(r",p_authentication_id=>wwv_flow_api.id[(]([\d]+)[)]", ',p_authentication_id=>wwv_flow_api.id({})'.format(default_authentication), new_content)
 
       # convert component id to names
