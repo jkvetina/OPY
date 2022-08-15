@@ -1155,9 +1155,10 @@ if args['rollout'] and not args['feature']:
   print('------------------')
 
   # show removed files
-  for file in sorted(hashed_old.keys()):
-    if not os.path.exists(git_root + '/' + file):
-      print('  [-] {}'.format(file))
+  if args['delete']:
+    for file in sorted(hashed_old.keys()):
+      if not os.path.exists(git_root + '/' + file):
+        print('  [-] {}'.format(file))
 
   # store hashes for next patch
   with open(rollout_log, 'w', encoding = 'utf-8') as w:
@@ -1167,15 +1168,19 @@ if args['rollout'] and not args['feature']:
         for line in r.readlines():
           if '|' in line:
             (hash, file) = line.split('|')
-            hashed_old[file.strip()] = hash.strip()
+            hash = hash.strip()
+            file = file.strip()
+            hashed_old[file] = hash
             print('  [+] {}'.format(file))
-    #
+
+    # keep all previous hashes
     content = []
     for file in sorted(hashed_old.keys()):
       short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-      #
-      if os.path.exists(git_root + '/' + file):
-        content.append('{} | {}'.format(hashed_old[file], file))
+      # ignore/remove non existing files only on -delete mode
+      if args['delete'] and not os.path.exists(git_root + '/' + file):
+        continue
+      content.append('{} | {}'.format(hashed_old[file], file))
     #
     w.write('\n'.join(content) + '\n')
 

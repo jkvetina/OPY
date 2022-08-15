@@ -73,6 +73,9 @@ Create patch as a feature branch from changed files (against rollout.log)\
 Mark recently created patch as executed (merge files in patch to rollout.log)\
 ```python export.py -n PROJECT -rollout```
 
+Mark recently created patch as executed + keep just existing files in log\
+```python export.py -n PROJECT -rollout -delete```
+
 <br />
 
 ## Connect to database
