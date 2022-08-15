@@ -137,7 +137,7 @@ file_ext_spec   = '.spec.sql'
 apex_dir        = folders['APEX']
 apex_temp_dir   = apex_dir + 'temp/'  # temp file for partial APEX exports
 apex_ws_files   = apex_dir + 'workspace_files/'
-apex_tmp        = 'apex.tmp'  # temp file for running SQLcl on Windows
+apex_tmp        = 'apex.#.tmp'  # temp file for running SQLcl on Windows
 
 # cleanup junk files created on Mac probably by iCloud sync
 path = apex_dir + '**/* [0-9].*'
@@ -679,6 +679,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   #
 
   # export APEX stuff
+  apex_tmp = apex_tmp.replace('#', '{}'.format(args['app']))  # allow to export multiple apps at the same time
   changed = []
   for (i, request) in enumerate(requests):
     request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
