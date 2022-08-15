@@ -323,7 +323,7 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 #
 if count_objects:
   if (len(locked_objects) or args['lock']):
-    count_objects = len(locked_objects)
+    count_objects = min(count_objects, len(locked_objects))
     print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
     if args['verbose']:
       print('-------------------------')
