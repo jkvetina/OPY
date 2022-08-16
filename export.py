@@ -710,7 +710,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       changed = []
       if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
         for line in lines[7:]:
-          if line.startswith('Disconnected'):
+          if (line.startswith('Disconnected') or line.startswith('Exporting Application')):
             break
           line_date   = line[0:16].strip()
           line_object = line[17:57].strip()
