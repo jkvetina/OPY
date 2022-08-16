@@ -522,3 +522,23 @@ JOIN p
     AND p.grantable     = t.grantable
 ORDER BY 1, 2, 3"""
 
+# list objects needed before requested object
+query_objects_before = """
+SELECT DISTINCT
+    d.referenced_type       AS type,
+    d.referenced_name       AS name
+FROM user_dependencies d
+WHERE d.name                = :object_name
+    AND d.referenced_owner  = USER
+ORDER BY 1, 2"""
+
+# list objects dependent on requested object
+query_objects_after = """
+SELECT DISTINCT
+    d.type,
+    d.name
+FROM user_dependencies d
+WHERE d.referenced_name     = :object_name
+    AND d.name              != d.referenced_name
+ORDER BY 1, 2"""
+
