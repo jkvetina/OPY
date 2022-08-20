@@ -156,7 +156,17 @@ curr_schema = connection['user'].split('[')[1].rstrip(']') if '[' in connection[
 grants_file = '{}{}.sql'.format(folders['GRANT'], curr_schema)
 #
 if not args.rollout:
-  conn      = Oracle(connection)
+  try:
+    conn = Oracle(connection)
+  except Exception:
+    print('#')
+    print('# CONNECTION FAILED')
+    print('#')
+    print()
+    print(traceback.format_exc().splitlines()[-1])
+    #print(sys.exc_info()[2])
+    sys.exit()
+  #
   data      = conn.fetch_assoc(query_today, recent = args.recent if args.recent >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
   schema    = data[0].curr_user
@@ -174,31 +184,30 @@ if not args.rollout:
   #
   print('CONNECTING:')
   print('-----------')
-  print('    SOURCE | {}@{}/{}{}'.format(
+  print('      SOURCE | {}@{}/{}{}'.format(
     connection['user'],
     connection.get('host', ''),
     connection.get('service', ''),
     connection.get('sid', '')))
   #
   if wallet_file != '':
-    print('    WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
+    print('      WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
   #
-  print('           | {}'.format(db_conf.replace(common_root, '~ ')))
-  print('    TARGET | {}'.format(git_target.replace(common_root, '~ ')))
-  print()
+  print('             | {}'.format(db_conf.replace(common_root, '~ ')))
+  print('      TARGET | {}'.format(git_target.replace(common_root, '~ ')))
+  print('             |')
 
   # get versions
-  if args.info:
-    try:
-      version_apex  = conn.fetch_value(query_version_apex)
-      version_db    = conn.fetch_value(query_version_db)
-    except Exception:
-      version_apex  = version_apex or ''
-      version_db    = conn.fetch_value(query_version_db_old)
-    #
-    print('  DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
-    print('      APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
-    print()
+  try:
+    version_apex  = conn.fetch_value(query_version_apex)
+    version_db    = conn.fetch_value(query_version_db)
+  except Exception:
+    version_apex  = version_apex or ''
+    version_db    = conn.fetch_value(query_version_db_old)
+  #
+  print('    DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
+  print('        APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
+  print()
 
 
 
