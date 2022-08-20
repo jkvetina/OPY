@@ -338,35 +338,17 @@ WHEN NOT MATCHED THEN
 
 # table dependencies
 query_tables_dependencies = """
-WITH d AS (
-    SELECT
-        c.table_name,
-        LISTAGG(r.table_name, ', ') WITHIN GROUP (ORDER BY r.table_name) AS references
-    FROM user_constraints c
-    JOIN user_constraints r
-        ON r.constraint_name    = c.r_constraint_name
-        AND r.owner             = c.owner
-    WHERE c.constraint_type     = 'R'
-        AND c.owner             = c.r_owner
-        AND c.status            = 'ENABLED'
-    GROUP BY c.table_name
-)
 SELECT
-    u.table_name,
-    NULL                AS references
-FROM user_tables u
-LEFT JOIN d
-    ON d.table_name     = u.table_name
-LEFT JOIN user_mviews m
-    ON m.mview_name     = u.table_name
-WHERE d.table_name      IS NULL
-    AND m.mview_name    IS NULL
-    AND u.table_name    NOT LIKE '%\\__$' ESCAPE '\\'
-UNION ALL
-SELECT
-    d.table_name,
-    d.references
-FROM d
+    c.table_name,
+    LISTAGG(r.table_name, ', ') WITHIN GROUP (ORDER BY r.table_name) AS references
+FROM user_constraints c
+JOIN user_constraints r
+    ON r.constraint_name    = c.r_constraint_name
+    AND r.owner             = c.owner
+WHERE c.constraint_type     = 'R'
+    AND c.owner             = c.r_owner
+    AND c.status            = 'ENABLED'
+GROUP BY c.table_name
 ORDER BY 1"""
 
 # grants made by current schema
