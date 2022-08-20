@@ -816,23 +816,6 @@ if args['patch'] and not args['feature']:
     os.remove(file)
 
 if (args['patch'] or args['feature']):
-  # get order good for deployment
-  tables_sorted = []
-  table_notes   = []
-  #
-  try:
-    data = conn.fetch_assoc(query_tables_sorted)
-    for row in data:
-      tables_sorted.append(row.table_name)
-  except Exception:
-    if args['debug']:
-      print('#')
-      print('# CYCLE_DETECTED_MOST_LIKELY')
-      print('#')
-      #print(traceback.format_exc())
-      print(sys.exc_info()[2])
-      print()
-
   # get list of files in correct order
   buckets = []
   for target_dir in sorted(patch_folders.values()):
@@ -848,11 +831,6 @@ if (args['patch'] or args['feature']):
         if object_type in folders:
           files_path  = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
           files       = sorted(glob.glob(files_path))
-
-          # sort tables to be in installable order
-          if object_type == 'TABLE':
-            files = get_files_sorted(files, tables_sorted)
-          #
           files_todo.append([type, object_type, files])
 
     # pass only changed files
@@ -1042,10 +1020,6 @@ if args['feature'] and not args['patch'] and not args['rollout']:
   for type in objects_sorted:
     file_found  = False
     files       = sorted(glob.glob(folders[type] + '/*' + file_ext_obj))
-
-    # sort tables in installable order
-    if type == 'TABLE':
-      files = get_files_sorted(files, tables_sorted)
 
     # process files
     for file in files:

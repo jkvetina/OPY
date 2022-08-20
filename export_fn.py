@@ -14,23 +14,6 @@ def get_file_details(file, git_root, hashed_old):
 
 
 
-def get_files_sorted(files, sorted_objects):
-  out_files = []
-  for object_name in sorted_objects:
-    for file in files:
-      if os.path.basename(file).split('.')[0].upper() == object_name:
-        if not (file in out_files):
-          out_files.append(file)
-
-  # check missing files
-  for file in sorted(files):
-    if not (file in out_files):
-      out_files.append(file)
-  #
-  return out_files
-
-
-
 def get_object(conn, object_type, object_name):
   try:
     # get object from database
