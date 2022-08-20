@@ -369,7 +369,6 @@ if count_objects:
     # check locked objects
     flag = ''
     if (len(locked_objects) or args['lock']):
-      flag = ' '  # dont show regular flags
       if not (short_file in locked_objects):
         if hash_old == '' and not args['lock']:
           # add new files to the list
