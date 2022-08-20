@@ -1029,67 +1029,6 @@ if args['patch'] and not args['feature']:
 
 
 #
-# SHOW CHANGED/NEW TABLES AS A MAP
-#
-if (args['patch'] or args['feature']) and args['verbose']:
-  # get table references
-  references = {}
-  for row in conn.fetch_assoc(query_tables_dependencies):
-    references[row.table_name] = row.references.replace(' ', '').split(',') if row.references else []
-
-  # if query for getting sorted tables failed, use alphabetic order
-  sorted_flag = True
-  if not len(tables_sorted):
-    tables_sorted = sorted(references.keys())
-    sorted_flag = False
-
-  # show only some tables
-  filter_tables = tables_changed + tables_added
-  #
-  if len(filter_tables):
-    print()
-    print('TABLE REFERENCES FOR NEW/CHANGED TABLES: ({}{}) {}'.format(*[
-      str(len(filter_tables)) + '/' if len(filter_tables) > 0 else '',
-      len(references),
-      '- NOT SORTED' if not sorted_flag else ''
-    ]))
-    print('----------------------------------------')
-    #
-    recent_parent = ''
-    for table_name in tables_sorted:
-      if (not table_name in references or (not (table_name in filter_tables) and len(filter_tables))):
-        continue
-      #
-      if not len(references[table_name]):
-        table_notes.append(' {:>30} | {:<30} | {}'.format(table_name, '', 'NEW' if table_name in tables_added else ''))
-      #
-      curr_parent = table_name
-      for referenced_table in references[table_name]:
-        if not (referenced_table in filter_tables) and len(filter_tables):
-          continue
-        #
-        if curr_parent != recent_parent:
-          table_notes.append(' {:>30} | {:<30} | {}'.format(curr_parent, '', 'NEW' if curr_parent in tables_added else ''))
-          recent_parent = curr_parent
-        #
-        if referenced_table != recent_parent:
-          table_notes.append(' {:>30} | {:<30} | {}'.format('', referenced_table, 'NEW' if referenced_table in tables_added else ''))
-      recent_parent = curr_parent
-    #
-    if len(table_notes):
-      content = '\n'.join(table_notes) + '\n'
-      print(content)
-
-      # write patch file to notify user about changed tables
-      with open(patch_tables, 'w', encoding = 'utf-8') as w:
-        w.write('/*\n{}*/\n'.format(content))
-  #
-  if not args['feature']:
-    print()
-
-
-
-#
 # SHOW LIST OF CHANGED FILES
 #
 if args['feature'] and not args['patch'] and not args['rollout']:
