@@ -834,259 +834,180 @@ if args.patch:
   for file in glob.glob(patch_done + '/*' + file_ext_obj):
     os.remove(file)
 
-if (args['patch'] or args['feature']):
-  # get list of files in correct order
-  buckets = []
-  for target_dir in sorted(patch_folders.values()):
-    # go thru patch template files
-    type        = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
-    object_type = ''
-    files       = glob.glob(target_dir + '/*' + file_ext_obj)
-    files_todo  = [[type, object_type, sorted(files)]]
+  # prep arrays
+  changed_objects   = []
+  processed_objects = []
+  processed_names   = []
+  ordered_objects   = []
+  references_todo   = {}
+  references        = {}
+  last_type         = ''
+  table_relations   = {}
+  tables_todo       = []
 
-    # go thru database objects in requested order
-    if type in patch_map:
-      for object_type in patch_map[type]:
-        if object_type in folders:
-          files_path  = folders[object_type] + '/*' + (file_ext_csv if object_type == 'DATA' else file_ext_obj)
-          files       = sorted(glob.glob(files_path))
-          files_todo.append([type, object_type, files])
+  # start with tables, get referenced tables for each table
+  for row in conn.fetch_assoc(query_tables_dependencies):
+    table_relations[row.table_name] = row.references.split(', ')
 
-    # pass only changed files
-    for (type, object_type, files) in files_todo:
-      files_changed = []
-      for file in files:
-        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-
-        # check package spec vs body (in the same dir)
-        if object_type == 'PACKAGE BODY' and file.endswith(file_ext_spec):   # ignore package spec in body dir
-          continue
-        if object_type == 'PACKAGE' and not file.endswith(file_ext_spec):    # ignore package body in spec dir
-          continue
-
-        # ignore unchanged files in some folders
-        if type in patch_store and hash_new == hash_old:
-          continue
-
-        # special treatment for tables
-        if type == 'tables' and object_type == 'TABLE':
-          table_name = os.path.basename(short_file).split('.')[0].upper()
-          if hash_old == '':
-            # add new tables to the list
-            tables_added.append(table_name)
-          elif hash_new != hash_old:
-            # ignore changed tables, they will need a manual patch
-            tables_changed.append(table_name)
-
-            # dont put changed table on the patch list
-            continue
-
-        # check file hash and compare it with hash in rollout.log
-        if (hash_new != hash_old or object_type == '') and os.path.getsize(file) > 0:
-          files_changed.append(file)
-
-        # store hash even for manual patch files
-        if (type in patch_store or object_type != '') and hash_new != hash_old:
-          hashed_new[short_file] = hash_new
-      #
-      if len(files_changed):
-        buckets.append([type, object_type, files_changed])
-
-      # pass changed tables so we can show then on the screen
-      files_changed = []
-      if type == 'changes' and len(tables_changed):
-        buckets.append([type, 'TABLE', tables_changed])
-
-if args['patch'] and not args['feature']:
-  patch_files = []
-
-  # open target file and write new content there
-  count_lines = 0
-  with open(patch_today, 'w', encoding = 'utf-8') as w:
-    last_type = ''
-    for (type, object_type, files) in buckets:
-      if type != last_type:
-        print('{:20} | {}'.format('', patch_folders[type].replace(patch_root + '/', '')))
-      #
-      last_object_type = ''
-      for (i, file) in enumerate(files):
-        content = ''
-        short_file, hash_old, hash_new = file, '', ''
-        file_exists = os.path.exists(file)
-        if file_exists:
-          short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-
-        # show file with/for table changes
-        if type == 'changes' and len(tables_changed) and i == 0:
-          print('{:>20} > {:40}  | {}'.format('', os.path.basename(patch_tables), 'MANUALLY'))
-
-        # show progress to user
-        if not args['debug']:
-          object_name = os.path.basename(short_file)
-          status      = ''
-          if object_type != '':
-            object_name = object_name.split('.')[0].upper()
-            status      = '| MANUALLY' if not file_exists else '| NEW' if hash_old == '' else '| CHANGED'
-          #
-          print('{:>20} {} {}{:<40}{}'.format(*[
-            object_type if object_type != last_object_type else '',
-            '>' if not file_exists else '+' if '.' in object_name else '|',
-            '  ' if object_type != '' else '',
-            object_name,
-            status
-          ]))
-
-        # retrieve file content
-        if object_type == 'DATA' and file.endswith(file_ext_csv):
-          # convert CSV files to MERGE
-          content = get_merge_from_csv(file, conn)
-
-          # add CSV file to patch.log
-          if file_exists:
-            hashed_new[short_file] = hashlib.md5(open(file, 'rb').read()).hexdigest()
-          #
-        elif file_exists:
-          # retrieve object content
-          with open(file, 'r', encoding = 'utf-8') as r:
-            content = r.read()
-
-          # drop changed view first due to grant issues
-          # drop MVW so we can actually create it again
-          if object_type in ('VIEW', 'MATERIALIZED VIEW'):
-            object_name = os.path.basename(short_file).split('.')[0]
-            content = 'DROP {} {};\n--\n'.format(object_type, object_name) + content
-
-        # dont copy file, just append target patch file
-        if len(content):
-          if object_type == 'SYNONYM':
-            content = content.rstrip().split(' FOR ')
-            content = '{:<57} FOR {}\n'.format(content[0], content[1])
-          else:
-            content = '--\n-- {}\n--\n{}\n\n'.format(short_file, content.rstrip())
-          w.write(content)
-          count_lines += content.count('\n')
-          #
-          if args['debug']:
-            print(content)
-        #
-        last_object_type = object_type
-      #
-      if not args['debug']:
-        print('{:20} |'.format(''))
-      #
-      last_type = type
-    #
-    patch_files.append([patch_today, count_lines])
-
-    # append GRANTs
-    if os.path.exists(grants_file):
-      with open(grants_file, 'r', encoding = 'utf-8') as r:
-        content = r.read()
-        w.write(content)
-        count_lines += content.count('\n')
-
-  # store APEX files in separated patch files
-  for file in glob.glob(folders['APEX'] + '/f*' + file_ext_obj):
-    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-    target_file = patch_today.replace(file_ext_obj, '.' + os.path.basename(file))
-    #
-    if hash_old != hash_new:
-      if os.path.exists(target_file):
-        os.remove(target_file)
-      shutil.copyfile(file, target_file)
-      patch_files.append([target_file, ''])
-
-  # create binary to whatever purpose
-  if args['zip']:
-    with zipfile.ZipFile(patch_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
-      zip.write(patch_today)
-      patch_files.append([patch_zip, ''])
-
-  # store new hashes for rollout
-  content = []
-  with open(patch_log, 'w', encoding = 'utf-8') as w:
-    for file in sorted(hashed_new.keys()):
-      content.append('{} | {}'.format(hashed_new[file], file))
-    content = '\n'.join(content) + '\n'
-    w.write(content)
-    patch_files.append([patch_log, 0])
-
-  # summary, list created files
-  print('{:56}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
-  for (file, count_lines) in patch_files:
-    if count_lines == '':
-      pass
-    elif count_lines == 0:
-      count_lines = content.count('\n') + 1
-    elif count_lines > 0:
-      count_lines += 1
-    print('{:>20} | {:30}   {:>8} | {:>8}'.format('', os.path.basename(file), count_lines, os.path.getsize(file)))
-  print()
-
-
-
-#
-# SHOW LIST OF CHANGED FILES
-#
-if args['feature'] and not args['patch'] and not args['rollout']:
-  print()
-  print('CREATING FEATURE BRANCH PATCH:')
-  print('------------------------------')
-  print()
-
-  # find all unchanged files, sorted by object type
-  content = []
-  for type in objects_sorted:
-    file_found  = False
-    files       = sorted(glob.glob(folders[type] + '/*' + file_ext_obj))
-
-    # process files
-    for file in files:
+  # get list of changed objects and their references
+  for object_type in objects_sorted:
+    for file in sorted(glob.glob(folders[object_type] + '/*' + file_ext_obj)):
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
 
-      # check package spec vs body (in the same dir)
-      if type == 'PACKAGE BODY' and file.endswith(file_ext_spec):   # ignore package spec in body dir
+      # check if object changed
+      if hash_old == hash_new:                      # ignore unchanged objects
         continue
-      if type == 'PACKAGE' and not file.endswith(file_ext_spec):    # ignore package body in spec dir
-        continue
-
-      # process only changed files
-      if hash_new != hash_old:
-        # append type header when first file is found
-        if not file_found:
-          content.append('--\n-- {}\n--'.format(type))
-        file_found = True
+      #
+      object_name = os.path.basename(file).split('.')[0].upper()
+      curr_object = '{}.{}'.format(object_type, object_name)
+      #
+      references_todo[curr_object] = []
+      references[curr_object] = []
+      changed_objects.append(curr_object)
+      #
+      if not (object_type in ('TABLE', 'DATA')):
+        for row in conn.fetch_assoc(query_objects_before, object_name = object_name, object_type = object_type):
+          ref_object = '{}.{}'.format(row.type, row.name)
+          references_todo[curr_object].append(ref_object)
+          references[curr_object].append(ref_object)
+      else:
+        tables_todo.append(object_name)           # to process tables first
         #
-        content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
+        if object_name in table_relations:
+          for table_name in table_relations[object_name]:
+            ref_object = '{}.{}'.format('TABLE', table_name)
+            references_todo[curr_object].append(ref_object)
+            references[curr_object].append(ref_object)
+
+  # sort objects to have them in correct order
+  for i in range(0, 20):                            # adjust depending on your depth
+    for obj, refs in references_todo.items():
+      if obj in ordered_objects:                    # object processed
+        continue
+
+      # process tables first
+      object_type, object_name = obj.split('.')
+      if object_type != 'TABLE' and len(tables_todo):
+        continue
+      #
+      if len(refs) == 0:
+        ordered_objects.append(obj)                 # no more references
+        if object_type == 'TABLE':
+          tables_todo.remove(object_name)
+        continue
+
+      # pass only existing objects
+      for ref_object in refs:
+        if ref_object == obj:                       # ignore self reference
+          references_todo[obj].remove(ref_object)
+          continue
+        if not (ref_object in changed_objects):     # ignore objects not part of the patch
+          references_todo[obj].remove(ref_object)
+          continue
+        if ref_object in ordered_objects:           # ignore objects created in previous steps
+          references_todo[obj].remove(ref_object)
+          continue
+        if not obj.startswith('TABLE.') and ref_object.startswith('TABLE.'):  # ignore tables referenced from objects
+          references_todo[obj].remove(ref_object)
+          continue
+
+  # create patch plan
+  for obj in ordered_objects:
+    if not (obj in references):                     # ignore unknown objects
+      continue
     #
-    if file_found:
-      content.append('')
-
-  # append GRANTs
-  if os.path.exists(grants_file):
-    content.append('--\n-- GRANTS\n--')
-    content.append('@@"./{}"'.format(os.path.normpath(grants_file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
-    content.append('')
-
-  # append APEX files
-  changed_files = []
-  for file in glob.glob(folders['APEX'] + '/f*' + file_ext_obj):
+    object_type, object_name = obj.split('.')
+    file = '{}{}{}'.format(folders[object_type], object_name.lower(), file_ext_obj if object_type != 'PACKAGE' else file_ext_spec)
     short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-    if hash_old != hash_new:
-      changed_files.append(file)
+    flag = '[+]' if hash_old == '' else 'ALTERED' if hash_old != hash_new and object_type == 'TABLE' else ''
+    #
+    processed_names.append(obj)                     # to final check if order is correct
+    processed_objects.append({
+      'type'        : object_type,
+      'name'        : object_name,
+      'file'        : file,
+      'short_file'  : short_file,
+      'hash_old'    : hash_old,
+      'hash_new'    : hash_new,
+    })
+    #
+    if ((last_type != object_type and last_type != '') or len(references[obj])):
+      print('{:<20} |'.format(''))
+    print('{:>20} | {:<48}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
+    last_type = object_type
+    #
+    for ref_object in references[obj]:
+      if ref_object != obj and ref_object in changed_objects:
+        object_type, object_name = ref_object.split('.')
+        obj = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
+        if not (ref_object in processed_names):
+          obj = (obj + ' <').ljust(50, '-') + ' MISSING OBJECT'
+        print('{:<20} |   > {}'.format('', obj))
   #
-  if len(changed_files):
-    content.append('--\n-- APEX\n--')
-    for file in changed_files:
-      content.append('@@"./{}"'.format(os.path.normpath(file).replace(os.path.normpath(args['target']), '').replace('\\', '/').lstrip('/')))
-    content.append('')
+  if len(ordered_objects):
+    print('{:<20} |'.format(''))
 
-  # copy objects to the patch file
-  content = '\n'.join(content) + '\n'
-  with open(patch_today, 'w', encoding = 'utf-8') as w:
-    w.write(content)
+  # add data files
   #
-  print(content)
+  # @TODO: NEED TO USE SAME ORDER AS FOR TABLES
+  #
+  files = sorted(glob.glob(folders['DATA'] + '/*' + file_ext_csv))
+  if len(files):
+    object_type = 'DATA'
+    for file in files:
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      object_name = os.path.basename(short_file).split('.')[0].upper()
+      flag = ''
+
+      # check if object changed
+      if hash_old == hash_new:                      # ignore unchanged objects
+        continue
+
+      print('{:>20} | {:<54} {}'.format(object_type if last_type != object_type else '', object_name, flag))
+      last_type = object_type
+    print('{:<20} |'.format(''))
+
+  # create list of files to process
+  processed_files = []
+  for target_dir in sorted(patch_folders.values()):
+    type    = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
+    files   = glob.glob(target_dir + '/*' + file_ext_obj)
+
+    # process files in patch folder first
+    if len(files):
+      print('\n--\n-- {}\n--'.format(type.upper()))
+      for file in files:
+        short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+        print('@@"./{}"'.format(short_file))
+        processed_files.append(short_file)
+
+    # add objects mapped to current patch folder
+    if type in patch_map:
+      header_printed = False
+      for obj in processed_objects:
+        if not (obj['type'] in patch_map[type]):        # ignore non related types
+          continue
+        if not (obj['type'] in folders):                # ignore unknown types
+          continue
+        if obj['short_file'] in processed_files:        # ignore processed objects/files
+          continue
+        #
+        if not header_printed:
+          header_printed = True
+          print('\n--\n-- {}\n--'.format(type.upper()))
+        #
+        print('@@"./{}"'.format(obj['short_file']))
+        processed_files.append(obj['short_file'])
+
+  # append APEX apps
+  apex_apps = glob.glob(folders['APEX'] + '/f*' + file_ext_obj)
+  if len(apex_apps):
+    print('\n--\n-- APEX\n--')
+    for file in apex_apps:
+      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      processed_files.append(short_file)
+      print('@@"./{}"'.format(short_file))
+  print()
 
 
 

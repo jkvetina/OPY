@@ -469,6 +469,7 @@ SELECT DISTINCT
     d.referenced_name       AS name
 FROM user_dependencies d
 WHERE d.name                = :object_name
+    AND d.type              = :object_type
     AND d.referenced_owner  = USER
 ORDER BY 1, 2"""
 
