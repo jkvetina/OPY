@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, hashlib
+import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, hashlib, collections
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -9,53 +9,55 @@ from export_fn import *
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', '-target',  '--target',   help = 'Target folder (Git root)')
 parser.add_argument('-n', '-name',    '--name',     help = 'Connection name')
-parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type', default = '')
-parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compiled since SYSDATE - $recent')
-parser.add_argument('-a', '-app',     '--app',      help = 'APEX application')
-parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ dor to CSV files',   nargs = '?', default = False, const = True)
-parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',           nargs = '?', default = False, const = True)
-parser.add_argument('-d', '-debug',   '--debug',    help = '',                                          nargs = '?', default = False, const = True)
-parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',     nargs = '?', default = False, const = True)
-parser.add_argument(      '-patch',   '--patch',    help = 'Prepare patch',                             nargs = '?', default = False, const = True)
-parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
-parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
-parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',  nargs = '?', default = False, const = True)
-parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',    nargs = '?', default = False, const = True)
-parser.add_argument('-l', '-log',     '--log',      help = 'Rollout.log from different environment')
+parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compiled recently',          type = int,   default = -1)
+parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type',                                               nargs = '?')
+parser.add_argument('-a', '-apex',    '--apex',     help = 'APEX application(s) to export',             type = int,                     nargs = '*')
+parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ dor to CSV files',                 default = False,  nargs = '?',  const = True)
+parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                         default = False,  nargs = '?',  const = True)
+parser.add_argument('-d', '-debug',   '--debug',    help = 'Show some extra stuff when debugging',                    default = False,  nargs = '?',  const = True)
+parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',                   default = False,  nargs = '?',  const = True)
+parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',                                           default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                                    default = False,  nargs = '?',  const = True)
+parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                                            default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',                default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',                  default = False,  nargs = '?',  const = True)
 #
 args = vars(parser.parse_args())
-args['app']     = int(args['app']     or 0)
-args['recent']  = int(args['recent']  or -1)
-#
-root      = os.path.dirname(os.path.realpath(__file__))
-conn_dir  = os.path.abspath(root + '/conn')
+args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
 
-# find connection file
-conn_files = []
-if 'target' in args and args['target'] != None and len(args['target']) > 0:
-  conn_files.append(args['target'] + '/documentation/db.conf')
-if 'name' in args:
-  conn_files.append(os.path.normpath('{}/{}.conf'.format(conn_dir, args['name'])))
+# check args
+if args.debug:
+  print('ARGS:')
+  print('-----')
+  for key, value in sorted(zip(args._fields, args)):
+    if not (key in ('pwd', 'wallet_pwd')):
+      print('{:>10} = {}'.format(key, value))
+  print('')
+
+
+
+#
+# FIND CONNECTION FILE
+#
+root        = os.path.dirname(os.path.realpath(__file__))
+conn_dir    = os.path.abspath(root + '/conn')
+conn_files  = []
+#
+if args.target != None:
+  conn_files.append(args.target + '/documentation/db.conf')
+elif args.name != None:
+  conn_files.append(os.path.normpath('{}/{}.conf'.format(conn_dir, args.name)))
 #
 for db_conf in conn_files:
   if os.path.exists(db_conf):
     with open(db_conf, 'rb') as b:
       connection = pickle.load(b)
-      if args['target'] == None and 'target' in connection:  # overwrite target from pickle file
-        args['target'] = connection['target']
+      if args.target == None and 'target' in connection:  # overwrite target from pickle file
+        args = args._replace(target = connection['target'])
       break
 
-# check args
-if args['debug']:
-  print('ARGS:')
-  print('-----')
-  for (key, value) in args.items():
-    if not (key in ('pwd', 'wallet_pwd')):
-      print('{:>10} = {}'.format(key, value))
-  print('')
-
 # check target
-if (args['target'] == None or len(args['target']) == 0):
+if args.target == None:
   print('#')
   print('# UNKNOWN TARGET')
   print('#')
@@ -69,7 +71,7 @@ if (args['target'] == None or len(args['target']) == 0):
 #
 
 # target folders by object types
-git_target  = os.path.abspath(args['target'] + '/database') + '/'
+git_target  = os.path.abspath(args.target + '/database') + '/'
 git_root    = os.path.normpath(git_target + '../')
 folders = {
   'TABLE'             : git_target + 'tables/',
@@ -130,7 +132,6 @@ patch_folders = {
 }
 patch_store     = ('changes')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
-patch_tables    = patch_folders['changes'] + today_date + '_tables.sql'  # file to notify users about table changes
 file_ext_obj    = '.sql'
 file_ext_csv    = '.csv'
 file_ext_spec   = '.spec.sql'
@@ -154,9 +155,9 @@ for file in glob.glob(path, recursive = True):
 curr_schema = connection['user'].split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user']
 grants_file = '{}{}.sql'.format(folders['GRANT'], curr_schema)
 #
-if not args['rollout']:
+if not args.rollout:
   conn      = Oracle(connection)
-  data      = conn.fetch_assoc(query_today, recent = args['recent'] if args['recent'] >= 0 else '')
+  data      = conn.fetch_assoc(query_today, recent = args.recent if args.recent >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
   schema    = data[0].curr_user
 
@@ -187,7 +188,7 @@ if not args['rollout']:
   print()
 
   # get versions
-  if args['info']:
+  if args.info:
     try:
       version_apex  = conn.fetch_value(query_version_apex)
       version_db    = conn.fetch_value(query_version_db)
@@ -220,14 +221,14 @@ for file in glob.glob(os.path.dirname(patch_manually) + '/*' + file_ext_obj):
     os.remove(file)
 
 # create new patch file for manual changes (ALTER statements, related data changes...)
-if args['patch']:
+if args.patch:
   if not os.path.exists(patch_manually):
     with open(patch_manually, 'w', encoding = 'utf-8') as w:
       w.write('')
 
 # switch to alternative log file (typically from PROD when preparing new patch for PROD)
-if 'log' in args and args['log']:
-  rollout_log = rollout_log.replace('.', '.{}.'.format(args['log']))
+if args.patch and len(args.patch):
+  rollout_log = rollout_log.replace('.', '.{}.'.format(args.patch))
   if not os.path.exists(rollout_log):
     print('#')
     print('# REQUESTED PATCH FILE MISSING')
@@ -269,13 +270,13 @@ if os.path.exists(locked_log):
         locked_objects.append(short_file)
 
       # remove not existing files
-      if args['delete']:
+      if args.delete:
         file = os.path.normpath(git_root + '/' + short_file)
         if not os.path.exists(file):
           print('REMOVING', short_file)
           locked_objects.remove(short_file)
 #
-if args['lock'] and not args['delete']:
+if args.lock and not args.delete:
   # add all existing files to the locked log
   for type in objects_sorted:
     for file in sorted(glob.glob(folders[type] + '/*.*')):
@@ -291,7 +292,7 @@ if args['lock'] and not args['delete']:
 data_objects  = []
 count_objects = 0
 #
-if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not args['feature']:
+if args.recent != 0 and not args.patch and not args.rollout:
   print()
   print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
   print('-----------------                                      ------------')
@@ -301,7 +302,7 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
   for (i, object_type) in enumerate(objects_sorted):
     sort += 'WHEN \'{}\' THEN {}'.format(object_type, i)
   #
-  data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args['type'].upper(), recent = args['recent'] if args['recent'] >= 0 else '')
+  data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args.type.upper(), recent = args.recent if args.recent >= 0 else '')
   summary = {}
   for row in data_objects:
     if not (row.object_type) in summary:
@@ -335,16 +336,16 @@ if args['recent'] != 0 and not args['patch'] and not args['rollout'] and not arg
 # EXPORT OBJECTS
 #
 if count_objects:
-  if (len(locked_objects) or args['lock']):
+  if (len(locked_objects) or args.lock):
     count_objects = min(count_objects, len(locked_objects))
     print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
-    if args['verbose']:
+    if args.verbose:
       print('-------------------------')
   else:
     print('EXPORTING OBJECTS: ({})'.format(count_objects))
-    if args['verbose']:
+    if args.verbose:
       print('------------------')
-  if args['verbose']:
+  if args.verbose:
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   #
   recent_type = ''
@@ -353,7 +354,7 @@ if count_objects:
 
     # make sure we have target folders ready
     if not (object_type in folders):
-      if args['debug']:
+      if args.debug:
         print('#')
         print('# OBJECT_TYPE_NOT_SUPPORTED:', object_type)
         print('#\n')
@@ -368,9 +369,9 @@ if count_objects:
 
     # check locked objects
     flag = ''
-    if (len(locked_objects) or args['lock']):
+    if (len(locked_objects) or args.lock):
       if not (short_file in locked_objects):
-        if hash_old == '' and not args['lock']:
+        if hash_old == '' and not args.lock:
           # add new files to the list
           #locked_objects.append(short_file)
           # get them, but dont add on locked.log list
@@ -386,13 +387,13 @@ if count_objects:
 
     # check object
     obj = get_object(conn, object_type, object_name)
-    if obj == None and args['debug']:
+    if obj == None and args.debug:
       print('#')
       print('# OBJECT_EMPTY:', object_type, object_name)
       print('#\n')
       continue
     #
-    if args['verbose']:
+    if args.verbose:
       if flag == '':
         flag = 'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
       #
@@ -434,7 +435,7 @@ if count_objects:
     with open(file, 'w', encoding = 'utf-8') as w:
       w.write(obj + '\n\n')
   #
-  if not args['verbose']:
+  if not args.verbose:
     print()
   print()
 
@@ -443,13 +444,13 @@ if count_objects:
 #
 # UPDATE LOCKED FILE
 #
-if (len(locked_objects) or args['lock']):
+if (len(locked_objects) or args.lock):
   content = '\n'.join(sorted(locked_objects)) + '\n'
   with open(locked_log, 'w', encoding = 'utf-8') as w:
     w.write(content)
 
 # delete all database object files except APEX
-if args['lock'] and args['delete']:
+if args.lock and args.delete:
   for type in objects_sorted:
     for file in sorted(glob.glob(folders[type] + '/*.*')):
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
@@ -462,7 +463,7 @@ if args['lock'] and args['delete']:
 #
 # EXPORT DATA
 #
-if args['csv'] and not args['patch'] and not args['rollout'] and not args['feature']:
+if args.csv and not args.patch and not args.rollout:
   if not (os.path.isdir(folders['DATA'])):
     os.makedirs(folders['DATA'])
   #
@@ -471,7 +472,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
   #
   print()
   print('EXPORT DATA TO CSV: ({})'.format(len(files)))
-  if args['verbose']:
+  if args.verbose:
     print('------------------- {:12} {:>8} | {:>8} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(files)):
@@ -511,7 +512,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
     csv_file.close()
 
     # show progress
-    if args['verbose']:
+    if args.verbose:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       #
       print('  {:30} {:>8} | {:>8} {}'.format(*[
@@ -526,7 +527,7 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
   #
-  if not args['verbose']:
+  if not args.verbose:
     print()
   print()
 
@@ -535,14 +536,14 @@ if args['csv'] and not args['patch'] and not args['rollout'] and not args['featu
 #
 # EXPORT GRANTS
 #
-if not args['rollout']:
+if not args.rollout:
   all_grants  = conn.fetch_assoc(query_grants_made)
   last_type   = ''
   content     = []
   #
   for row in all_grants:
     # limit to objects on the locked.log
-    if (len(locked_objects) or args['lock']):
+    if (len(locked_objects) or args.lock):
       if not row.type in folders:  # skip unsupported object types
         continue
       #
@@ -570,19 +571,19 @@ if not args['rollout']:
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if not args['patch'] and not args['rollout'] and not args['feature'] and (not args['csv'] or args['app']):
+if not args.patch and not args.rollout and (not args.csv or args.apex):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   workspace = ''
   #
   for row in all_apps:
-    if (len(locked_objects) or args['lock']):
+    if (len(locked_objects) or args.lock):
       if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
         continue  # show only keeped apps
     apex_apps[row.application_id] = row
     if workspace == '':
       workspace = row.workspace
   #
-  if apex_apps != {} and not args['app'] and not args['patch'] and not args['rollout'] and not args['feature']:
+  if apex_apps != {} and not args.apex and not args.patch and not args.rollout:
     header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(workspace)
     #
     print()
@@ -597,14 +598,14 @@ if not args['patch'] and not args['rollout'] and not args['feature'] and (not ar
 #
 # EXPORT APEX APP
 #
-if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args['rollout'] and not args['feature']:
+if 'app' in args and args.apex in apex_apps and not args.patch and not args.rollout:
   # recreate temp dir
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
   os.makedirs(apex_temp_dir)
 
   # delete folder to remove obsolete objects only on full export
-  apex_dir_app = '{}f{}'.format(apex_dir, args['app'])
+  apex_dir_app = '{}f{}'.format(apex_dir, args.apex)
   if os.path.exists(apex_dir_app):
     shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
   #
@@ -614,7 +615,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     os.makedirs(apex_ws_files)
 
   # get app details
-  apex = conn.fetch_assoc(query_apex_app_detail, app_id = args['app'])[0]
+  apex = conn.fetch_assoc(query_apex_app_detail, app_id = args.apex)[0]
   #
   print()
   print('EXPORTING APEX APP:')
@@ -622,7 +623,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
   print('        NAME | {}'.format(apex.app_name))
   #
-  if args['info']:
+  if args.info:
     print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
     print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
     print()
@@ -642,13 +643,13 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     if not (type in apex_replacements):
       apex_replacements[type] = {}
     #
-    rows = conn.fetch(query, app_id = args['app'])
+    rows = conn.fetch(query, app_id = args.apex)
     for data in rows:
       (component_id, component_name) = data
       apex_replacements[type][component_id] = component_name
 
   # overwrite default AuthN scheme for the application based on file
-  default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = args['app'])
+  default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = args.apex)
 
   # prepare requests (multiple exports)
   request_conn = ''
@@ -670,7 +671,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
     ])
 
   # always do full APEX export, but when -r > 0 then show changed components
-  if args['recent'] > 0:
+  if args.recent > 0:
     # partial export, get list of changed objects since that, show it to user
     requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
@@ -678,7 +679,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
   requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
   requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args['app']].workspace_id))
+  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args.apex].workspace_id))
   #
   #-expOriginalIds -> strange owner and app_id
   #
@@ -691,14 +692,14 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
   #
 
   # trade progress for speed, creating all the JVM is so expensive
-  if not args['debug']:
+  if not args.debug:
     requests = ['\n'.join(requests)]
 
   # export APEX stuff
-  apex_tmp = apex_tmp.replace('#', '{}'.format(args['app']))  # allow to export multiple apps at the same time
+  apex_tmp = apex_tmp.replace('#', '{}'.format(args.apex))  # allow to export multiple apps at the same time
   changed = []
   for (i, request) in enumerate(requests):
-    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args['app'], since = req_today, changed = changed)
+    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args.apex, since = req_today, changed = changed)
     process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
     # for Windows create temp file
@@ -708,7 +709,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
         w.write(request + '\nexit;')
 
     # run SQLcl and capture the output
-    result  = subprocess.run(process, shell = True, capture_output = not args['debug'], text = True)
+    result  = subprocess.run(process, shell = True, capture_output = not args.debug, text = True)
     output  = (result.stdout or '').strip()
 
     # for Windows remove temp file
@@ -744,7 +745,7 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       changed = ' '.join(changed)
 
     # show progress
-    if args['debug']:
+    if args.debug:
       print()
       print(process)
       print()
@@ -756,21 +757,21 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       sys.stdout.flush()
 
     # cleanup files after each loop
-    clean_apex_files(args['app'], folders['APEX'], apex_replacements, default_authentication)
+    clean_apex_files(args.apex, folders['APEX'], apex_replacements, default_authentication)
   #
   print()
   print()
 
   # rename workspace files
-  ws_files = 'files_{}.sql'.format(apex_apps[args['app']].workspace_id)
+  ws_files = 'files_{}.sql'.format(apex_apps[args.apex].workspace_id)
   if os.path.exists(apex_ws_files + ws_files):
-    target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[args['app']].workspace)
+    target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[args.apex].workspace)
     if os.path.exists(target_file):
       os.remove(target_file)
     os.rename(apex_ws_files + ws_files, target_file)
 
   # move some changed files to proper APEX folder
-  apex_partial = '{}f{}'.format(apex_temp_dir, args['app'])
+  apex_partial = '{}f{}'.format(apex_temp_dir, args.apex)
   if os.path.exists(apex_partial):
     remove_files = [
       'install_component.sql',
@@ -783,14 +784,14 @@ if 'app' in args and args['app'] in apex_apps and not args['patch'] and not args
       for file in glob.glob(apex_partial + '/' + file_pattern):
         os.remove(file)
     #
-    shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, args['app']), dirs_exist_ok = True)
+    shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, args.apex), dirs_exist_ok = True)
 
   # cleanup
   if os.path.exists(apex_temp_dir):
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
 # show timer after all db queries are done
-if count_objects or args['app'] > 0 or args['app'] or args['csv']:
+if count_objects or args.apex > 0 or args.apex or args.csv:
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
@@ -1074,13 +1075,13 @@ if args['feature'] and not args['patch'] and not args['rollout']:
 #
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
-if args['rollout'] and not args['feature']:
+if args.rollout:
   print()
   print('ROLLOUT CONFIRMED:')
   print('------------------')
 
   # show removed files
-  if args['delete']:
+  if args.delete:
     for file in sorted(hashed_old.keys()):
       if not os.path.exists(git_root + '/' + file):
         print('  [-] {}'.format(file))
@@ -1103,7 +1104,7 @@ if args['rollout'] and not args['feature']:
     for file in sorted(hashed_old.keys()):
       short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
       # ignore/remove non existing files only on -delete mode
-      if args['delete'] and not os.path.exists(git_root + '/' + file):
+      if args.delete and not os.path.exists(git_root + '/' + file):
         continue
       content.append('{} | {}'.format(hashed_old[file], file))
     #
