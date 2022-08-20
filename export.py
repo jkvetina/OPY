@@ -544,6 +544,8 @@ if args.csv and not args.patch and not args.rollout:
 #
 # EXPORT GRANTS
 #
+# @TODO: export also RECD grants, system grants/roles, credentials, ACL...
+#
 if not args.rollout:
   all_grants  = conn.fetch_assoc(query_grants_made)
   last_type   = ''
@@ -579,7 +581,7 @@ if not args.rollout:
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if not args.patch and not args.rollout and (not args.csv or args.apex):
+if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout and not args.csv:
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   workspace = ''
   #
@@ -591,14 +593,14 @@ if not args.patch and not args.rollout and (not args.csv or args.apex):
     if workspace == '':
       workspace = row.workspace
   #
-  if apex_apps != {} and not args.apex and not args.patch and not args.rollout:
+  if apex_apps != {}:
     header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(workspace)
     #
     print()
     print(header + '\n' + '-' * len(header))
-    print('{:<52}PAGES | LAST CHANGE AT'.format(''))
+    print('{:<54}PAGES | LAST CHANGE AT'.format(''))
     for (app_id, row) in apex_apps.items():
-      print('{:>10} | {:<38} {:>5} | {}'.format(app_id, row.application_name[0:36], row.pages, row.last_updated_on))
+      print('{:>12} | {:<38} {:>5} | {}'.format(app_id, row.application_name[0:36], row.pages, row.last_updated_on))
     print()
 
 
