@@ -806,8 +806,10 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
 
 
-# show timer after all db queries are done
-if count_objects or (args.apex or isinstance(args.apex, list)) or args.csv:
+#
+# SHOW TIMER
+#
+if count_objects or apex_apps != {} or args.csv:
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
@@ -816,17 +818,17 @@ if count_objects or (args.apex or isinstance(args.apex, list)) or args.csv:
 #
 # PREPARE PATCH
 #
-if args['patch'] and not args['feature']:
+if args.patch:
+  header = 'PREPARING PATCH FOR {}:'.format(args.patch).replace(' FOR True:', ':')
   print()
-  print('PREPARING PATCH:')
-  print('----------------')
+  print(header)
+  print('-' * len(header))
+  print()
 
   # remove target patch files
   for file in [patch_today, patch_zip]:
     if os.path.exists(file):
       os.remove(file)
-  if os.path.exists(patch_tables):
-    os.remove(patch_tables)
 
   # cleanup old patches
   for file in glob.glob(patch_done + '/*' + file_ext_obj):
