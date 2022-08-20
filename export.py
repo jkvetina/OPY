@@ -278,7 +278,7 @@ if os.path.exists(locked_log):
 if args['lock'] and not args['delete']:
   # add all existing files to the locked log
   for type in objects_sorted:
-    for file in sorted(glob.glob(folders[type] + '/*' + file_ext_obj)):
+    for file in sorted(glob.glob(folders[type] + '/*.*')):
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       if not (short_file in locked_objects):
         locked_objects.append(short_file)
