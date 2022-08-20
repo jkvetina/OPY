@@ -236,7 +236,7 @@ if args.patch:
       w.write('')
 
 # switch to alternative log file (typically from PROD when preparing new patch for PROD)
-if args.patch and len(args.patch):
+if args.patch and args.patch != True:
   rollout_log = rollout_log.replace('.', '.{}.'.format(args.patch))
   if not os.path.exists(rollout_log):
     print('#')
@@ -727,7 +727,7 @@ if 'app' in args and args.apex in apex_apps and not args.patch and not args.roll
 
     # check output for recent APEX changes
     if ' -list' in request:
-      lines   = output.split('\n')
+      lines   = output.splitlines()
       objects = {}
       changed = []
       if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
@@ -800,7 +800,7 @@ if 'app' in args and args.apex in apex_apps and not args.patch and not args.roll
     shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
 
 # show timer after all db queries are done
-if count_objects or args.apex > 0 or args.apex or args.csv:
+if count_objects or (args.apex or isinstance(args.apex, list)) or args.csv:
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
