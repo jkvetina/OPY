@@ -608,197 +608,203 @@ if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.ro
 #
 # EXPORT APEX APP
 #
-if 'app' in args and args.apex in apex_apps and not args.patch and not args.rollout:
-  # recreate temp dir
-  if os.path.exists(apex_temp_dir):
-    shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
-  os.makedirs(apex_temp_dir)
+if apex_apps != {} and not args.patch and not args.rollout:
+  for app_id in apex_apps:
+    if not (args.apex == [] or app_id in args.apex):
+      continue
 
-  # delete folder to remove obsolete objects only on full export
-  apex_dir_app = '{}f{}'.format(apex_dir, args.apex)
-  if os.path.exists(apex_dir_app):
-    shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
-  #
-  if not os.path.exists(apex_dir):
-    os.makedirs(apex_dir)
-  if not os.path.exists(apex_ws_files):
-    os.makedirs(apex_ws_files)
+    # recreate temp dir
+    if os.path.exists(apex_temp_dir):
+      shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
+    os.makedirs(apex_temp_dir)
 
-  # get app details
-  apex = conn.fetch_assoc(query_apex_app_detail, app_id = args.apex)[0]
-  #
-  print()
-  print('EXPORTING APEX APP:')
-  print('-------------------')
-  print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
-  print('        NAME | {}'.format(apex.app_name))
-  #
-  if args.info:
-    print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
-    print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
+    # delete folder to remove obsolete objects only on full export
+    apex_dir_app = '{}f{}'.format(apex_dir, app_id)
+    if os.path.exists(apex_dir_app):
+      shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
+    #
+    if not os.path.exists(apex_dir):
+      os.makedirs(apex_dir)
+    if not os.path.exists(apex_ws_files):
+      os.makedirs(apex_ws_files)
+
+    # get app details
+    apex = conn.fetch_assoc(query_apex_app_detail, app_id = app_id)[0]
+    #
     print()
-    print('       PAGES | {:<8}      LISTS | {:<8}    SETTINGS | {:<8}'.format(apex.pages, apex.lists or '', apex.settings or ''))
-    print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
-    print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
-    print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
-  print()
-
-  # get component names, because the id itself wont tell you much
-  apex_replacements_plan = {
-    'AUTHZ' : query_apex_authz_schemes,
-    'LOV'   : query_apex_lov_names,
-  }
-  apex_replacements = {}
-  for (type, query) in apex_replacements_plan.items():
-    if not (type in apex_replacements):
-      apex_replacements[type] = {}
+    print('EXPORTING APEX APP:')
+    print('-------------------')
+    print('         APP | {} {}'.format(apex.app_id, apex.app_alias))
+    print('        NAME | {}'.format(apex.app_name))
     #
-    rows = conn.fetch(query, app_id = args.apex)
-    for data in rows:
-      (component_id, component_name) = data
-      apex_replacements[type][component_id] = component_name
-
-  # overwrite default AuthN scheme for the application based on file
-  default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = args.apex)
-
-  # prepare requests (multiple exports)
-  request_conn = ''
-  requests = []
-  if wallet_file != '' and 'wallet' in connection:
-    request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
-    request_conn += 'connect {}/"{}"@{}\n'.format(*[
-      connection['user'],
-      connection['pwd'],
-      connection['service']
-    ])
-  else:
-    request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(*[
-      connection['user'],
-      connection['pwd'],
-      connection['host'],
-      connection['port'],
-      connection['sid']
-    ])
-
-  # always do full APEX export, but when -r > 0 then show changed components
-  if args.recent > 0:
-    # partial export, get list of changed objects since that, show it to user
-    requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
-
-  # export full app in several formats
-  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
-  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
-  requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[args.apex].workspace_id))
-  #
-  #-expOriginalIds -> strange owner and app_id
-  #
-  # @TODO: export readable version(s) when switch to 22.1
-  #
-  #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML')
-  #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML')
-  #
-  # @TODO: export app+ws files + decode
-  #
-
-  # trade progress for speed, creating all the JVM is so expensive
-  if not args.debug:
-    requests = ['\n'.join(requests)]
-
-  # export APEX stuff
-  apex_tmp = apex_tmp.replace('#', '{}'.format(args.apex))  # allow to export multiple apps at the same time
-  changed = []
-  for (i, request) in enumerate(requests):
-    request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = args.apex, since = req_today, changed = changed)
-    process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
-
-    # for Windows create temp file
-    if os.name == 'nt':
-      process = 'sql /nolog @' + apex_tmp
-      with open(apex_tmp, 'w', encoding = 'utf-8') as w:
-        w.write(request + '\nexit;')
-
-    # run SQLcl and capture the output
-    result  = subprocess.run(process, shell = True, capture_output = not args.debug, text = True)
-    output  = (result.stdout or '').strip()
-
-    # for Windows remove temp file
-    if os.name == 'nt' and os.path.exists(apex_tmp):
-      os.remove(apex_tmp)
-
-    # check output for recent APEX changes
-    if ' -list' in request:
-      lines   = output.splitlines()
-      objects = {}
-      changed = []
-      if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
-        for line in lines[7:]:
-          if (line.startswith('Disconnected') or line.startswith('Exporting Application')):
-            break
-          line_date   = line[0:16].strip()
-          line_object = line[17:57].strip()
-          line_type   = line_object.split(':')[0]
-          line_name   = line[57:].strip()
-          #
-          if not (line_type in objects):
-            objects[line_type] = []
-          objects[line_type].append(line_name)
-          changed.append(line_object)
-        #
-        print()
-        print('CHANGES SINCE {}: ({})'.format(req_today, len(changed)))
-        print('-------------------------')
-        for obj_type, obj_names in objects.items():
-          for (j, name) in enumerate(sorted(obj_names)):
-            print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
-        print()
-      changed = ' '.join(changed)
-
-    # show progress
-    if args.debug:
+    if args.info:
+      print('   WORKSPACE | {:<30}  CREATED AT | {}'.format(apex.workspace, apex.created_at))
+      print('   COMPATIB. | {:<30}  CHANGED AT | {}'.format(apex.compatibility_mode, apex.changed_at))
       print()
-      print(process)
-      print()
-      print(output)
+      print('       PAGES | {:<8}      LISTS | {:<8}    SETTINGS | {:<8}'.format(apex.pages, apex.lists or '', apex.settings or ''))
+      print('       ITEMS | {:<8}       LOVS | {:<8}  BUILD OPT. | {:<8}'.format(apex.items or '', apex.lovs or '', apex.build_options or ''))
+      print('   PROCESSES | {:<8}  WEB SERV. | {:<8}  INIT/CLEAN | {:<8}'.format(apex.processes or '', apex.ws or '', (apex.has_init_code or '-') + '/' + (apex.has_cleanup or '-')))
+      print('     COMPUT. | {:<8}    TRANSL. | {:<8}      AUTH-Z | {:<8}'.format(apex.computations or '', apex.translations or '', apex.authz_schemes or ''))
+    print()
+
+    # get component names, because the id itself wont tell you much
+    apex_replacements_plan = {
+      'AUTHZ' : query_apex_authz_schemes,
+      'LOV'   : query_apex_lov_names,
+    }
+    apex_replacements = {}
+    for (type, query) in apex_replacements_plan.items():
+      if not (type in apex_replacements):
+        apex_replacements[type] = {}
+      #
+      rows = conn.fetch(query, app_id = app_id)
+      for data in rows:
+        (component_id, component_name) = data
+        apex_replacements[type][component_id] = component_name
+
+    # overwrite default AuthN scheme for the application based on file
+    default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = app_id)
+
+    # prepare requests (multiple exports)
+    request_conn = ''
+    requests = []
+    if wallet_file != '' and 'wallet' in connection:
+      request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
+      request_conn += 'connect {}/"{}"@{}\n'.format(*[
+        connection['user'],
+        connection['pwd'],
+        connection['service']
+      ])
     else:
-      perc = (i + 1) / len(requests)
-      dots = int(70 * perc)
-      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-      sys.stdout.flush()
+      request_conn += 'connect {}/"{}"@{}:{}/{}\n'.format(*[
+        connection['user'],
+        connection['pwd'],
+        connection['host'],
+        connection['port'],
+        connection['sid']
+      ])
 
-    # cleanup files after each loop
-    clean_apex_files(args.apex, folders['APEX'], apex_replacements, default_authentication)
-  #
-  print()
-  print()
+    # always do full APEX export, but when -r > 0 then show changed components
+    if args.recent > 0:
+      # partial export, get list of changed objects since that, show it to user
+      requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
-  # rename workspace files
-  ws_files = 'files_{}.sql'.format(apex_apps[args.apex].workspace_id)
-  if os.path.exists(apex_ws_files + ws_files):
-    target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[args.apex].workspace)
-    if os.path.exists(target_file):
-      os.remove(target_file)
-    os.rename(apex_ws_files + ws_files, target_file)
-
-  # move some changed files to proper APEX folder
-  apex_partial = '{}f{}'.format(apex_temp_dir, args.apex)
-  if os.path.exists(apex_partial):
-    remove_files = [
-      'install_component.sql',
-      'install_page.sql',
-      'application/end_environment.sql',
-      'application/set_environment.sql',
-      'application/pages/delete*.sql',
-    ]
-    for file_pattern in remove_files:
-      for file in glob.glob(apex_partial + '/' + file_pattern):
-        os.remove(file)
+    # export full app in several formats
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+    requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
     #
-    shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, args.apex), dirs_exist_ok = True)
+    #-expOriginalIds -> strange owner and app_id
+    #
+    # @TODO: export readable version(s) when switch to 22.1
+    #
+    #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML')
+    #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML')
+    #
+    # @TODO: export app+ws files + decode
+    #
 
-  # cleanup
-  if os.path.exists(apex_temp_dir):
-    shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
+    # trade progress for speed, creating all the JVM is so expensive
+    if not args.debug:
+      requests = ['\n'.join(requests)]
+
+    # export APEX stuff
+    apex_tmp = apex_tmp.replace('#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    changed = []
+    for (i, request) in enumerate(requests):
+      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = app_id, since = req_today, changed = changed)
+      process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
+
+      # for Windows create temp file
+      if os.name == 'nt':
+        process = 'sql /nolog @' + apex_tmp
+        with open(apex_tmp, 'w', encoding = 'utf-8') as w:
+          w.write(request + '\nexit;')
+
+      # run SQLcl and capture the output
+      result  = subprocess.run(process, shell = True, capture_output = not args.debug, text = True)
+      output  = (result.stdout or '').strip()
+
+      # for Windows remove temp file
+      if os.name == 'nt' and os.path.exists(apex_tmp):
+        os.remove(apex_tmp)
+
+      # check output for recent APEX changes
+      if ' -list' in request:
+        lines   = output.splitlines()
+        objects = {}
+        changed = []
+        if len(lines) > 5 and lines[5].startswith('Date') and lines[6].startswith('----------------'):
+          for line in lines[7:]:
+            if (line.startswith('Disconnected') or line.startswith('Exporting Application')):
+              break
+            line_date   = line[0:16].strip()
+            line_object = line[17:57].strip()
+            line_type   = line_object.split(':')[0]
+            line_name   = line[57:].strip()
+            #
+            if not (line_type in objects):
+              objects[line_type] = []
+            objects[line_type].append(line_name)
+            changed.append(line_object)
+          #
+          print()
+          print('CHANGES SINCE {}: ({})'.format(req_today, len(changed)))
+          print('-------------------------')
+          for obj_type, obj_names in objects.items():
+            for (j, name) in enumerate(sorted(obj_names)):
+              print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
+          print()
+        changed = ' '.join(changed)
+
+      # show progress
+      if args.debug:
+        print()
+        print(process)
+        print()
+        print(output)
+      else:
+        perc = (i + 1) / len(requests)
+        dots = int(70 * perc)
+        sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+        sys.stdout.flush()
+
+      # cleanup files after each loop
+      clean_apex_files(app_id, folders['APEX'], apex_replacements, default_authentication)
+    #
+    print()
+    print()
+
+    # rename workspace files
+    ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
+    if os.path.exists(apex_ws_files + ws_files):
+      target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[app_id].workspace)
+      if os.path.exists(target_file):
+        os.remove(target_file)
+      os.rename(apex_ws_files + ws_files, target_file)
+
+    # move some changed files to proper APEX folder
+    apex_partial = '{}f{}'.format(apex_temp_dir, app_id)
+    if os.path.exists(apex_partial):
+      remove_files = [
+        'install_component.sql',
+        'install_page.sql',
+        'application/end_environment.sql',
+        'application/set_environment.sql',
+        'application/pages/delete*.sql',
+      ]
+      for file_pattern in remove_files:
+        for file in glob.glob(apex_partial + '/' + file_pattern):
+          os.remove(file)
+      #
+      shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, app_id), dirs_exist_ok = True)
+
+    # cleanup
+    if os.path.exists(apex_temp_dir):
+      shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
+
+
 
 # show timer after all db queries are done
 if count_objects or (args.apex or isinstance(args.apex, list)) or args.csv:
