@@ -18,7 +18,6 @@ parser.add_argument('-d', '-debug',   '--debug',    help = '',                  
 parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',     nargs = '?', default = False, const = True)
 parser.add_argument(      '-patch',   '--patch',    help = 'Prepare patch',                             nargs = '?', default = False, const = True)
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                      nargs = '?', default = False, const = True)
-parser.add_argument('-f', '-feature', '--feature',  help = 'Feature branch, keep just changed files',   nargs = '?', default = False, const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                              nargs = '?', default = False, const = True)
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',  nargs = '?', default = False, const = True)
 parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',    nargs = '?', default = False, const = True)
@@ -99,10 +98,11 @@ objects_sorted = [
 # map objects to patch folders
 patch_map = {
   'init'      : [],
-  'tables'    : ['TABLE', 'SEQUENCE', 'INDEX', 'MATERIALIZED VIEW'],
-  'objects'   : ['VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
-  'jobs'      : ['JOB'],
+  'tables'    : ['SEQUENCE', 'TABLE'],
+  'objects'   : ['INDEX', 'MATERIALIZED VIEW', 'VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'SYNONYM'],
   'data'      : ['DATA'],
+  'grants'    : ['GRANT'],
+  'jobs'      : ['JOB'],
 }
 
 # some variables
@@ -122,10 +122,11 @@ patch_folders = {
   'tables'    : patch_root + '/20_new_tables/',
   'changes'   : patch_root + '/30_table+data_changes/',
   'objects'   : patch_root + '/40_repeatable_objects/',
-  'jobs'      : patch_root + '/50_jobs/',
-  'cleanup'   : patch_root + '/60_cleanup/',
-  'data'      : patch_root + '/70_data/',
-  'finally'   : patch_root + '/80_finally/',
+  'cleanup'   : patch_root + '/50_cleanup/',
+  'data'      : patch_root + '/60_data/',
+  'grants'    : patch_root + '/70_grants/',
+  'jobs'      : patch_root + '/80_jobs/',                 # after data
+  'finally'   : patch_root + '/90_finally/',
 }
 patch_store     = ('changes')   # store hashes for files in these folders
 patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
