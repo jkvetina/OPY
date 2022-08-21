@@ -879,12 +879,7 @@ if args.patch:
       references[curr_object] = []
       changed_objects.append(curr_object)
       #
-      if not (object_type in ('TABLE', 'DATA')):
-        for row in conn.fetch_assoc(query_objects_before, object_name = object_name, object_type = object_type):
-          ref_object = '{}.{}'.format(row.type, row.name)
-          references_todo[curr_object].append(ref_object)
-          references[curr_object].append(ref_object)
-      else:
+      if object_type in ('TABLE', 'DATA'):
         tables_todo.append(object_name)           # to process tables first
         #
         if object_name in table_relations:
@@ -892,6 +887,11 @@ if args.patch:
             ref_object = '{}.{}'.format('TABLE', table_name)
             references_todo[curr_object].append(ref_object)
             references[curr_object].append(ref_object)
+      else:
+        for row in conn.fetch_assoc(query_objects_before, object_name = object_name, object_type = object_type):
+          ref_object = '{}.{}'.format(row.type, row.name)
+          references_todo[curr_object].append(ref_object)
+          references[curr_object].append(ref_object)
 
   # sort objects to have them in correct order
   for i in range(0, 20):                            # adjust depending on your depth
