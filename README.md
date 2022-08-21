@@ -13,7 +13,7 @@ http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-app
 
 ### Typical commands
 
-#### Exporting all/recent objects
+#### Exporting database objects
 
 Export database objects since today midnight\
 ```python export.py -n PROJECT -r 1```
@@ -36,6 +36,8 @@ Export all tables (or other object types - PACKAGE, VIEW...)\
 Export all tables changed today and show each table name\
 ```python export.py -n PROJECT -t TABLE -r 1 -v```
 
+#### Exporting CSV
+
 Export data from all tables listed in data/ as CSV files\
 ```python export.py -n PROJECT -r 0 -csv```
 
@@ -48,13 +50,18 @@ Export data as CSV from all tables starting with USER or ROLE\
 Export data from all tables listed in data/ as CSV files and show more details\
 ```python export.py -n PROJECT -r 0 -csv -v```
 
-Export all database objects and APEX application 100\
-```python export.py -n PROJECT -a 100```
+#### Exporting APEX
 
-Export just the APEX application 100\
+Export all database objects and APEX applications listed in apex/ folder\
+```python export.py -n PROJECT -a```
+
+Export all database objects and APEX applications 100, 110\
+```python export.py -n PROJECT -a 100 110```
+
+Export just the APEX application 100 without db objects\
 ```python export.py -n PROJECT -r 0 -a 100```
 
-Export APEX application 100, but just changes made today\
+Export APEX application 100, and show changes made today\
 ```python export.py -n PROJECT -r 1 -a 100```
 
 #### Exporting locked objects
@@ -73,11 +80,14 @@ Delete all files not listed on locked.log list\
 Create patch from changed files (against rollout.log)\
 ```python export.py -n PROJECT -patch```
 
-Create patch as a feature branch from changed files (against rollout.log)\
-```python export.py -n PROJECT -feature```
+Create patch for PROD environment from changed files (against rollout.PROD.log)\
+```python export.py -n PROJECT -patch PROD```
 
 Mark recently created patch as executed (merge files in patch to rollout.log)\
 ```python export.py -n PROJECT -rollout```
+
+Mark recently created PROD patch as executed (merge files in patch to rollout.PROD.log)\
+```python export.py -n PROJECT -rollout PROD```
 
 Mark recently created patch as executed + keep just existing files in log\
 ```python export.py -n PROJECT -rollout -delete```
