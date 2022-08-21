@@ -944,6 +944,7 @@ if args.patch:
       'hash_old'    : hash_old,
       'hash_new'    : hash_new,
     })
+    hashed_new[short_file] = hash_new  # store value for new patch.log
     #
     if ((last_type != object_type and last_type != '') or (len(references[obj]) and args.verbose)):
       print('{:<20} |'.format(''))
@@ -1023,6 +1024,14 @@ if args.patch:
       processed_files.append(short_file)
       print('@@"./{}"'.format(short_file))
   print()
+
+  # store new hashes for rollout
+  content = []
+  with open(patch_log, 'w', encoding = 'utf-8') as w:
+    for file in sorted(hashed_new.keys()):
+      content.append('{} | {}'.format(hashed_new[file], file))
+    content = '\n'.join(content) + '\n'
+    w.write(content)
 
 
 
