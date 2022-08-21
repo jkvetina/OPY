@@ -1031,6 +1031,14 @@ if args.patch:
     content = '\n'.join(content) + '\n'
     w.write(content)
 
+  # create binary to whatever purpose
+  if args.zip:
+    if os.path.exists(patch_zip):
+      os.remove(patch_zip)
+    #
+    shutil.make_archive(git_root + 'patch', 'zip', git_root)  # everything in folder
+    os.rename(git_root + 'patch.zip', patch_zip)
+
 
 
 #
