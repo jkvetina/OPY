@@ -836,7 +836,7 @@ if args.patch:
   print()
 
   # remove target patch files
-  for file in [patch_today, patch_zip]:
+  for file in (patch_today, patch_zip):
     if os.path.exists(file):
       os.remove(file)
 
@@ -981,6 +981,8 @@ if args.patch:
 
   # create list of files to process
   processed_files = []
+  patch_line      = '@@"../{}"'  # @@ = relative to script from which it is called from
+  #
   for target_dir in sorted(patch_folders.values()):
     type    = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
     files   = glob.glob(target_dir + '/*' + file_ext_obj)
@@ -990,7 +992,7 @@ if args.patch:
       print('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
         short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-        print('@@"./{}"'.format(short_file))
+        print(patch_line.format(short_file))
         processed_files.append(short_file)
 
     # add objects mapped to current patch folder
@@ -1008,7 +1010,7 @@ if args.patch:
           header_printed = True
           print('\n--\n-- {}\n--'.format(type.upper()))
         #
-        print('@@"./{}"'.format(obj['short_file']))
+        print(patch_line.format(obj['short_file']))
         processed_files.append(obj['short_file'])
 
   # append APEX apps
@@ -1018,7 +1020,7 @@ if args.patch:
     for file in apex_apps:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       processed_files.append(short_file)
-      print('@@"./{}"'.format(short_file))
+      print(patch_line.format(short_file))
   print()
 
   # store new hashes for rollout
