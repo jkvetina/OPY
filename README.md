@@ -45,7 +45,7 @@ Export data as CSV from table NAVIGATION\
 ```python export.py -n PROJECT -r 0 -csv NAVIGATION```
 
 Export data as CSV from all tables starting with USER or ROLE\
-```python export.py -n PROJECT -r 0 -csv USER% ROLE%```
+```python export.py -n PROJECT -r 0 -csv USER% ROLE% -v```
 
 Export data from all tables listed in data/ as CSV files and show more details\
 ```python export.py -n PROJECT -r 0 -csv -v```
