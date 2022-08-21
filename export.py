@@ -962,29 +962,21 @@ if args.patch:
           if not (ref_object in processed_names):
             obj = (obj + ' <').ljust(50, '-') + ' MISSING OBJECT'
           print('{:<20} |   > {}'.format('', obj))
-  #
-  if len(ordered_objects):
-    print('{:<20} |'.format(''))
 
-  # add data files
-  #
-  # @TODO: NEED TO USE SAME ORDER AS FOR TABLES
-  #
-  files = sorted(glob.glob(folders['DATA'] + '/*' + file_ext_csv))
-  if len(files):
-    object_type = 'DATA'
-    for file in files:
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
-      object_name = os.path.basename(short_file).split('.')[0].upper()
-      flag = ''
-
-      # check if object changed
-      if hash_old == hash_new:                      # ignore unchanged objects
-        continue
-
-      print('{:>20} | {:<54} {}'.format(object_type if last_type != object_type else '', object_name, flag))
-      last_type = object_type
-    print('{:<20} |'.format(''))
+  # show changed data files
+  for object_type in ('DATA',):
+    if len(ordered_objects):
+      print('{:<20} |'.format(''))
+    #
+    files = sorted(glob.glob(folders[object_type] + '/*' + file_ext_csv))
+    if len(files):
+      for file in files:
+        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+        object_name = os.path.basename(short_file).split('.')[0].upper()
+        if hash_old != hash_new or 1 == 1:
+          print('{:>20} | {:<54}'.format(object_type if last_type != object_type else '', object_name))
+        last_type = object_type
+      print('{:<20} |'.format(''))
 
   # create list of files to process
   processed_files = []
