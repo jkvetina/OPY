@@ -494,26 +494,25 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     print('------------------- {:12} {:>8} | {:>8} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(tables)):
+    file = '{}{}.csv'.format(folders['DATA'], table_name)
+    #
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
-      print()
-      print('#')
-      print('# TABLE_MISSING:', table_name)
-      print('#\n')
-      #print(traceback.format_exc())
-      #print(sys.exc_info()[2])
+      if args.verbose:
+        print('  {:50} | REMOVED'.format(table_name))
+      if os.path.exists(file):
+        os.remove(file)
       continue
     #
-    file        = '{}{}.csv'.format(folders['DATA'], table_name)
-    csv_file    = open(file, 'w', encoding = 'utf-8')
-    writer      = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
-    columns     = [col for col in conn.cols if not (col in ignore_columns)]
-    order_by    = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
+    csv_file  = open(file, 'w', encoding = 'utf-8')
+    writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+    columns   = [col for col in conn.cols if not (col in ignore_columns)]
+    order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
     #
     try:
-      data      = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+      data    = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
     except Exception:
       print()
       print('#')
