@@ -945,18 +945,19 @@ if args.patch:
       'hash_new'    : hash_new,
     })
     #
-    if ((last_type != object_type and last_type != '') or len(references[obj])):
+    if ((last_type != object_type and last_type != '') or (len(references[obj]) and args.verbose)):
       print('{:<20} |'.format(''))
     print('{:>20} | {:<48}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
     last_type = object_type
     #
-    for ref_object in references[obj]:
-      if ref_object != obj and ref_object in changed_objects:
-        object_type, object_name = ref_object.split('.')
-        obj = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
-        if not (ref_object in processed_names):
-          obj = (obj + ' <').ljust(50, '-') + ' MISSING OBJECT'
-        print('{:<20} |   > {}'.format('', obj))
+    if args.verbose:
+      for ref_object in references[obj]:
+        if ref_object != obj and ref_object in changed_objects:
+          object_type, object_name = ref_object.split('.')
+          obj = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
+          if not (ref_object in processed_names):
+            obj = (obj + ' <').ljust(50, '-') + ' MISSING OBJECT'
+          print('{:<20} |   > {}'.format('', obj))
   #
   if len(ordered_objects):
     print('{:<20} |'.format(''))
