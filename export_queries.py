@@ -283,6 +283,9 @@ SELECT p.version
 FROM product_component_version p
 WHERE p.product LIKE 'Oracle Database%'"""
 
+query_csv_tables = """
+SELECT table_name FROM user_tables WHERE table_name LIKE :tables_like"""
+
 # get all compatible columns to export table to CSV
 query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols

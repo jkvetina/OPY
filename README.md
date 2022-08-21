@@ -39,6 +39,12 @@ Export all tables changed today and show each table name\
 Export data from all tables listed in data/ as CSV files\
 ```python export.py -n PROJECT -r 0 -csv```
 
+Export data as CSV from table NAVIGATION\
+```python export.py -n PROJECT -r 0 -csv NAVIGATION```
+
+Export data as CSV from all tables starting with USER or ROLE\
+```python export.py -n PROJECT -r 0 -csv USER% ROLE%```
+
 Export data from all tables listed in data/ as CSV files and show more details\
 ```python export.py -n PROJECT -r 0 -csv -v```
 

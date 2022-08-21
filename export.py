@@ -12,7 +12,7 @@ parser.add_argument('-n', '-name',    '--name',     help = 'Connection name')
 parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compiled recently',          type = int,   default = -1)
 parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type',                             default = '',     nargs = '?')
 parser.add_argument('-a', '-apex',    '--apex',     help = 'APEX application(s) to export',             type = int,                     nargs = '*')
-parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ dor to CSV files',                 default = False,  nargs = '?',  const = True)
+parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ to CSV files',                                       nargs = '*')
 parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                         default = False,  nargs = '?',  const = True)
 parser.add_argument('-d', '-debug',   '--debug',    help = 'Show some extra stuff when debugging',                    default = False,  nargs = '?',  const = True)
 parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',                   default = False,  nargs = '?',  const = True)
@@ -135,6 +135,9 @@ patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
 file_ext_obj    = '.sql'
 file_ext_csv    = '.csv'
 file_ext_spec   = '.spec.sql'
+
+# for CSV files dont export audit columns
+ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by']
 
 # apex folders
 apex_dir        = folders['APEX']
@@ -321,7 +324,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
       count_objects += 1
   #
   all_objects = conn.fetch_assoc(query_summary)
-  print('                     | EXPORTING |   TOTAL')
+  print('                       EXPORTING |   TOTAL')
   for row in all_objects:
     if row.object_count:
       print('{:>20} | {:>9} | {:>7} {:<6} {:>12}{}{:>4}'.format(*[
@@ -471,19 +474,30 @@ if args.lock and args.delete:
 #
 # EXPORT DATA
 #
-if args.csv and not args.patch and not args.rollout:
+if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout:
   if not (os.path.isdir(folders['DATA'])):
     os.makedirs(folders['DATA'])
-  #
-  files = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*.csv')]
-  ignore_columns = ['updated_at', 'updated_by', 'created_at', 'created_by', 'calculated_at']
-  #
+
+  # export/refresh existing files
+  tables = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*' + file_ext_csv)]
+
+  # when passing values to -csv arg, find relevant tables
+  if isinstance(args.csv, list) and len(args.csv):
+    tables = []
+    for tables_like in args.csv:
+      data = conn.fetch_assoc(query_csv_tables, tables_like = tables_like.upper())
+      for row in data:
+        table_name = row.table_name.lower()
+        if not (table_name in tables):
+          tables.append(table_name)
+
+  # proceed with data export
   print()
-  print('EXPORT DATA TO CSV: ({})'.format(len(files)))
+  print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
   if args.verbose:
     print('------------------- {:12} {:>8} | {:>8} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
   #
-  for (i, table_name) in enumerate(sorted(files)):
+  for (i, table_name) in enumerate(sorted(tables)):
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
@@ -530,7 +544,7 @@ if args.csv and not args.patch and not args.rollout:
         '| NEW' if hash_old == '' else '| CHANGED' if hash_new != hash_old else ''
       ]))
     else:
-      perc = (i + 1) / len(files)
+      perc = (i + 1) / len(tables)
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
@@ -581,7 +595,7 @@ if not args.rollout:
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout and not args.csv:
+if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout and not (args.csv or isinstance(args.csv, list)):
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
   workspace = ''
   #
@@ -809,7 +823,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 #
 # SHOW TIMER
 #
-if count_objects or apex_apps != {} or args.csv:
+if count_objects or apex_apps != {} or (args.csv or isinstance(args.csv, list)):
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
   print('\n')
 
