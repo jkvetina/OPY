@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, hashlib, collections
+import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, collections
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -260,10 +260,6 @@ if os.path.exists(rollout_log):
       if '/' in hash:
         hash, file = file, hash  # swap columns for backward compatibility
       hashed_old[file.strip()] = hash.strip()
-
-# split tables into buckets
-tables_changed  = []
-tables_added    = []
 
 
 
