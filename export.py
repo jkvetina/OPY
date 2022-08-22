@@ -1095,9 +1095,10 @@ if args.patch:
 # CONFIRM ROLLOUT - STORE CURRENT HASHES IN A LOG
 #
 if args.rollout:
+  header = 'ROLLOUT CONFIRMED FOR {}:'.format(args.rollout).replace(' FOR True:', ':')
   print()
-  print('ROLLOUT CONFIRMED:')
-  print('------------------')
+  print(header)
+  print('-' * len(header))
 
   # show removed files
   if args.delete:
@@ -1106,6 +1107,9 @@ if args.rollout:
         print('  [-] {}'.format(file))
 
   # store hashes for next patch
+  if args.rollout != True:
+    rollout_log = rollout_log.replace('.', '.{}.'.format(args.rollout))
+  #
   with open(rollout_log, 'w', encoding = 'utf-8') as w:
     # get files and hashes from patch.log file and overwrite old hashes
     if os.path.exists(patch_log):
@@ -1133,6 +1137,5 @@ if args.rollout:
     if os.path.exists(patch_log):
       os.remove(patch_log)
   #
-  print()
   print()
 
