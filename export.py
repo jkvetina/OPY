@@ -248,7 +248,6 @@ if args.patch and args.patch != True:
     print('#', rollout_log)
     print('#')
     print()
-    sys.exit()
 
 # get old hashes
 hashed_old = {}
