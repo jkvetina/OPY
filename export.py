@@ -585,7 +585,7 @@ if not args.rollout:
       content.append('\n--\n-- {}\n--'.format(row.type))
     content.append(row.sql)
     last_type = row.type
-  content = '{}\n\n'.format('\n'.join(content).lstrip())
+  content = '{}\n\n'.format('\n'.join(content)).lstrip()
   #
   if not os.path.exists(os.path.dirname(grants_file)):
     os.makedirs(os.path.dirname(grants_file))
