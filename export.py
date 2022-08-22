@@ -666,13 +666,13 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # recreate temp dir
     if os.path.exists(apex_temp_dir):
-      shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
+      shutil.rmtree(apex_temp_dir, ignore_errors = True, onerror = None)
     os.makedirs(apex_temp_dir)
 
     # delete folder to remove obsolete objects only on full export
     apex_dir_app = '{}f{}'.format(apex_dir, app_id)
     if os.path.exists(apex_dir_app):
-      shutil.rmtree(apex_dir_app, ignore_errors = False, onerror = None)
+      shutil.rmtree(apex_dir_app, ignore_errors = True, onerror = None)
     #
     if not os.path.exists(apex_dir):
       os.makedirs(apex_dir)
@@ -853,7 +853,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # cleanup
     if os.path.exists(apex_temp_dir):
-      shutil.rmtree(apex_temp_dir, ignore_errors = False, onerror = None)
+      shutil.rmtree(apex_temp_dir, ignore_errors = True, onerror = None)
 
 
 
