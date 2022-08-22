@@ -155,8 +155,9 @@ for file in glob.glob(path, recursive = True):
 #
 # CONNECT TO DATABASE
 #
-curr_schema = connection['user'].split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user']
-grants_file = '{}{}.sql'.format(folders['GRANT'], curr_schema)
+curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
+grants_made_file  = '{}{}.sql'.format(folders['GRANT'], curr_schema)
+grants_recd_file  = os.path.dirname(grants_made_file) + '/received/#' + file_ext_obj
 #
 if not args.rollout:
   try:
@@ -564,11 +565,10 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 # @TODO: export also RECD grants, system grants/roles, credentials, ACL...
 #
 if not args.rollout:
-  all_grants  = conn.fetch_assoc(query_grants_made)
   last_type   = ''
   content     = []
   #
-  for row in all_grants:
+  for row in conn.fetch_assoc(query_grants_made):
     # limit to objects on the locked.log
     if (len(locked_objects) or args.lock):
       if not row.type in folders:  # skip unsupported object types
@@ -587,10 +587,37 @@ if not args.rollout:
     last_type = row.type
   content = '{}\n\n'.format('\n'.join(content)).lstrip()
   #
-  if not os.path.exists(os.path.dirname(grants_file)):
-    os.makedirs(os.path.dirname(grants_file))
-  with open(grants_file, 'w', encoding = 'utf-8') as w:
+  if not os.path.exists(os.path.dirname(grants_made_file)):
+    os.makedirs(os.path.dirname(grants_made_file))
+  with open(grants_made_file, 'w', encoding = 'utf-8') as w:
     w.write(content)
+
+  # received grants
+  received_grants = {}
+  for row in conn.fetch_assoc(query_grants_recd):
+    if not (row.owner in received_grants):
+      received_grants[row.owner] = {}
+    if not (row.type in received_grants[row.owner]):
+      received_grants[row.owner][row.type] = {}
+    if not (row.table_name in received_grants[row.owner][row.type]):
+      received_grants[row.owner][row.type][row.table_name] = []
+    received_grants[row.owner][row.type][row.table_name].append(row)
+  #
+  switch_schema = 'ALTER SESSION SET CURRENT_SCHEMA = {};\n'
+  for owner, types in received_grants.items():
+    content = [switch_schema.format(owner.lower())]
+    for type in types:
+      content.append('--\n-- {}\n--'.format(type))
+      for table_name in received_grants[owner][type]:
+        for row in received_grants[owner][type][table_name]:
+          content.append('GRANT {:<17} ON {}.{:<30} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower()))
+      content.append('')
+    content.append(switch_schema.format(curr_schema.lower()))
+    #
+    if not os.path.exists(os.path.dirname(grants_recd_file)):
+      os.makedirs(os.path.dirname(grants_recd_file))
+    with open(grants_recd_file.replace('#', owner), 'w', encoding = 'utf-8') as w:
+      w.write(('\n'.join(content) + '\n').lstrip())
 
 
 

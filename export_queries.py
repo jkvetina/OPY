@@ -460,6 +460,18 @@ JOIN p
     AND p.grantable     = t.grantable
 ORDER BY 1, 2, 3"""
 
+# grants received by current schema
+query_grants_recd = """
+SELECT
+    t.owner,
+    t.type,
+    t.table_name,
+    t.privilege,
+    t.grantable
+FROM user_tab_privs_recd t
+WHERE t.type NOT IN ('USER')
+ORDER BY 1, 2, 3"""
+
 # list objects needed before requested object
 query_objects_before = """
 SELECT DISTINCT
