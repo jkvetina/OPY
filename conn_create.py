@@ -89,6 +89,14 @@ print('')
 
 
 #
+# create target dir
+#
+if not os.path.exists(args['target']):
+  os.makedirs(args['target'])
+
+
+
+#
 # check connectivity
 #
 ora = Oracle(args)
