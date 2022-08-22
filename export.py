@@ -599,7 +599,7 @@ if not args.rollout:
 #
 apex_apps = {}
 if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout and not (args.csv or isinstance(args.csv, list)):
-  all_apps  = conn.fetch_assoc(query_apex_applications, schema = connection['user'].upper())
+  all_apps  = conn.fetch_assoc(query_apex_applications, schema = curr_schema)
   workspace = ''
   #
   for row in all_apps:
@@ -865,6 +865,8 @@ if args.patch:
   last_type         = ''
   table_relations   = {}
   tables_todo       = []
+  patch_notes       = []
+  patch_content     = []
 
   # start with tables, get referenced tables for each table
   for row in conn.fetch_assoc(query_tables_dependencies):
@@ -954,8 +956,8 @@ if args.patch:
     hashed_new[short_file] = hash_new  # store value for new patch.log
     #
     if ((last_type != object_type and last_type != '') or (len(references[obj]) and args.verbose)):
-      print('{:<20} |'.format(''))
-    print('{:>20} | {:<48}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
+      patch_notes.append('{:<20} |'.format(''))
+    patch_notes.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
     last_type = object_type
     #
     if args.verbose:
@@ -964,13 +966,13 @@ if args.patch:
           object_type, object_name = ref_object.split('.')
           obj = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
           if not (ref_object in processed_names):
-            obj = (obj + ' <').ljust(50, '-') + ' MISSING OBJECT'
-          print('{:<20} |   > {}'.format('', obj))
+            obj = (obj + ' <').ljust(48, '-') + ' MISSING OBJECT'
+          patch_notes.append('{:<20} |   > {}'.format('', obj))
 
   # show changed data files
   for object_type in ('DATA',):
     if len(ordered_objects):
-      print('{:<20} |'.format(''))
+      patch_notes.append('{:<20} |'.format(''))
     #
     files = sorted(glob.glob(folders[object_type] + '/*' + file_ext_csv))
     if len(files):
@@ -978,9 +980,9 @@ if args.patch:
         short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
         object_name = os.path.basename(short_file).split('.')[0].upper()
         if hash_old != hash_new or 1 == 1:
-          print('{:>20} | {:<54}'.format(object_type if last_type != object_type else '', object_name))
+          patch_notes.append('{:>20} | {:<54}'.format(object_type if last_type != object_type else '', object_name))
         last_type = object_type
-      print('{:<20} |'.format(''))
+      patch_notes.append('{:<20} |'.format(''))
 
   # create list of files to process
   processed_files = []
@@ -992,10 +994,10 @@ if args.patch:
 
     # process files in patch folder first
     if len(files):
-      print('\n--\n-- {}\n--'.format(type.upper()))
+      patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
         short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-        print(patch_line.format(short_file))
+        patch_content.append(patch_line.format(short_file))
         processed_files.append(short_file)
 
     # add objects mapped to current patch folder
@@ -1011,20 +1013,20 @@ if args.patch:
         #
         if not header_printed:
           header_printed = True
-          print('\n--\n-- {}\n--'.format(type.upper()))
+          patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
         #
-        print(patch_line.format(obj['short_file']))
+        patch_content.append(patch_line.format(obj['short_file']))
         processed_files.append(obj['short_file'])
 
   # append APEX apps
   apex_apps = glob.glob(folders['APEX'] + '/f*' + file_ext_obj)
   if len(apex_apps):
-    print('\n--\n-- APEX\n--')
+    patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       processed_files.append(short_file)
-      print(patch_line.format(short_file))
-  print()
+      patch_content.append(patch_line.format(short_file))
+  patch_content.append('')
 
   # store new hashes for rollout
   content = []
@@ -1033,6 +1035,13 @@ if args.patch:
       content.append('{} | {}'.format(hashed_new[file], file))
     content = '\n'.join(content) + '\n'
     w.write(content)
+
+  # show to user and store in the patch file
+  print('\n'.join(patch_notes))
+  print('\n'.join(patch_content))
+  #
+  with open(patch_today, 'w', encoding = 'utf-8') as w:
+    w.write('--\n--' + '\n--'.join(patch_notes) + '\n' + '\n'.join(patch_content) + '\n')
 
   # create binary to whatever purpose
   if args.zip:
