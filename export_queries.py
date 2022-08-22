@@ -72,18 +72,13 @@ FROM (
                 m.mview_name    AS object_name
             FROM user_mviews m
         )
-        AND (o.object_type, o.object_name) NOT IN (
-            SELECT
-                'JOB'           AS object_type,
-                j.job_name      AS object_name
-            FROM user_scheduler_jobs j
-            WHERE j.job_style NOT IN ('REGULAR')
-        )
+        AND o.object_type NOT IN ('JOB')
     UNION ALL
     SELECT 'JOB' AS object_type, j.job_name AS object_name
     FROM user_scheduler_jobs j
     WHERE :recent IS NULL
         AND (:object_type = 'JOB' OR :object_type IS NULL)
+        AND j.schedule_type != 'IMMEDIATE'
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
