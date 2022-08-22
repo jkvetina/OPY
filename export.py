@@ -637,9 +637,13 @@ if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.ro
   workspace = ''
   #
   for row in all_apps:
-    if (len(locked_objects) or args.lock):
-      if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
-        continue  # show only keeped apps
+    if args.apex == []:
+      if (len(locked_objects) or args.lock):
+        if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
+          continue  # show only keeped apps
+    elif not (row.application_id in args.apex):
+      continue
+    #
     apex_apps[row.application_id] = row
     if workspace == '':
       workspace = row.workspace
