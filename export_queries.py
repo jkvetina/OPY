@@ -318,7 +318,8 @@ FROM (
 ) t"""
 
 # template for MERGE statement from CSV file
-template_csv_merge = """MERGE INTO {table_name} t
+template_csv_merge = """
+MERGE INTO {table_name} t
 USING (
     {csv_content_query}
 ) s

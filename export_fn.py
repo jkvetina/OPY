@@ -540,7 +540,7 @@ def get_merge_from_csv(csv_file, conn):
   #
   all_cols    = 't.' + ',\n        t.'.join(columns)
   all_values  = 's.' + ',\n        s.'.join(columns)
-  query       = template_csv_merge.format(table_name = table_name, primary_cols_set = primary_cols_set, csv_content_query = csv_select, non_primary_cols_set = update_cols, all_cols = all_cols, all_values = all_values, skip_update = skip_update)
+  query       = template_csv_merge.lstrip().format(table_name = table_name, primary_cols_set = primary_cols_set, csv_content_query = csv_select, non_primary_cols_set = update_cols, all_cols = all_cols, all_values = all_values, skip_update = skip_update)
   #
   return query
 
