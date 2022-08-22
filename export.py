@@ -549,12 +549,18 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   print()
 
   # convert all existing CSV files to MERGE statement files in patch/data/ folder
+  all_data = ''
   for file in glob.glob(folders['DATA'] + '*' + file_ext_csv):
     target_file = patch_folders['data'] + os.path.basename(file).replace(file_ext_csv, file_ext_obj)
-    content = get_merge_from_csv(file, conn)
+    table_name  = os.path.basename(file).split('.')[0]
+    content     = get_merge_from_csv(file, conn)
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:
         w.write(content)
+        all_data += 'DELETE FROM {};\n{}\n\n\n'.format(table_name, content)
+  #
+  with open(patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
+    w.write(all_data + 'COMMIT;\n\n')
 
 
 
@@ -1023,6 +1029,10 @@ if args.patch:
       patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
         short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+        #
+        if os.path.basename(short_file) == '__.sql':    # ignore file with all data files merged
+          continue
+        #
         patch_content.append(patch_line.format(short_file))
         processed_files.append(short_file)
 
