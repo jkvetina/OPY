@@ -567,7 +567,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 #
 # EXPORT GRANTS
 #
-# @TODO: export also RECD grants, system grants/roles, credentials, ACL...
+# @TODO: export also system grants/roles, credentials, ACL...
 #
 if not args.rollout:
   last_type   = ''
@@ -606,16 +606,18 @@ if not args.rollout:
       received_grants[row.owner][row.type] = {}
     if not (row.table_name in received_grants[row.owner][row.type]):
       received_grants[row.owner][row.type][row.table_name] = []
-    received_grants[row.owner][row.type][row.table_name].append(row)
+    #
+    query = 'GRANT {:<17} ON {}.{:<30} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower())
+    received_grants[row.owner][row.type][row.table_name].append(query)
   #
   switch_schema = 'ALTER SESSION SET CURRENT_SCHEMA = {};\n'
   for owner, types in received_grants.items():
     content = [switch_schema.format(owner.lower())]
     for type in types:
       content.append('--\n-- {}\n--'.format(type))
-      for table_name in received_grants[owner][type]:
-        for row in received_grants[owner][type][table_name]:
-          content.append('GRANT {:<17} ON {}.{:<30} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower()))
+      for table_name in sorted(received_grants[owner][type]):
+        for query in sorted(received_grants[owner][type][table_name]):
+          content.append(query)
       content.append('')
     content.append(switch_schema.format(curr_schema.lower()))
     #
