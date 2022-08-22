@@ -850,6 +850,10 @@ if args.patch:
   # cleanup old patches
   for file in glob.glob(patch_done + '/*' + file_ext_obj):
     os.remove(file)
+  #
+  for file in glob.glob(patch_folders['changes'] + '/*' + file_ext_obj):
+    if os.path.getsize(file) == 0:
+      os.remove(file)
 
   # prep arrays
   changed_objects   = []
