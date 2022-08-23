@@ -19,9 +19,9 @@ parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX version
 parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',                                           default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                                    default = False,  nargs = '?',  const = True)
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                                            default = False,  nargs = '?',  const = True)
-parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',                default = False,  nargs = '?',  const = True)
-parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',                  default = False,  nargs = '?',  const = True)
-#                           lock+
+parser.add_argument(      '-lock',    '--lock',     help = 'Lock existing files into locked.log',                     default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                 default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
 #
 args = vars(parser.parse_args())
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
@@ -269,7 +269,7 @@ if os.path.exists(rollout_log):
 #
 
 # process just files in the locked.log file
-locked_objects  = []
+locked_objects = []
 if os.path.exists(locked_log):
   with open(locked_log, 'r', encoding = 'utf-8') as r:
     # get list of locked objects
@@ -284,9 +284,9 @@ if os.path.exists(locked_log):
         if not os.path.exists(file):
           print('REMOVING', short_file)
           locked_objects.remove(short_file)
-#
-if args.lock and not args.delete:
-  # add all existing files to the locked log
+
+# add all existing files to the locked log when just -lock is used
+if args.lock and not args.delete and not args.add:
   for type in objects_sorted:
     for file in sorted(glob.glob(folders[type] + '/*.*')):
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
@@ -379,15 +379,10 @@ if count_objects:
     flag = ''
     if (len(locked_objects) or args.lock):
       if not (short_file in locked_objects):
-        if hash_old == '' and not args.lock:
-          # add new files to the list
-          #locked_objects.append(short_file)
-          # get them, but dont add on locked.log list
-          # you can either -delete them
-          # or keep them with following -lock call
+        if hash_old == '' and args.add:         # add new files to the locked list
           flag = '[+]'
         else:
-          continue  # skip files not on the list
+          continue                              # skip files not on the locked list
 
     # make sure we have target folders ready
     if not (os.path.isdir(folder)):

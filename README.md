@@ -69,11 +69,14 @@ Export APEX application 100, and show changes made today\
 Mark all current files as locked (create locked.log, then export just these objects)\
 ```python export.py -n PROJECT -lock```
 
-Export only locked objects (when locked.log file exists) and add new files\
-```python export.py -n PROJECT -v -r 1```
-
 Delete all files not listed on locked.log list\
 ```python export.py -n PROJECT -lock -delete```
+
+Allow to export new objects to files when -lock(ed)\
+```python export.py -n PROJECT -lock -add```
+
+Export only locked objects (when locked.log file exists) changed today\
+```python export.py -n PROJECT -v -r 1```
 
 #### Patching
 
