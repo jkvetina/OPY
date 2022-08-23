@@ -452,7 +452,7 @@ if (len(locked_objects) or args.lock):
   with open(locked_log, 'w', encoding = 'utf-8') as w:
     w.write(content)
 
-# delete all database object files except APEX
+# delete all database object files not on the list and except APEX folder
 if args.lock and args.delete:
   for type in objects_sorted:
     for file in sorted(glob.glob(folders[type] + '/*.*')):
@@ -471,7 +471,13 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     os.makedirs(folders['DATA'])
 
   # export/refresh existing files
-  tables = [os.path.splitext(os.path.basename(file))[0] for file in glob.glob(folders['DATA'] + '*' + file_ext_csv)]
+  tables = []
+  tables_flags = {}  # to keep flags and use them in MERGE statements
+  for file in glob.glob(folders['DATA'] + '*' + file_ext_csv):
+    file = os.path.basename(file).split('.')
+    tables.append(file[0])
+    if file[1] in ('U', 'D'):
+      tables_flags[file[0]] = file[1]
 
   # when passing values to -csv arg, find relevant tables
   if isinstance(args.csv, list) and len(args.csv):
@@ -487,17 +493,18 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   print()
   print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
   if args.verbose:
-    print('------------------- {:12} {:>8} | {:>8} | {}'.format('', 'LINES', 'BYTES', 'STATUS'))
+    print('------------------- {:14} {:>3} | {:>3} | {:>8} | {:>8} | {}'.format('', 'UPD', 'DEL', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(tables)):
-    file = '{}{}.csv'.format(folders['DATA'], table_name)
+    flag = tables_flags[table_name] if table_name in tables_flags else ''
+    file = '{}{}.{}.csv'.format(folders['DATA'], table_name, flag).replace('..', '.')
     #
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       if args.verbose:
-        print('  {:50} | REMOVED'.format(table_name))
+        print('  {:64} | REMOVED'.format(table_name))
       if os.path.exists(file):
         os.remove(file)
       continue
@@ -528,8 +535,10 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     if args.verbose:
       short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
       #
-      print('  {:30} {:>8} | {:>8} {}'.format(*[
-        table_name,
+      print('  {:32} {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
+        table_name.upper(),
+        '' if not ('.U.' in file) else 'UPD',
+        '' if not ('.D.' in file) else 'DEL',
         len(data),                # lines
         os.path.getsize(file),    # bytes
         '| NEW' if hash_old == '' else '| CHANGED' if hash_new != hash_old else ''
@@ -547,9 +556,11 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   # convert all existing CSV files to MERGE statement files in patch/data/ folder
   all_data = ''
   for file in glob.glob(folders['DATA'] + '*' + file_ext_csv):
-    target_file = patch_folders['data'] + os.path.basename(file).replace(file_ext_csv, file_ext_obj)
     table_name  = os.path.basename(file).split('.')[0]
-    content     = get_merge_from_csv(file, conn)
+    target_file = patch_folders['data'] + table_name + file_ext_obj
+    skip_update = '--' if not ('.U.' in file) else ''
+    skip_delete = '--' if not ('.D.' in file) else ''
+    content     = get_merge_from_csv(file, conn, skip_update, skip_delete)
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:
         w.write(content)

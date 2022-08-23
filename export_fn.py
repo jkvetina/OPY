@@ -490,13 +490,12 @@ def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
 
 
 
-def get_merge_from_csv(csv_file, conn):
-  table_name  = os.path.basename(csv_file).replace('.csv', '').lower()
+def get_merge_from_csv(csv_file, conn, skip_update, skip_delete):
+  table_name  = os.path.basename(csv_file).split('.')[0].lower()
   columns     = []
   csv_select  = []
   all_rows    = []
   update_cols = []
-  skip_update = '--'
   csv_rows    = 0
 
   # parse CSV file and create WITH table
@@ -540,7 +539,16 @@ def get_merge_from_csv(csv_file, conn):
   #
   all_cols    = 't.' + ',\n        t.'.join(columns)
   all_values  = 's.' + ',\n        s.'.join(columns)
-  query       = template_csv_merge.lstrip().format(table_name = table_name, primary_cols_set = primary_cols_set, csv_content_query = csv_select, non_primary_cols_set = update_cols, all_cols = all_cols, all_values = all_values, skip_update = skip_update)
+  query       = template_csv_merge.lstrip().format (
+    table_name            = table_name,
+    primary_cols_set      = primary_cols_set,
+    csv_content_query     = csv_select,
+    non_primary_cols_set  = update_cols,
+    all_cols              = all_cols,
+    all_values            = all_values,
+    skip_update           = skip_update,
+    skip_delete           = skip_delete
+  )
   #
   return query
 
