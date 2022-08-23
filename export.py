@@ -21,6 +21,7 @@ parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                                            default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files (db objects only)',                default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-lock',    '--lock',     help = 'Updates only objects in the locked.log',                  default = False,  nargs = '?',  const = True)
+#                           lock+
 #
 args = vars(parser.parse_args())
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
@@ -346,13 +347,13 @@ if count_objects:
   if (len(locked_objects) or args.lock):
     count_objects = min(count_objects, len(locked_objects))
     print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
-    if args.verbose:
+    if (args.verbose or args.recent == 1):
       print('-------------------------')
   else:
     print('EXPORTING OBJECTS: ({})'.format(count_objects))
-    if args.verbose:
+    if (args.verbose or args.recent == 1):
       print('------------------')
-  if args.verbose:
+  if (args.verbose or args.recent == 1):
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   #
   recent_type = ''
@@ -400,7 +401,7 @@ if count_objects:
       print('#\n')
       continue
     #
-    if args.verbose:
+    if (args.verbose or args.recent == 1):
       if flag == '':
         flag = 'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
       #
@@ -442,7 +443,7 @@ if count_objects:
     with open(file, 'w', encoding = 'utf-8') as w:
       w.write(obj + '\n\n')
   #
-  if not args.verbose:
+  if not (args.verbose or args.recent == 1):
     print()
   print()
 
