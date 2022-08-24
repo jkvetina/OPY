@@ -419,7 +419,7 @@ if count_objects:
     lines = get_lines(obj)
     cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
     if getattr(sys.modules[__name__], cleanup_fn, None):
-      lines = getattr(sys.modules[__name__], cleanup_fn)(lines, schema)
+      lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = object_name, lines = lines, schema = schema)
     obj   = '\n'.join(lines)
 
     # append comments
