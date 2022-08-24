@@ -354,16 +354,10 @@ if args.recent != 0 and not args.patch and not args.rollout:
 # EXPORT OBJECTS
 #
 if count_objects:
-  if (len(locked_objects) or args.lock):
-    count_objects = min(count_objects, len(locked_objects))
-    print('EXPORTING LOCKED OBJECTS: ({})'.format(count_objects))
-    if (args.verbose or args.recent == 1):
-      print('-------------------------')
-  else:
-    print('EXPORTING OBJECTS: ({})'.format(count_objects))
-    if (args.verbose or args.recent == 1):
-      print('------------------')
+  header = 'EXPORTING {}OBJECTS: ({})'.format('LOCKED ' if (len(locked_objects) or args.lock) else '', count_objects)
+  print(header)
   if (args.verbose or args.recent == 1):
+    print('-' * len(header.split(':')[0]) + '-')
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
   #
   recent_type = ''
