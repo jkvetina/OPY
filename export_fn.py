@@ -255,7 +255,8 @@ def clean_view(object_name, lines, schema):
 def clean_materialized_view(object_name, lines, schema):
   lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
   lines[0] = fix_simple_name(lines[0], schema)
-  lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
+  lines[0] = template_mvw_drop.lstrip().format(view_name = object_name) + lines[0]
+  #lines[0] = lines[0].replace('CREATE', 'DROP') + ';\n--\n' + lines[0]
 
   # found query start
   splitter = 0

@@ -336,6 +336,17 @@ WHEN NOT MATCHED THEN
         {all_values}
     );\n"""
 
+# drop MVW query
+template_mvw_drop = """
+BEGIN
+    DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP MATERIALIZED VIEW {view_name}');
+EXCEPTION
+WHEN OTHERS THEN
+    NULL;
+END;
+/
+--\n"""
+
 # table dependencies
 query_tables_dependencies = """
 SELECT
