@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, datetime, shutil, zipfile, collections
+import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, shutil, collections, inspect
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -25,6 +25,8 @@ parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged fil
 #
 args = vars(parser.parse_args())
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
+#
+start_timer = timeit.default_timer()
 
 # check args
 if args.debug:
@@ -33,7 +35,7 @@ if args.debug:
   for key, value in sorted(zip(args._fields, args)):
     if not (key in ('pwd', 'wallet_pwd')):
       print('{:>10} = {}'.format(key, value))
-  print('')
+  print()
 
 
 
@@ -109,7 +111,6 @@ patch_map = {
 }
 
 # some variables
-start_timer     = timeit.default_timer()
 today_date      = datetime.datetime.today().strftime('%Y-%m-%d')  # YYYY-MM-DD
 patch_root      = os.path.normpath(git_target + '../patches')
 patch_done      = os.path.normpath(git_target + '../patches_done')
@@ -145,11 +146,6 @@ apex_dir        = folders['APEX']
 apex_temp_dir   = apex_dir + 'temp/'  # temp file for partial APEX exports
 apex_ws_files   = apex_dir + 'workspace_files/'
 apex_tmp        = 'apex.#.tmp'  # temp file for running SQLcl on Windows
-
-# cleanup junk files created on Mac probably by iCloud sync
-path = apex_dir + '**/* [0-9].*'
-for file in glob.glob(path, recursive = True):
-  os.remove(file)
 
 
 
@@ -219,6 +215,11 @@ if not args.rollout:
 #
 # PREP FOLDERS AND GET OLD HASHES
 #
+
+# cleanup junk files created on Mac probably by iCloud sync
+path = cfg.apex_dir + '**/* [0-9].*'
+for file in glob.glob(path, recursive = True):
+  os.remove(file)
 
 # create basic dirs
 for dir in [git_target, patch_root, patch_done]:
