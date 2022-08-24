@@ -110,8 +110,8 @@ cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to nam
 # CONNECT TO DATABASE
 #
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
-grants_made_file  = '{}{}.sql'.format(folders['GRANT'], curr_schema)
-grants_recd_file  = os.path.dirname(grants_made_file) + '/received/#' + file_ext_obj
+grants_made_file  = '{}{}.sql'.format(cfg.folders['GRANT'], curr_schema)
+grants_recd_file  = os.path.dirname(grants_made_file) + '/received/#' + cfg.file_ext_obj
 #
 if not args.rollout:
   try:
@@ -149,10 +149,10 @@ if not args.rollout:
     connection.get('sid', '')))
   #
   if wallet_file != '':
-    print('      WALLET | {}'.format(connection['wallet'].replace(common_root, '~ ')))
+    print('      WALLET | {}'.format(connection['wallet']))
   #
-  print('             | {}'.format(db_conf.replace(common_root, '~ ')))
-  print('      TARGET | {}'.format(git_target.replace(common_root, '~ ')))
+  print('             | {}'.format(db_conf))
+  print('      TARGET | {}'.format(cfg.git_target))
   print('             |')
 
   # get versions
@@ -179,32 +179,32 @@ for file in glob.glob(path, recursive = True):
   os.remove(file)
 
 # create basic dirs
-for dir in [git_target, patch_root, patch_done]:
+for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done]:
   if not os.path.exists(dir):
     os.makedirs(dir)
 #
-for (type, dir) in patch_folders.items():
+for (type, dir) in cfg.patch_folders.items():
   if not os.path.exists(dir):
     os.makedirs(dir)
 
 # delete old empty patch files
-for file in glob.glob(os.path.dirname(patch_manually) + '/*' + file_ext_obj):
+for file in glob.glob(os.path.dirname(cfg.patch_manually) + '/*' + cfg.file_ext_obj):
   if os.path.getsize(file) == 0:
     os.remove(file)
 
 # create new patch file for manual changes (ALTER statements, related data changes...)
 if args.patch:
-  if not os.path.exists(patch_manually):
-    with open(patch_manually, 'w', encoding = 'utf-8') as w:
+  if not os.path.exists(cfg.patch_manually):
+    with open(cfg.patch_manually, 'w', encoding = 'utf-8') as w:
       w.write('')
 
 # switch to alternative log file (typically from PROD when preparing new patch for PROD)
 if args.patch and args.patch != True:
-  rollout_log = rollout_log.replace('.', '.{}.'.format(args.patch))
-  if not os.path.exists(rollout_log):
+  cfg.rollout_log = cfg.rollout_log.replace('.', '.{}.'.format(args.patch))
+  if not os.path.exists(cfg.rollout_log):
     print('#')
     print('# REQUESTED PATCH FILE MISSING')
-    print('#', rollout_log)
+    print('#', cfg.rollout_log)
     print('#')
     print()
 
@@ -212,8 +212,8 @@ if args.patch and args.patch != True:
 hashed_old = {}
 hashed_new = {}   # files/objects changed since last rollout
 #
-if os.path.exists(rollout_log):
-  with open(rollout_log, 'r', encoding = 'utf-8') as r:
+if os.path.exists(cfg.rollout_log):
+  with open(cfg.rollout_log, 'r', encoding = 'utf-8') as r:
     for line in r.readlines():
       (hash, file) = line.split('|')
       if '/' in hash:
@@ -228,8 +228,8 @@ if os.path.exists(rollout_log):
 
 # process just files in the locked.log file
 locked_objects = []
-if os.path.exists(locked_log):
-  with open(locked_log, 'r', encoding = 'utf-8') as r:
+if os.path.exists(cfg.locked_log):
+  with open(cfg.locked_log, 'r', encoding = 'utf-8') as r:
     # get list of locked objects
     for short_file in r.readlines():
       short_file = short_file.strip()
@@ -238,16 +238,16 @@ if os.path.exists(locked_log):
 
       # remove not existing files
       if args.delete:
-        file = os.path.normpath(git_root + '/' + short_file)
+        file = os.path.normpath(cfg.git_root + '/' + short_file)
         if not os.path.exists(file):
           print('REMOVING', short_file)
           locked_objects.remove(short_file)
 
 # add all existing files to the locked log when just -lock is used
 if args.lock and not args.delete and not args.add:
-  for type in objects_sorted:
-    for file in sorted(glob.glob(folders[type] + '/*.*')):
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+  for type in cfg.objects_sorted:
+    for file in sorted(glob.glob(cfg.folders[type] + '/*.*')):
+      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
       if not (short_file in locked_objects):
         locked_objects.append(short_file)
 
@@ -266,7 +266,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
 
   # retrieve objects in specific order
   sort = ''
-  for (i, object_type) in enumerate(objects_sorted):
+  for (i, object_type) in enumerate(cfg.objects_sorted):
     sort += 'WHEN \'{}\' THEN {}'.format(object_type, i)
   #
   data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args.type.upper(), recent = args.recent if args.recent >= 0 else '')
@@ -274,15 +274,15 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for row in data_objects:
     # show just locked files
     if (len(locked_objects) or args.lock):
-      folder      = folders[row.object_type] if row.object_type in folders else ''
-      file_ext    = file_ext_obj if row.object_type != 'PACKAGE' else file_ext_spec
+      folder      = cfg.folders[row.object_type] if row.object_type in cfg.folders else ''
+      file_ext    = cfg.file_ext_obj if row.object_type != 'PACKAGE' else cfg.file_ext_spec
       file        = '{}{}{}'.format(folder, row.object_name.lower(), file_ext)
-      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      short_file  = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
       #
       if not (short_file in locked_objects):
         continue                              # skip files not on the locked list
     #
-    if row.object_type in folders:
+    if row.object_type in cfg.folders:
       if not (row.object_type) in summary:
         summary[row.object_type] = 0
       summary[row.object_type] += 1
@@ -296,7 +296,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
         row.object_type,
         summary.get(row.object_type, ''),
         row.object_count,
-        '' if row.object_type in folders else '[N/A]',
+        '' if row.object_type in cfg.folders else '[N/A]',
         row.constraint_type or '',
         ' | ' if row.constraint_type else '',
         row.constraint_count or ''
@@ -323,19 +323,19 @@ if count_objects:
     object_type, object_name = row.object_type, row.object_name
 
     # make sure we have target folders ready
-    if not (object_type in folders):
+    if not (object_type in cfg.folders):
       if args.debug:
         print('#')
         print('# OBJECT_TYPE_NOT_SUPPORTED:', object_type)
         print('#\n')
       continue
     #
-    folder    = folders[object_type]
-    file_ext  = file_ext_obj if object_type != 'PACKAGE' else file_ext_spec
+    folder    = cfg.folders[object_type]
+    file_ext  = cfg.file_ext_obj if object_type != 'PACKAGE' else cfg.file_ext_spec
     file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
 
     # prepare short_file before we even create the file
-    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+    short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
 
     # check locked objects
     flag = ''
@@ -411,14 +411,14 @@ if count_objects:
 #
 if (len(locked_objects) or args.lock):
   content = '\n'.join(sorted(locked_objects)) + '\n'
-  with open(locked_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.locked_log, 'w', encoding = 'utf-8') as w:
     w.write(content)
 
 # delete all database object files not on the list and except APEX folder
 if args.lock and args.delete:
-  for type in objects_sorted:
-    for file in sorted(glob.glob(folders[type] + '/*.*')):
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+  for type in cfg.objects_sorted:
+    for file in sorted(glob.glob(cfg.folders[type] + '/*.*')):
+      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
       if not (short_file in locked_objects):
         #print('  {}'.format(short_file))
         os.remove(file)
@@ -429,13 +429,13 @@ if args.lock and args.delete:
 # EXPORT DATA
 #
 if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout:
-  if not (os.path.isdir(folders['DATA'])):
-    os.makedirs(folders['DATA'])
+  if not (os.path.isdir(cfg.folders['DATA'])):
+    os.makedirs(cfg.folders['DATA'])
 
   # export/refresh existing files
   tables = []
   tables_flags = {}  # to keep flags and use them in MERGE statements
-  for file in glob.glob(folders['DATA'] + '*' + file_ext_csv):
+  for file in glob.glob(cfg.folders['DATA'] + '*' + cfg.file_ext_csv):
     file = os.path.basename(file).split('.')
     tables.append(file[0])
     if file[1] in ('U', 'D'):
@@ -459,7 +459,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   #
   for (i, table_name) in enumerate(sorted(tables)):
     flag = tables_flags[table_name] if table_name in tables_flags else ''
-    file = '{}{}.{}.csv'.format(folders['DATA'], table_name, flag).replace('..', '.')
+    file = '{}{}.{}.csv'.format(cfg.folders['DATA'], table_name, flag).replace('..', '.')
     #
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
@@ -473,7 +473,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     #
     csv_file  = open(file, 'w', encoding = 'utf-8')
     writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
-    columns   = [col for col in conn.cols if not (col in ignore_columns)]
+    columns   = [col for col in conn.cols if not (col in cfg.ignore_columns)]
     order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
     #
     try:
@@ -495,7 +495,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
     # show progress
     if args.verbose:
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
       #
       print('  {:32} {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
         table_name.upper(),
@@ -517,9 +517,9 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
   # convert all existing CSV files to MERGE statement files in patch/data/ folder
   all_data = ''
-  for file in glob.glob(folders['DATA'] + '*' + file_ext_csv):
+  for file in glob.glob(cfg.folders['DATA'] + '*' + cfg.file_ext_csv):
     table_name  = os.path.basename(file).split('.')[0]
-    target_file = patch_folders['data'] + table_name + file_ext_obj
+    target_file = cfg.patch_folders['data'] + table_name + cfg.file_ext_obj
     skip_update = '--' if not ('.U.' in file) else ''
     skip_delete = '--' if not ('.D.' in file) else ''
     content     = get_merge_from_csv(file, conn, skip_update, skip_delete)
@@ -528,7 +528,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         w.write(content)
         all_data += 'DELETE FROM {};\n{}\n\n\n'.format(table_name, content)
   #
-  with open(patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
+  with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
     w.write(all_data + 'COMMIT;\n\n')
 
 
@@ -545,11 +545,11 @@ if not args.rollout:
   for row in conn.fetch_assoc(query_grants_made):
     # limit to objects on the locked.log
     if (len(locked_objects) or args.lock):
-      if not row.type in folders:  # skip unsupported object types
+      if not row.type in cfg.folders:  # skip unsupported object types
         continue
       #
-      object_file = '{}{}{}'.format(folders[row.type], row.table_name.lower(), file_ext_obj)
-      short_file, hash_old, hash_new = get_file_details(object_file, git_root, hashed_old)
+      object_file = '{}{}{}'.format(cfg.folders[row.type], row.table_name.lower(), cfg.file_ext_obj)
+      short_file, hash_old, hash_new = get_file_details(object_file, cfg.git_root, hashed_old)
       #
       if not short_file in locked_objects:
         continue
@@ -608,7 +608,7 @@ if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.ro
   for row in all_apps:
     if args.apex == []:
       if (len(locked_objects) or args.lock):
-        if not os.path.exists('{}f{}{}'.format(apex_dir, row.application_id, file_ext_obj)):
+        if not os.path.exists('{}f{}{}'.format(cfg.apex_dir, row.application_id, cfg.file_ext_obj)):
           continue  # show only keeped apps
     elif not (row.application_id in args.apex):
       continue
@@ -638,19 +638,19 @@ if apex_apps != {} and not args.patch and not args.rollout:
       continue
 
     # recreate temp dir
-    if os.path.exists(apex_temp_dir):
-      shutil.rmtree(apex_temp_dir, ignore_errors = True, onerror = None)
-    os.makedirs(apex_temp_dir)
+    if os.path.exists(cfg.apex_temp_dir):
+      shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
+    os.makedirs(cfg.apex_temp_dir)
 
     # delete folder to remove obsolete objects only on full export
-    apex_dir_app = '{}f{}'.format(apex_dir, app_id)
-    if os.path.exists(apex_dir_app):
-      shutil.rmtree(apex_dir_app, ignore_errors = True, onerror = None)
+    apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
+    if os.path.exists(apex_app_folder):
+      shutil.rmtree(apex_app_folder, ignore_errors = True, onerror = None)
     #
-    if not os.path.exists(apex_dir):
-      os.makedirs(apex_dir)
-    if not os.path.exists(apex_ws_files):
-      os.makedirs(apex_ws_files)
+    if not os.path.exists(cfg.apex_dir):
+      os.makedirs(cfg.apex_dir)
+    if not os.path.exists(cfg.apex_ws_files):
+      os.makedirs(cfg.apex_ws_files)
 
     # get app details
     apex = conn.fetch_assoc(query_apex_app_detail, app_id = app_id)[0]
@@ -734,10 +734,10 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests = ['\n'.join(requests)]
 
     # export APEX stuff
-    apex_tmp = apex_tmp.replace('#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_tmp = cfg.apex_tmp.replace('#', '{}'.format(app_id))  # allow to export multiple apps at the same time
     changed = []
     for (i, request) in enumerate(requests):
-      request = request_conn + '\n' + request.format(dir = apex_dir, dir_temp = apex_temp_dir, dir_ws_files = apex_ws_files, app_id = app_id, since = req_today, changed = changed)
+      request = request_conn + '\n' + request.format(dir = cfg.apex_dir, dir_temp = cfg.apex_temp_dir, dir_ws_files = cfg.apex_ws_files, app_id = app_id, since = req_today, changed = changed)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
       # for Windows create temp file
@@ -795,21 +795,21 @@ if apex_apps != {} and not args.patch and not args.rollout:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(app_id, folders['APEX'], apex_replacements, default_authentication)
+      clean_apex_files(app_id, cfg.folders['APEX'], apex_replacements, default_authentication)
     #
     print()
     print()
 
     # rename workspace files
     ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
-    if os.path.exists(apex_ws_files + ws_files):
-      target_file = '{}{}.sql'.format(apex_ws_files, apex_apps[app_id].workspace)
+    if os.path.exists(cfg.apex_ws_files + ws_files):
+      target_file = '{}{}.sql'.format(cfg.apex_ws_files, apex_apps[app_id].workspace)
       if os.path.exists(target_file):
         os.remove(target_file)
-      os.rename(apex_ws_files + ws_files, target_file)
+      os.rename(cfg.apex_ws_files + ws_files, target_file)
 
     # move some changed files to proper APEX folder
-    apex_partial = '{}f{}'.format(apex_temp_dir, app_id)
+    apex_partial = '{}f{}'.format(cfg.apex_temp_dir, app_id)
     if os.path.exists(apex_partial):
       remove_files = [
         'install_component.sql',
@@ -822,11 +822,11 @@ if apex_apps != {} and not args.patch and not args.rollout:
         for file in glob.glob(apex_partial + '/' + file_pattern):
           os.remove(file)
       #
-      shutil.copytree(apex_partial, '{}f{}'.format(apex_dir, app_id), dirs_exist_ok = True)
+      shutil.copytree(apex_partial, '{}f{}'.format(cfg.apex_dir, app_id), dirs_exist_ok = True)
 
     # cleanup
-    if os.path.exists(apex_temp_dir):
-      shutil.rmtree(apex_temp_dir, ignore_errors = True, onerror = None)
+    if os.path.exists(cfg.apex_temp_dir):
+      shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
 
 
 
@@ -850,15 +850,15 @@ if args.patch:
   print()
 
   # remove target patch files
-  for file in (patch_today, patch_zip):
+  for file in (cfg.patch_today, cfg.patch_zip):
     if os.path.exists(file):
       os.remove(file)
 
   # cleanup old patches
-  for file in glob.glob(patch_done + '/*' + file_ext_obj):
+  for file in glob.glob(cfg.patch_done + '/*' + cfg.file_ext_obj):
     os.remove(file)
   #
-  for file in glob.glob(patch_folders['changes'] + '/*' + file_ext_obj):
+  for file in glob.glob(cfg.patch_folders['changes'] + '/*' + cfg.file_ext_obj):
     if os.path.getsize(file) == 0:
       os.remove(file)
 
@@ -880,9 +880,9 @@ if args.patch:
     table_relations[row.table_name] = row.references.split(', ')
 
   # get list of changed objects and their references
-  for object_type in objects_sorted:
-    for file in sorted(glob.glob(folders[object_type] + '/*' + file_ext_obj)):
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+  for object_type in cfg.objects_sorted:
+    for file in sorted(glob.glob(cfg.folders[object_type] + '/*' + cfg.file_ext_obj)):
+      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
 
       # check if object changed
       if hash_old == hash_new:                      # ignore unchanged objects
@@ -947,8 +947,8 @@ if args.patch:
       continue
     #
     object_type, object_name = obj.split('.')
-    file = '{}{}{}'.format(folders[object_type], object_name.lower(), file_ext_obj if object_type != 'PACKAGE' else file_ext_spec)
-    short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+    file = '{}{}{}'.format(cfg.folders[object_type], object_name.lower(), cfg.file_ext_obj if object_type != 'PACKAGE' else cfg.file_ext_spec)
+    short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
     flag = '[+]' if hash_old == '' else 'ALTERED' if hash_old != hash_new and object_type == 'TABLE' else ''
     #
     processed_names.append(obj)                     # to final check if order is correct
@@ -981,10 +981,10 @@ if args.patch:
     if len(ordered_objects):
       patch_notes.append('{:<20} |'.format(''))
     #
-    files = sorted(glob.glob(folders[object_type] + '/*' + file_ext_csv))
+    files = sorted(glob.glob(cfg.folders[object_type] + '/*' + cfg.file_ext_csv))
     if len(files):
       for file in files:
-        short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+        short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
         object_name = os.path.basename(short_file).split('.')[0].upper()
         if hash_old != hash_new or 1 == 1:
           patch_notes.append('{:>20} | {:<54}'.format(object_type if last_type != object_type else '', object_name))
@@ -995,15 +995,15 @@ if args.patch:
   processed_files = []
   patch_line      = '@@"../{}"'  # @@ = relative to script from which it is called from
   #
-  for target_dir in sorted(patch_folders.values()):
-    type    = next((type for type, dir in patch_folders.items() if dir == target_dir), None)
-    files   = glob.glob(target_dir + '/*' + file_ext_obj)
+  for target_dir in sorted(cfg.patch_folders.values()):
+    type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
+    files   = glob.glob(target_dir + '/*' + cfg.file_ext_obj)
 
     # process files in patch folder first
     if len(files):
       patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
-        short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+        short_file = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
         #
         if os.path.basename(short_file) == '__.sql':    # ignore file with all data files merged
           continue
@@ -1012,12 +1012,12 @@ if args.patch:
         processed_files.append(short_file)
 
     # add objects mapped to current patch folder
-    if type in patch_map:
+    if type in cfg.patch_map:
       header_printed = False
       for obj in processed_objects:
-        if not (obj['type'] in patch_map[type]):        # ignore non related types
+        if not (obj['type'] in cfg.patch_map[type]):    # ignore non related types
           continue
-        if not (obj['type'] in folders):                # ignore unknown types
+        if not (obj['type'] in cfg.folders):            # ignore unknown types
           continue
         if obj['short_file'] in processed_files:        # ignore processed objects/files
           continue
@@ -1030,18 +1030,18 @@ if args.patch:
         processed_files.append(obj['short_file'])
 
   # append APEX apps
-  apex_apps = glob.glob(folders['APEX'] + '/f*' + file_ext_obj)
+  apex_apps = glob.glob(cfg.folders['APEX'] + '/f*' + cfg.file_ext_obj)
   if len(apex_apps):
     patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
-      short_file, hash_old, hash_new = get_file_details(file, git_root, hashed_old)
+      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
       processed_files.append(short_file)
       patch_content.append(patch_line.format(short_file))
   patch_content.append('')
 
   # store new hashes for rollout
   content = []
-  with open(patch_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.patch_log, 'w', encoding = 'utf-8') as w:
     for file in sorted(hashed_new.keys()):
       content.append('{} | {}'.format(hashed_new[file], file))
     content = '\n'.join(content) + '\n'
@@ -1051,16 +1051,16 @@ if args.patch:
   print('\n'.join(patch_notes))
   print('\n'.join(patch_content))
   #
-  with open(patch_today, 'w', encoding = 'utf-8') as w:
+  with open(cfg.patch_today, 'w', encoding = 'utf-8') as w:
     w.write('--\n--' + '\n--'.join(patch_notes) + '\n' + '\n'.join(patch_content) + '\n')
 
   # create binary to whatever purpose
   if args.zip:
-    if os.path.exists(patch_zip):
-      os.remove(patch_zip)
+    if os.path.exists(cfg.patch_zip):
+      os.remove(cfg.patch_zip)
     #
-    shutil.make_archive(git_root + 'patch', 'zip', git_root)  # everything in folder
-    os.rename(git_root + 'patch.zip', patch_zip)
+    shutil.make_archive(cfg.git_root + 'patch', 'zip', cfg.git_root)  # everything in folder
+    os.rename(cfg.git_root + 'patch.zip', cfg.patch_zip)
 
 
 
@@ -1076,17 +1076,17 @@ if args.rollout:
   # show removed files
   if args.delete:
     for file in sorted(hashed_old.keys()):
-      if not os.path.exists(git_root + '/' + file):
+      if not os.path.exists(cfg.git_root + '/' + file):
         print('  [-] {}'.format(file))
 
   # store hashes for next patch
   if args.rollout != True:
-    rollout_log = rollout_log.replace('.', '.{}.'.format(args.rollout))
+    cfg.rollout_log = cfg.rollout_log.replace('.', '.{}.'.format(args.rollout))
   #
-  with open(rollout_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.rollout_log, 'w', encoding = 'utf-8') as w:
     # get files and hashes from patch.log file and overwrite old hashes
-    if os.path.exists(patch_log):
-      with open(patch_log, 'r', encoding = 'utf-8') as r:
+    if os.path.exists(cfg.patch_log):
+      with open(cfg.patch_log, 'r', encoding = 'utf-8') as r:
         for line in r.readlines():
           if '|' in line:
             (hash, file) = line.split('|')
@@ -1098,17 +1098,17 @@ if args.rollout:
     # keep all previous hashes
     content = []
     for file in sorted(hashed_old.keys()):
-      short_file = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      short_file = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
       # ignore/remove non existing files only on -delete mode
-      if args.delete and not os.path.exists(git_root + '/' + file):
+      if args.delete and not os.path.exists(cfg.git_root + '/' + file):
         continue
       content.append('{} | {}'.format(hashed_old[file], file))
     #
     w.write('\n'.join(content) + '\n')
 
     # cleanup
-    if os.path.exists(patch_log):
-      os.remove(patch_log)
+    if os.path.exists(cfg.patch_log):
+      os.remove(cfg.patch_log)
   #
   print()
 
