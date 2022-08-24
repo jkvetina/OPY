@@ -314,10 +314,20 @@ if args.recent != 0 and not args.patch and not args.rollout:
   data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args.type.upper(), recent = args.recent if args.recent >= 0 else '')
   summary = {}
   for row in data_objects:
-    if not (row.object_type) in summary:
-      summary[row.object_type] = 0
-    summary[row.object_type] += 1
+    # show just locked files
+    if (len(locked_objects) or args.lock):
+      folder      = folders[row.object_type] if row.object_type in folders else ''
+      file_ext    = file_ext_obj if row.object_type != 'PACKAGE' else file_ext_spec
+      file        = '{}{}{}'.format(folder, row.object_name.lower(), file_ext)
+      short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
+      #
+      if not (short_file in locked_objects):
+        continue                              # skip files not on the locked list
+    #
     if row.object_type in folders:
+      if not (row.object_type) in summary:
+        summary[row.object_type] = 0
+      summary[row.object_type] += 1
       count_objects += 1
   #
   all_objects = conn.fetch_assoc(query_summary)
