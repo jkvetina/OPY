@@ -1,0 +1,82 @@
+apex_dir: '#ROOT#/database/apex/'
+apex_temp_dir: '#ROOT#/database/apex/temp/'
+apex_tmp: apex.#.tmp
+apex_ws_files: '#ROOT#/database/apex/workspace_files/'
+file_ext_csv: .csv
+file_ext_obj: .sql
+file_ext_spec: .spec.sql
+folders:
+  APEX: '#ROOT#/database/apex/'
+  DATA: '#ROOT#/database/data/'
+  FUNCTION: '#ROOT#/database/functions/'
+  GRANT: '#ROOT#/database/grants/'
+  INDEX: '#ROOT#/database/indexes/'
+  JOB: '#ROOT#/database/jobs/'
+  MATERIALIZED VIEW: '#ROOT#/database/mviews/'
+  PACKAGE: '#ROOT#/database/packages/'
+  PACKAGE BODY: '#ROOT#/database/packages/'
+  PROCEDURE: '#ROOT#/database/procedures/'
+  SEQUENCE: '#ROOT#/database/sequences/'
+  SYNONYM: '#ROOT#/database/synonyms/'
+  TABLE: '#ROOT#/database/tables/'
+  TRIGGER: '#ROOT#/database/triggers/'
+  VIEW: '#ROOT#/database/views/'
+git_root: '#ROOT#/'
+git_target: '#ROOT#/database/'
+ignore_columns:
+- updated_at
+- updated_by
+- created_at
+- created_by
+locked_log: '#ROOT#/patches_done//locked.log'
+objects_sorted:
+- SYNONYM
+- SEQUENCE
+- TABLE
+- INDEX
+- MATERIALIZED VIEW
+- VIEW
+- FUNCTION
+- PROCEDURE
+- PACKAGE
+- PACKAGE BODY
+- TRIGGER
+- JOB
+patch_done: '#ROOT#/patches_done/'
+patch_folders:
+  changes: '#ROOT#/patches//30_table+data_changes/'
+  cleanup: '#ROOT#/patches//50_cleanup/'
+  data: '#ROOT#/patches//60_data/'
+  finally: '#ROOT#/patches//90_finally/'
+  grants: '#ROOT#/patches//70_grants/'
+  init: '#ROOT#/patches//10_init/'
+  jobs: '#ROOT#/patches//80_jobs/'
+  objects: '#ROOT#/patches//40_repeatable_objects/'
+  tables: '#ROOT#/patches//20_new_tables/'
+patch_log: '#ROOT#/patches_done//patch.log'
+patch_manually: '#ROOT#/patches//30_table+data_changes/#TODAY#.sql'
+patch_map:
+  data:
+  - DATA
+  grants:
+  - GRANT
+  init: []
+  jobs:
+  - JOB
+  objects:
+  - INDEX
+  - MATERIALIZED VIEW
+  - VIEW
+  - TRIGGER
+  - PROCEDURE
+  - FUNCTION
+  - PACKAGE
+  - PACKAGE BODY
+  - SYNONYM
+  tables:
+  - SEQUENCE
+  - TABLE
+patch_root: '#ROOT#/patches/'
+patch_today: '#ROOT#/patches_done//patch_#TODAY#.sql'
+patch_zip: '#ROOT#/patches_done//patch_#TODAY#.zip'
+rollout_log: '#ROOT#/patches_done//rollout.log'
