@@ -1,5 +1,3 @@
-import os, datetime
-
 # target folders by object types
 git_root    = '#ROOT#/'
 git_target  = '#ROOT#/database/'
@@ -40,11 +38,10 @@ patch_map = {
 }
 
 # some variables
-today_date    = datetime.datetime.today().strftime('%Y-%m-%d')  # YYYY-MM-DD
 patch_root    = '#ROOT#/patches/'
 patch_done    = '#ROOT#/patches_done/'
-patch_today   = '{}/patch_{}.sql'.format(patch_done, today_date)
-patch_zip     = '{}/patch_{}.zip'.format(patch_done, today_date)
+patch_today   = '{}/patch_{}.sql'.format(patch_done, '#TODAY#')
+patch_zip     = '{}/patch_{}.zip'.format(patch_done, '#TODAY#')
 patch_log     = '{}/{}'.format(patch_done, 'patch.log')
 rollout_log   = '{}/{}'.format(patch_done, 'rollout.log')
 locked_log    = '{}/{}'.format(patch_done, 'locked.log')
@@ -62,7 +59,7 @@ patch_folders = {
   'finally'   : patch_root + '/90_finally/',
 }
 #
-patch_manually  = '{}{}.sql'.format(patch_folders['changes'], today_date)
+patch_manually  = '{}{}.sql'.format(patch_folders['changes'], '#TODAY#')
 file_ext_obj    = '.sql'
 file_ext_csv    = '.csv'
 file_ext_spec   = '.spec.sql'

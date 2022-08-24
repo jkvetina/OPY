@@ -1,4 +1,4 @@
-import sys, os, re, traceback, glob, csv, hashlib
+import sys, os, re, traceback, glob, csv, hashlib, datetime
 from export_queries import *
 
 
@@ -19,6 +19,9 @@ def get_fixed_path(value, root):
     append  = '/' if value[-1] == '/' else ''
     append  = '\\' if '\\' in value and append != '' else ''
     value   = value.replace('#ROOT#', root) + append
+  #
+  if '#TODAY#' in value:
+    value   = value.replace('#TODAY#', datetime.datetime.today().strftime('%Y-%m-%d'))  # YYYY-MM-DD
   return value
 
 
