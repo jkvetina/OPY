@@ -14,6 +14,15 @@ def get_file_details(file, git_root, hashed_old):
 
 
 
+def get_fixed_path(value, root):
+  if isinstance(value, str) and '#ROOT#' in value:
+    append  = '/' if value[-1] == '/' else ''
+    append  = '\\' if '\\' in value and append != '' else ''
+    value   = value.replace('#ROOT#', root) + append
+  return value
+
+
+
 def get_object(conn, object_type, object_name):
   try:
     # get object from database
