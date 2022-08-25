@@ -1001,8 +1001,6 @@ if args.patch:
 
   # create list of files to process
   processed_files = []
-  patch_line      = '@@"../{}"'  # @@ = relative to script from which it is called from
-  #
   for target_dir in sorted(cfg.patch_folders.values()):
     type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
     files   = glob.glob(target_dir + '/*.sql')
@@ -1108,7 +1106,7 @@ if args.rollout:
     for file in sorted(hashed_old.keys()):
       short_file = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
       # ignore/remove non existing files only on -delete mode
-      if args.delete and not os.path.exists(cfg.git_root + '/' + file):
+      if args.delete and not os.path.exists(cfg.git_root + file):
         continue
       content.append('{} | {}'.format(hashed_old[file], file))
     #
