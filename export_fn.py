@@ -15,13 +15,14 @@ def get_file_details(file, git_root, hashed_old):
 
 
 def get_fixed_path(value, root):
-  if isinstance(value, str) and '#ROOT#' in value:
-    append  = '/' if value[-1] == '/' else ''
-    append  = '\\' if '\\' in value and append != '' else ''
-    value   = value.replace('#ROOT#', root) + append
-  #
-  if '#TODAY#' in value:
-    value   = value.replace('#TODAY#', datetime.datetime.today().strftime('%Y-%m-%d'))  # YYYY-MM-DD
+  if isinstance(value, str):
+    if '#ROOT#' in value:
+      value = value.replace('#ROOT#', root)
+      if '\\' in value:
+        value = value.replace('/', '\\')  # fix slashes for Windows
+    #
+    if '#TODAY#' in value:
+      value = value.replace('#TODAY#', datetime.datetime.today().strftime('%Y-%m-%d'))  # YYYY-MM-DD
   return value
 
 
