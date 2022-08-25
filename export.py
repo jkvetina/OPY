@@ -349,54 +349,55 @@ if count_objects:
       os.makedirs(obj.folder)
 
     # check object
-    obj = get_object(conn, object_type, object_name)
-    if obj == None and args.debug:
+    content = get_object(conn, obj.type, obj.name)
+    if content == None and args.debug:
       print('#')
-      print('# OBJECT_EMPTY:', object_type, object_name)
+      print('# OBJECT_EMPTY:', obj.type, obj.name)
       print('#\n')
       continue
     #
     if (args.verbose or args.recent == 1):
       if flag == '':
-        flag = 'NEW' if object_type == 'TABLE' and hash_old == '' else '<--' if object_type == 'TABLE' else ''
+        flag = 'NEW' if obj.type == 'TABLE' and obj.hash_old == '' else '<--' if obj.type == 'TABLE' else ''
       #
-      if object_type != recent_type and recent_type != '':
+      if obj.type != recent_type and recent_type != '':
         print('{:>20} |'.format(''))
       print('{:>20} | {:<30} {:>8} | {:>8} {}'.format(*[
-        object_type if object_type != recent_type else '',
-        object_name if len(object_name) <= 30 else object_name[0:27] + '...',
-        obj.count('\n') + 1,                                                    # count lines
-        len(obj) if obj else '',                                                # count bytes
+        obj.type if obj.type != recent_type else '',
+        obj.name if len(obj.name) <= 30 else obj.name[0:27] + '...',
+        (content.count('\n') + 1) if content else 0,                                    # count lines
+        len(content) if content else '',                                                # count bytes
         flag
       ]))
-      recent_type = object_type
+      recent_type = obj.type
     elif count_objects > 0:
       perc = min((i + 1) / count_objects, 1)
       dots = int(70 * perc)
       sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
       sys.stdout.flush()
-    #
-    lines = get_lines(obj)
-    cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
+
+    # call cleanup function for specific object type, if exists
+    lines = get_lines(content)
+    cleanup_fn = 'clean_' + obj.type.replace(' ', '_').lower()
     if getattr(sys.modules[__name__], cleanup_fn, None):
-      lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = object_name, lines = lines, schema = schema)
-    obj   = '\n'.join(lines)
+      lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = obj.name, lines = lines, schema = schema)
+    content = '\n'.join(lines)
 
     # append comments
-    if object_type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
-      obj += get_object_comments(conn, object_name)
+    if obj.type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
+      content += get_object_comments(conn, obj.name)
 
     # fill in job template
-    if object_type in ('JOB'):
-      obj = get_job_fixed(object_name, obj, conn)
+    if obj.type in ('JOB'):
+      content = get_job_fixed(obj.name, content, conn)
 
     # write object to file
-    obj = obj.rstrip()
-    if obj.rstrip('/') != obj:
-      obj = obj.rstrip('/').rstrip() + '\n/'
+    content = content.rstrip()
+    if content.rstrip('/') != content:
+      content = content.rstrip('/').rstrip() + '\n/'
     #
-    with open(file, 'w', encoding = 'utf-8') as w:
-      w.write(obj + '\n\n')
+    with open(obj.file, 'w', encoding = 'utf-8') as w:
+      w.write(content + '\n\n')
   #
   if not (args.verbose or args.recent == 1):
     print()
