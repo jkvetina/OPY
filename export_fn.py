@@ -1,16 +1,44 @@
-import sys, os, re, traceback, glob, csv, hashlib, datetime
+import sys, os, re, traceback, glob, csv, hashlib, datetime, collections
 from export_queries import *
 
 
 
-def get_file_details(file, git_root, hashed_old):
-  short_file  = file.replace(git_root, '').replace('\\', '/').lstrip('/')
-  hash_old    = hashed_old.get(short_file, '')
-  hash_new    = ''
-  if os.path.exists(file):
-    hash_new  = hashlib.md5(open(os.path.normpath(file), 'rb').read()).hexdigest()
+def get_file_details(object_type, object_name, file, cfg, hashed_old):
+  obj = {
+    'type'      : object_type or '',
+    'name'      : object_name or '',
+    'shortcut'  : '',
+    'file'      : file or '',
+    'folder'    : '',
+    'group'     : '',
+    'hash_old'  : '',
+    'hash_new'  : ''
+  }
   #
-  return (short_file, hash_old, hash_new)
+  if not (obj['type'] in cfg.folders):   # unsupported object type
+    return {}
+
+  # missing filename
+  obj_folder = cfg.folders[obj['type']]
+  if obj['file'] == '':
+    obj['file'] = os.path.normpath(obj_folder[0] + obj['name'].lower() + obj_folder[1])
+  obj['folder'] = obj_folder[0]
+
+  # missing object name
+  if obj['name'] == '':
+    obj['name'] = os.path.basename(obj['file']).split('.')[0]
+  obj['name'] = obj['name'].upper()
+
+  # get short file use in all log files
+  obj['shortcut'] = obj['file'].replace(cfg.git_root, '').replace('\\', '/').lstrip('/').strip()
+  obj['hash_old'] = hashed_old.get(obj['shortcut'], '')
+  obj['hash_new'] = ''
+
+  # calculate new file hash
+  if os.path.exists(obj['file']):
+    obj['hash_new']  = hashlib.md5(open(obj['file'], 'rb').read()).hexdigest()
+  #
+  return collections.namedtuple('OBJ', obj.keys())(*obj.values())  # convert to named tuple
 
 
 
