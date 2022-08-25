@@ -14,6 +14,13 @@ def get_file_details(file, git_root, hashed_old):
 
 
 
+def get_files(object_type, cfg, sort):
+  folder  = cfg.folders[object_type]
+  files   = glob.glob(folder[0] + '/*' + folder[1])
+  return files if not sort else sorted(files)
+
+
+
 def get_fixed_path(value, root):
   if isinstance(value, str):
     if '#ROOT#' in value:
