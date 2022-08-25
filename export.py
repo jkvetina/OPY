@@ -705,15 +705,19 @@ if apex_apps != {} and not args.patch and not args.rollout:
       ])
 
     # always do full APEX export, but when -r > 0 then show changed components
-    if args.recent > 0:
+    if args.recent > 0 and cfg.apex_changes:
       # partial export, get list of changed objects since that, show it to user
       requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
     # export full app in several formats
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
-    requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-    requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
+    if cfg.apex_embedded:
+      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
+    if cfg.apex_splited:
+      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+    if cfg.apex_full:
+      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+    if cfg.apex_files:
+      requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
     #
     #-expOriginalIds -> strange owner and app_id
     #

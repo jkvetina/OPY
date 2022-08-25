@@ -18,6 +18,12 @@ apex_temp_dir   : '#ROOT#/database/apex/temp/'
 apex_tmp        : apex.#.tmp
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 
+# APEX exports
+apex_embedded   : False           # export embedded code
+apex_splited    : True            # export splited application
+apex_full       : True            # traditional full export
+apex_files      : True            # export workspace files
+apex_changes    : True            # show app changes made in -recent days
 
 # target folders by object types
 folders:
