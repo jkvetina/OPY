@@ -37,6 +37,8 @@ folders:
   TRIGGER             : ['#ROOT#/database/triggers/',     .sql]
   VIEW                : ['#ROOT#/database/views/',        .sql]
 
+grants_recd : '/received/#.sql'   # received grants, under GRANT folder
+
 # export objects by type in this order
 objects_sorted:
   - SYNONYM
