@@ -61,10 +61,7 @@ for db_conf in conn_files:
 
 # check target
 if args.target == None:
-  print('#')
-  print('# UNKNOWN TARGET')
-  print('#')
-  print()
+  print('#\n# MISSING TARGET\n#\n')
   sys.exit()
 
 
@@ -105,6 +102,10 @@ for name, value in cfg_bak.items():
     cfg[name] = get_fixed_path(value, cfg_root)
 #
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
+#
+if cfg_bak == {}:
+  print('#\n# MISSING CONFIG\n#\n')
+  sys.exit()
 
 
 
@@ -130,6 +131,7 @@ if not args.rollout:
   data      = conn.fetch_assoc(query_today, recent = args.recent if args.recent >= 0 else '')
   req_today = data[0].today  # calculate date from recent arg
   schema    = data[0].curr_user
+  user_home = os.path.expanduser('~')
 
   # find wallet
   wallet_file = ''
@@ -150,12 +152,12 @@ if not args.rollout:
     connection.get('service', ''),
     connection.get('sid', '')))
   #
-  user_home = os.path.expanduser('~')
   if wallet_file != '':
     print('      WALLET | {}'.format(connection['wallet']).replace(user_home, '~'))
   #
   print('             | {}'.format(db_conf.replace(user_home, '~')))
   print('      TARGET | {}'.format(cfg.git_target.replace(user_home, '~')))
+  print('      CONFIG | {}'.format(config_file.replace(user_home, '~')))
   print('             |')
 
   # get versions
