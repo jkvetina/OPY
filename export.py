@@ -92,6 +92,9 @@ for name, value in cfg_bak.items():
     cfg[name] = {}
     for key, val in value.items():
       cfg[name][key] = get_fixed_path(val, cfg_root)
+      if isinstance(cfg[name][key], list):
+        for idx, val2 in enumerate(cfg[name][key]):
+          cfg[name][key][idx] = get_fixed_path(val2, cfg_root)
   #
   elif isinstance(value, list):
     cfg[name] = []
