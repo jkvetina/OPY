@@ -356,9 +356,10 @@ def clean_package_body(object_name, lines, schema):
 
 
 def clean_procedure(object_name, lines, schema):
-  lines[0] = fix_simple_name(lines[0], schema)
-  lines[0] = lines[0].replace(' EDITIONABLE', '')
-  lines[len(lines) - 1] += '\n/'
+  if len(lines):
+    lines[0] = fix_simple_name(lines[0], schema)
+    lines[0] = lines[0].replace(' EDITIONABLE', '')
+    lines[len(lines) - 1] += '\n/'
   return lines
 
 
@@ -376,14 +377,13 @@ def clean_sequence(object_name, lines, schema):
   lines[0] = lines[0].replace(' NOKEEP', '')
   lines[0] = lines[0].replace(' NOSCALE', '')
   lines[0] = lines[0].replace(' GLOBAL', '')
-  lines[0] = lines[0].replace(' GLOBAL', '')
   #
   lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = replace(lines[0], '\s+', ' ').strip() + ';'
   #
-  lines[0] = lines[0].replace(' MINVALUE', '\n    MINVALUE')
-  lines[0] = lines[0].replace(' START', '\n    START')
-  lines[0] = lines[0].replace(' CACHE', '\n    CACHE')
+  lines[0] = lines[0].replace(' MINVALUE',  '\n    MINVALUE')
+  lines[0] = lines[0].replace(' START',     '\n    START')
+  lines[0] = lines[0].replace(' CACHE',     '\n    CACHE')
   #
   lines = '\n'.join(lines).split('\n')
   lines[0] = lines[0].replace('CREATE', '-- DROP') + ';\n' + lines[0]
@@ -398,6 +398,9 @@ def clean_sequence(object_name, lines, schema):
 
 
 def clean_trigger(object_name, lines, schema):
+  if not len(lines):
+    return lines
+  #
   lines[0] = fix_simple_name(lines[0], schema)
   lines[0] = lines[0].replace(' EDITIONABLE', '')
 
@@ -443,9 +446,10 @@ def clean_index(object_name, lines, schema):
 
 
 def clean_synonym(object_name, lines, schema):
-  lines[0] = lines[0].replace(' EDITIONABLE', '')
-  lines[0] = fix_simple_name(lines[0], schema)
-  lines[len(lines) - 1] += ';'
+  if len(lines):
+    lines[0] = lines[0].replace(' EDITIONABLE', '')
+    lines[0] = fix_simple_name(lines[0], schema)
+    lines[len(lines) - 1] += ';'
   #
   return lines
 
