@@ -56,15 +56,15 @@ objects_sorted:
 
 # patch folders, sorted
 patch_folders:
+  init      : '#ROOT#/patches/10_init/'
+  tables    : '#ROOT#/patches/20_new_tables/'
   changes   : '#ROOT#/patches/30_table+data_changes/'
+  objects   : '#ROOT#/patches/40_repeatable_objects/'
   cleanup   : '#ROOT#/patches/50_cleanup/'
   data      : '#ROOT#/patches/60_data/'
-  finally   : '#ROOT#/patches/90_finally/'
   grants    : '#ROOT#/patches/70_grants/'
-  init      : '#ROOT#/patches/10_init/'
   jobs      : '#ROOT#/patches/80_jobs/'
-  objects   : '#ROOT#/patches//40_repeatable_objects/'
-  tables    : '#ROOT#/patches//20_new_tables/'
+  finally   : '#ROOT#/patches/90_finally/'
 
 # map objects to patch folders
 patch_map:
