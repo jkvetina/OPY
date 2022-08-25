@@ -72,12 +72,24 @@ if args.target == None:
 #
 # LOAD CONFIGURATION
 #
-with open(root + '/config.yaml', 'r', encoding = 'utf-8') as f:
-  cfg_bak = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0]
+config_file = '/config.yaml'
+cfg_root    = os.path.normpath(args.target)
+cfg_bak     = {}
+conf_files  = [
+  os.path.normpath(args.target + config_file),
+  os.path.normpath(conn_dir + '/../' + config_file),
+  os.path.normpath(os.path.dirname(__file__) + config_file)
+]
+#
+for conf_file in conf_files:
+  if os.path.exists(conf_file):
+    with open(conf_file, 'r', encoding = 'utf-8') as f:
+      cfg_bak = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0]
+    config_file = conf_file
+    break
 
 # normalize paths from config, replace #ROOT# with actual root
 cfg = {}
-cfg_root = os.path.normpath(args.target)
 for name, value in cfg_bak.items():
   if isinstance(value, dict):
     cfg[name] = {}
