@@ -18,28 +18,24 @@ apex_temp_dir   : '#ROOT#/database/apex/temp/'
 apex_tmp        : apex.#.tmp
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 
-# file extensions
-file_ext_csv    : .csv
-file_ext_obj    : .sql
-file_ext_spec   : .spec.sql
 
 # target folders by object types
 folders:
-  APEX                : '#ROOT#/database/apex/'
-  DATA                : '#ROOT#/database/data/'
-  FUNCTION            : '#ROOT#/database/functions/'
-  GRANT               : '#ROOT#/database/grants/'
-  INDEX               : '#ROOT#/database/indexes/'
-  JOB                 : '#ROOT#/database/jobs/'
-  MATERIALIZED VIEW   : '#ROOT#/database/mviews/'
-  PACKAGE             : '#ROOT#/database/packages/'
-  PACKAGE BODY        : '#ROOT#/database/packages/'
-  PROCEDURE           : '#ROOT#/database/procedures/'
-  SEQUENCE            : '#ROOT#/database/sequences/'
-  SYNONYM             : '#ROOT#/database/synonyms/'
-  TABLE               : '#ROOT#/database/tables/'
-  TRIGGER             : '#ROOT#/database/triggers/'
-  VIEW                : '#ROOT#/database/views/'
+  APEX                : ['#ROOT#/database/apex/',         .sql]
+  DATA                : ['#ROOT#/database/data/',         .csv]
+  FUNCTION            : ['#ROOT#/database/functions/',    .sql]
+  GRANT               : ['#ROOT#/database/grants/',       .sql]
+  INDEX               : ['#ROOT#/database/indexes/',      .sql]
+  JOB                 : ['#ROOT#/database/jobs/',         .sql]
+  MATERIALIZED VIEW   : ['#ROOT#/database/mviews/',       .sql]
+  PACKAGE             : ['#ROOT#/database/packages/',     .spec.sql]
+  PACKAGE BODY        : ['#ROOT#/database/packages/',     .sql]
+  PROCEDURE           : ['#ROOT#/database/procedures/',   .sql]
+  SEQUENCE            : ['#ROOT#/database/sequences/',    .sql]
+  SYNONYM             : ['#ROOT#/database/synonyms/',     .sql]
+  TABLE               : ['#ROOT#/database/tables/',       .sql]
+  TRIGGER             : ['#ROOT#/database/triggers/',     .sql]
+  VIEW                : ['#ROOT#/database/views/',        .sql]
 
 # export objects by type in this order
 objects_sorted:

@@ -113,8 +113,8 @@ if cfg_bak == {}:
 # CONNECT TO DATABASE
 #
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
-grants_made_file  = '{}{}.sql'.format(cfg.folders['GRANT'], curr_schema)
-grants_recd_file  = os.path.dirname(grants_made_file) + '/received/#' + cfg.file_ext_obj
+grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
+grants_recd_file  = os.path.dirname(grants_made_file) + cfg.grants_recd
 #
 if not args.rollout:
   try:
@@ -193,7 +193,7 @@ for (type, dir) in cfg.patch_folders.items():
     os.makedirs(dir)
 
 # delete old empty patch files
-for file in glob.glob(os.path.dirname(cfg.patch_manually) + '/*' + cfg.file_ext_obj):
+for file in glob.glob(os.path.dirname(cfg.patch_manually) + '/*.sql'):
   if os.path.getsize(file) == 0:
     os.remove(file)
 
@@ -434,8 +434,8 @@ if args.lock and args.delete:
 # EXPORT DATA
 #
 if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout:
-  if not (os.path.isdir(cfg.folders['DATA'])):
-    os.makedirs(cfg.folders['DATA'])
+  if not (os.path.isdir(cfg.folders['DATA'][0])):
+    os.makedirs(cfg.folders['DATA'][0])
 
   # export/refresh existing files
   tables = []
@@ -464,7 +464,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   #
   for (i, table_name) in enumerate(sorted(tables)):
     flag = tables_flags[table_name] if table_name in tables_flags else ''
-    file = '{}{}.{}.csv'.format(cfg.folders['DATA'], table_name, flag).replace('..', '.')
+    file = '{}{}.{}{}'.format(cfg.folders['DATA'][0], table_name, flag, cfg.folders['DATA'][1]).replace('..', '.')
     #
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
@@ -522,9 +522,9 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
   # convert all existing CSV files to MERGE statement files in patch/data/ folder
   all_data = ''
-  for file in glob.glob(cfg.folders['DATA'] + '*' + cfg.file_ext_csv):
+  for file in get_files('DATA', cfg, sort = True):
     table_name  = os.path.basename(file).split('.')[0]
-    target_file = cfg.patch_folders['data'] + table_name + cfg.file_ext_obj
+    target_file = cfg.patch_folders['data'] + table_name + '.sql'
     skip_update = '--' if not ('.U.' in file) else ''
     skip_delete = '--' if not ('.D.' in file) else ''
     content     = get_merge_from_csv(file, conn, skip_update, skip_delete)
@@ -613,7 +613,7 @@ if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.ro
   for row in all_apps:
     if args.apex == []:
       if (len(locked_objects) or args.lock):
-        if not os.path.exists('{}f{}{}'.format(cfg.apex_dir, row.application_id, cfg.file_ext_obj)):
+        if not os.path.exists('{}f{}.sql'.format(cfg.apex_dir, row.application_id)):
           continue  # show only keeped apps
     elif not (row.application_id in args.apex):
       continue
@@ -800,7 +800,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(app_id, cfg.folders['APEX'], apex_replacements, default_authentication)
+      clean_apex_files(app_id, cfg.folders['APEX'][0], apex_replacements, default_authentication)
     #
     print()
     print()
@@ -860,10 +860,10 @@ if args.patch:
       os.remove(file)
 
   # cleanup old patches
-  for file in glob.glob(cfg.patch_done + '/*' + cfg.file_ext_obj):
+  for file in glob.glob(cfg.patch_done + '/*.sql'):
     os.remove(file)
   #
-  for file in glob.glob(cfg.patch_folders['changes'] + '/*' + cfg.file_ext_obj):
+  for file in glob.glob(cfg.patch_folders['changes'] + '/*.sql'):
     if os.path.getsize(file) == 0:
       os.remove(file)
 
@@ -1002,7 +1002,7 @@ if args.patch:
   #
   for target_dir in sorted(cfg.patch_folders.values()):
     type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
-    files   = glob.glob(target_dir + '/*' + cfg.file_ext_obj)
+    files   = glob.glob(target_dir + '/*.sql')
 
     # process files in patch folder first
     if len(files):
@@ -1035,7 +1035,7 @@ if args.patch:
         processed_files.append(obj['short_file'])
 
   # append APEX apps
-  apex_apps = glob.glob(cfg.folders['APEX'] + '/f*' + cfg.file_ext_obj)
+  apex_apps = glob.glob(cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1])
   if len(apex_apps):
     patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
@@ -1081,7 +1081,7 @@ if args.rollout:
   # show removed files
   if args.delete:
     for file in sorted(hashed_old.keys()):
-      if not os.path.exists(cfg.git_root + '/' + file):
+      if not os.path.exists(cfg.git_root + file):
         print('  [-] {}'.format(file))
 
   # store hashes for next patch
