@@ -937,38 +937,33 @@ if args.patch:
           continue
 
   # create patch plan
-  for obj in ordered_objects:
-    if not (obj in references):                     # ignore unknown objects
+  for object_code in ordered_objects:
+    if not (object_code in references):             # ignore unknown objects
       continue
     #
-    object_type, object_name = obj.split('.')
-    file = '{}{}{}'.format(cfg.folders[object_type], object_name.lower(), cfg.file_ext_obj if object_type != 'PACKAGE' else cfg.file_ext_spec)
-    short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
-    flag = '[+]' if hash_old == '' else 'ALTERED' if hash_old != hash_new and object_type == 'TABLE' else ''
+    object_type, object_name = object_code.split('.')
     #
-    processed_names.append(obj)                     # to final check if order is correct
-    processed_objects.append({
-      'type'        : object_type,
-      'name'        : object_name,
-      'file'        : file,
-      'short_file'  : short_file,
-      'hash_old'    : hash_old,
-      'hash_new'    : hash_new,
-    })
-    hashed_new[short_file] = hash_new  # store value for new patch.log
+    # @TODO: ^ switch this to shortcut
     #
-    if ((last_type != object_type and last_type != '') or (len(references[obj]) and args.verbose)):
+    obj   = get_file_details(object_type, object_name, file, cfg, hashed_old)
+    flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
+    #
+    processed_names.append(object_code)             # to final check if order is correct
+    processed_objects.append(obj)
+    hashed_new[obj.shortcut] = obj. hash_new      # store value for new patch.log
+    #
+    if ((last_type != object_type and last_type != '') or (len(references[object_code]) and args.verbose)):
       patch_notes.append('{:<20} |'.format(''))
     patch_notes.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
     last_type = object_type
     #
     if args.verbose:
       for ref_object in references[obj]:
-        if ref_object != obj and ref_object in changed_objects:
+        if ref_object != object_code and ref_object in changed_objects:
           object_type, object_name = ref_object.split('.')
-          obj = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
+          object_code = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
           if not (ref_object in processed_names):
-            obj = (obj + ' <').ljust(48, '-') + ' MISSING OBJECT'
+            object_code = (object_code + ' <').ljust(48, '-') + ' MISSING OBJECT'
           patch_notes.append('{:<20} |   > {}'.format('', obj))
 
   # show changed data files
@@ -976,14 +971,12 @@ if args.patch:
     if len(ordered_objects):
       patch_notes.append('{:<20} |'.format(''))
     #
-    files = sorted(glob.glob(cfg.folders[object_type] + '/*' + cfg.file_ext_csv))
+    files = get_files(object_type, cfg, sorted = True)
     if len(files):
       for file in files:
-        short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
-        object_name = os.path.basename(short_file).split('.')[0].upper()
-        if hash_old != hash_new or 1 == 1:
-          patch_notes.append('{:>20} | {:<54}'.format(object_type if last_type != object_type else '', object_name))
-        last_type = object_type
+        obj = get_file_details(object_type, '', file, cfg, hashed_old)
+        if obj.hash_old != obj.hash_new:
+          patch_notes.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
       patch_notes.append('{:<20} |'.format(''))
 
   # create list of files to process
@@ -996,31 +989,31 @@ if args.patch:
     if len(files):
       patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
-        short_file = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
+        shortcut = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
         #
-        if os.path.basename(short_file) == '__.sql':    # ignore file with all data files merged
+        if os.path.basename(shortcut) == '__.sql':    # ignore file with all data files merged
           continue
         #
-        patch_content.append(patch_line.format(short_file))
-        processed_files.append(short_file)
+        patch_content.append(cfg.patch_line.format(shortcut))
+        processed_files.append(shortcut)
 
     # add objects mapped to current patch folder
     if type in cfg.patch_map:
       header_printed = False
       for obj in processed_objects:
-        if not (obj['type'] in cfg.patch_map[type]):    # ignore non related types
+        if not (obj.type in cfg.patch_map[type]):    # ignore non related types
           continue
-        if not (obj['type'] in cfg.folders):            # ignore unknown types
+        if not (obj.type in cfg.folders):            # ignore unknown types
           continue
-        if obj['short_file'] in processed_files:        # ignore processed objects/files
+        if obj.shortcut in processed_files:        # ignore processed objects/files
           continue
         #
         if not header_printed:
           header_printed = True
           patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
         #
-        patch_content.append(patch_line.format(obj['short_file']))
-        processed_files.append(obj['short_file'])
+        patch_content.append(cfg.patch_line.format(obj.shortcut))
+        processed_files.append(obj.shortcut)
 
   # append APEX apps
   apex_apps = glob.glob(cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1])
