@@ -148,11 +148,12 @@ if not args.rollout:
     connection.get('service', ''),
     connection.get('sid', '')))
   #
+  user_home = os.path.expanduser('~')
   if wallet_file != '':
-    print('      WALLET | {}'.format(connection['wallet']))
+    print('      WALLET | {}'.format(connection['wallet']).replace(user_home, '~'))
   #
-  print('             | {}'.format(db_conf))
-  print('      TARGET | {}'.format(cfg.git_target))
+  print('             | {}'.format(db_conf.replace(user_home, '~')))
+  print('      TARGET | {}'.format(cfg.git_target.replace(user_home, '~')))
   print('             |')
 
   # get versions
