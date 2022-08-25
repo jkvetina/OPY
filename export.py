@@ -239,25 +239,25 @@ locked_objects = []
 if os.path.exists(cfg.locked_log):
   with open(cfg.locked_log, 'r', encoding = 'utf-8') as r:
     # get list of locked objects
-    for short_file in r.readlines():
-      short_file = short_file.strip()
-      if len(short_file) > 1 and not (short_file in locked_objects):
-        locked_objects.append(short_file)
+    for shortcut in r.readlines():
+      shortcut = shortcut.strip()
+      if len(shortcut) > 1 and not (shortcut in locked_objects):
+        locked_objects.append(shortcut)
 
       # remove not existing files
       if args.delete:
-        file = os.path.normpath(cfg.git_root + '/' + short_file)
+        file = os.path.normpath(cfg.git_root + shortcut)
         if not os.path.exists(file):
-          print('REMOVING', short_file)
-          locked_objects.remove(short_file)
+          print('REMOVING', shortcut)
+          locked_objects.remove(shortcut)
 
 # add all existing files to the locked log when just -lock is used
 if args.lock and not args.delete and not args.add:
-  for type in cfg.objects_sorted:
-    for file in sorted(glob.glob(cfg.folders[type] + '/*.*')):
-      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
-      if not (short_file in locked_objects):
-        locked_objects.append(short_file)
+  for object_type in cfg.objects_sorted:
+    for file in get_files(object_type, cfg, sort = True):
+      obj = get_file_details(object_type, '', file, cfg, hashed_old)
+      if not (obj.shortcut in locked_objects):
+        locked_objects.append(obj.shortcut)
 
 
 
@@ -282,12 +282,8 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for row in data_objects:
     # show just locked files
     if (len(locked_objects) or args.lock):
-      folder      = cfg.folders[row.object_type] if row.object_type in cfg.folders else ''
-      file_ext    = cfg.file_ext_obj if row.object_type != 'PACKAGE' else cfg.file_ext_spec
-      file        = '{}{}{}'.format(folder, row.object_name.lower(), file_ext)
-      short_file  = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
-      #
-      if not (short_file in locked_objects):
+      obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old)
+      if (obj == {} or not (obj.shortcut in locked_objects)):
         continue                              # skip files not on the locked list
     #
     if row.object_type in cfg.folders:
@@ -328,35 +324,29 @@ if count_objects:
   #
   recent_type = ''
   for (i, row) in enumerate(data_objects):
-    object_type, object_name = row.object_type, row.object_name
-
     # make sure we have target folders ready
-    if not (object_type in cfg.folders):
+    if not (row.object_type in cfg.folders):
       if args.debug:
         print('#')
-        print('# OBJECT_TYPE_NOT_SUPPORTED:', object_type)
+        print('# OBJECT_TYPE_NOT_SUPPORTED:', row.object_type)
         print('#\n')
       continue
-    #
-    folder    = cfg.folders[object_type]
-    file_ext  = cfg.file_ext_obj if object_type != 'PACKAGE' else cfg.file_ext_spec
-    file      = '{}{}{}'.format(folder, object_name.lower(), file_ext)
 
-    # prepare short_file before we even create the file
-    short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
+    # prepare shortcut before we even create the file
+    obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old)
 
     # check locked objects
     flag = ''
     if (len(locked_objects) or args.lock):
-      if not (short_file in locked_objects):
-        if hash_old == '' and args.add:         # add new files to the locked list
+      if not (obj.shortcut in locked_objects):
+        if obj.hash_old == '' and args.add:     # add new files to the locked list
           flag = '[+]'
         else:
           continue                              # skip files not on the locked list
 
     # make sure we have target folders ready
-    if not (os.path.isdir(folder)):
-      os.makedirs(folder)
+    if not (os.path.isdir(obj.folder)):
+      os.makedirs(obj.folder)
 
     # check object
     obj = get_object(conn, object_type, object_name)
@@ -424,11 +414,10 @@ if (len(locked_objects) or args.lock):
 
 # delete all database object files not on the list and except APEX folder
 if args.lock and args.delete:
-  for type in cfg.objects_sorted:
-    for file in sorted(glob.glob(cfg.folders[type] + '/*.*')):
-      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
-      if not (short_file in locked_objects):
-        #print('  {}'.format(short_file))
+  for object_type in cfg.objects_sorted:
+    for file in get_files(object_type, cfg, sort = True):
+      obj = get_file_details(object_type, '', file, cfg, hashed_old)
+      if not (obj.shortcut in locked_objects):
         os.remove(file)
 
 
@@ -443,7 +432,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   # export/refresh existing files
   tables = []
   tables_flags = {}  # to keep flags and use them in MERGE statements
-  for file in glob.glob(cfg.folders['DATA'] + '*' + cfg.file_ext_csv):
+  for file in get_files('DATA', cfg, sort = True):
     file = os.path.basename(file).split('.')
     tables.append(file[0])
     if file[1] in ('U', 'D'):
@@ -503,7 +492,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
     # show progress
     if args.verbose:
-      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
+      obj = get_file_details('DATA', '', file, cfg, hashed_old)
       #
       print('  {:32} {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
         table_name.upper(),
@@ -511,7 +500,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         '' if not ('.D.' in file) else 'DEL',
         len(data),                # lines
         os.path.getsize(file),    # bytes
-        '| NEW' if hash_old == '' else '| CHANGED' if hash_new != hash_old else ''
+        '| NEW' if obj.hash_old == '' else '| CHANGED' if obj.hash_new != obj.hash_old else ''
       ]))
     else:
       perc = (i + 1) / len(tables)
@@ -556,10 +545,8 @@ if not args.rollout:
       if not row.type in cfg.folders:  # skip unsupported object types
         continue
       #
-      object_file = '{}{}{}'.format(cfg.folders[row.type], row.table_name.lower(), cfg.file_ext_obj)
-      short_file, hash_old, hash_new = get_file_details(object_file, cfg.git_root, hashed_old)
-      #
-      if not short_file in locked_objects:
+      obj = get_file_details('GRANT', row.table_name, '', cfg, hashed_old)
+      if not obj.shortcut in locked_objects:
         continue
 
     # show object type header
@@ -889,8 +876,8 @@ if args.patch:
 
   # get list of changed objects and their references
   for object_type in cfg.objects_sorted:
-    for file in sorted(glob.glob(cfg.folders[object_type] + '/*' + cfg.file_ext_obj)):
-      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
+    for file in get_files(object_type, cfg, sort = True):
+      obj = get_file_details(object_type, '', file, cfg, hashed_old)
 
       # check if object changed
       if hash_old == hash_new:                      # ignore unchanged objects
@@ -1040,9 +1027,9 @@ if args.patch:
   if len(apex_apps):
     patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
-      short_file, hash_old, hash_new = get_file_details(file, cfg.git_root, hashed_old)
-      processed_files.append(short_file)
-      patch_content.append(patch_line.format(short_file))
+      obj = get_file_details('APEX', '', file, cfg, hashed_old)
+      processed_files.append(obj.shortcut)
+      patch_content.append(cfg.patch_line.format(obj.shortcut))
   patch_content.append('')
 
   # store new hashes for rollout
@@ -1104,7 +1091,7 @@ if args.rollout:
     # keep all previous hashes
     content = []
     for file in sorted(hashed_old.keys()):
-      short_file = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
+      shortcut = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
       # ignore/remove non existing files only on -delete mode
       if args.delete and not os.path.exists(cfg.git_root + file):
         continue
