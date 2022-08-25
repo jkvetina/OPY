@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, shutil, collections, inspect
+import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, shutil, collections, inspect, yaml
 from oracle_wrapper import Oracle
 from export_fn import *
 
@@ -72,16 +72,13 @@ if args.target == None:
 #
 # LOAD CONFIGURATION
 #
-import config as cfg_bak
+with open(root + '/config.yaml', 'r', encoding = 'utf-8') as f:
+  cfg_bak = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0]
 
 # normalize paths from config, replace #ROOT# with actual root
 cfg = {}
 cfg_root = os.path.normpath(args.target)
-for name, value in vars(cfg_bak).items():
-  if (inspect.ismodule(value) or name.startswith('__')):
-    #print('SKIPPING', name)
-    continue
-  #
+for name, value in cfg_bak.items():
   if isinstance(value, dict):
     cfg[name] = {}
     for key, val in value.items():
@@ -94,13 +91,6 @@ for name, value in vars(cfg_bak).items():
   #
   else:
     cfg[name] = get_fixed_path(value, cfg_root)
-#
-if args.debug:
-  print('-------')
-  print('CONFIG:')
-  for name, value in cfg.items():
-    print(name, value)
-  print()
 #
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
 
