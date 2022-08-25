@@ -66,6 +66,9 @@ patch_folders:
   jobs      : '#ROOT#/patches/80_jobs/'
   finally   : '#ROOT#/patches/90_finally/'
 
+# @@ = relative to script from which it is called from
+patch_line  : '@@"../{}"'
+
 # map objects to patch folders
 patch_map:
   init: []
