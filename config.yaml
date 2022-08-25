@@ -1,8 +1,10 @@
 # basic folders
 git_root        : '#ROOT#/'
-git_target      : '#ROOT#/database/'
-patch_root      : '#ROOT#/patches/'
-patch_done      : '#ROOT#/patches_done/'
+git_target      : '#ROOT#/database/'        # exported database objects
+patch_root      : '#ROOT#/patches/'         # extra objects included when -patch(ing)
+patch_done      : '#ROOT#/patches_done/'    # output files from patching
+
+# log files and output files
 patch_today     : '#ROOT#/patches_done/patch_#TODAY#.sql'
 patch_zip       : '#ROOT#/patches_done/patch_#TODAY#.zip'
 patch_log       : '#ROOT#/patches_done/patch.log'
@@ -10,7 +12,7 @@ patch_manually  : '#ROOT#/patches/30_table+data_changes/#TODAY#.sql'
 rollout_log     : '#ROOT#/patches_done/rollout.log'
 locked_log      : '#ROOT#/patches_done/locked.log'
 
-# apex related
+# APEX related
 apex_dir        : '#ROOT#/database/apex/'
 apex_temp_dir   : '#ROOT#/database/apex/temp/'
 apex_tmp        : apex.#.tmp
