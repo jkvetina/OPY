@@ -71,9 +71,10 @@ if args.target == None:
 #
 config_file = '/config.yaml'
 cfg_root    = os.path.normpath(args.target)
-cfg_bak     = {}
+cfg_shared  = {}
+cfg_project = {}
+conf_used   = []
 conf_files  = [
-  os.path.normpath(args.target + config_file),
   os.path.normpath(conn_dir + '/../' + config_file),
   os.path.normpath(os.path.dirname(__file__) + config_file)
 ]
@@ -81,13 +82,35 @@ conf_files  = [
 for conf_file in conf_files:
   if os.path.exists(conf_file):
     with open(conf_file, 'r', encoding = 'utf-8') as f:
-      cfg_bak = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0]
-    config_file = conf_file
+      cfg_shared = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
+      cfg_shared = cfg_shared[0] if len(cfg_shared) > 0 else {}
+      conf_used.append(conf_file)
     break
 
+# overload shared config with project specific file
+conf_file = os.path.normpath(args.target + config_file)
+if os.path.exists(conf_file):
+  with open(conf_file, 'r', encoding = 'utf-8') as f:
+    cfg_project = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
+    cfg_project = cfg_project[0] if len(cfg_project) > 0 else {}
+    conf_used.append(conf_file)
+#
+cfg = collections.defaultdict(dict)
+cfg.update(cfg_shared)
+if cfg_project != {}:
+  if args.debug:
+    print('')
+    print('CONFIG UPDATE:')
+    print('--------------')
+  for key, nested_dict in cfg_project.items():
+    cfg[key].update(nested_dict)
+    if args.debug:
+      print('  ', key, nested_dict)
+  if args.debug:
+    print('\n')
+
 # normalize paths from config, replace #ROOT# with actual root
-cfg = {}
-for name, value in cfg_bak.items():
+for name, value in cfg.items():
   if isinstance(value, dict):
     cfg[name] = {}
     for key, val in value.items():
@@ -106,7 +129,7 @@ for name, value in cfg_bak.items():
 #
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
 #
-if cfg_bak == {}:
+if cfg_shared == {} and cfg_project == {}:
   print('#\n# MISSING CONFIG\n#\n')
   sys.exit()
 
@@ -160,7 +183,9 @@ if not args.rollout:
   #
   print('             | {}'.format(db_conf.replace(user_home, '~')))
   print('      TARGET | {}'.format(cfg.git_target.replace(user_home, '~')))
-  print('      CONFIG | {}'.format(config_file.replace(user_home, '~')))
+  print('      CONFIG | {}'.format(conf_used[0].replace(user_home, '~')))
+  if len(conf_used) > 1:
+    print('             | {}'.format(conf_used[1].replace(user_home, '~')))
   print('             |')
 
   # get versions
