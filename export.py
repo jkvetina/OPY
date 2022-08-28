@@ -383,6 +383,10 @@ if count_objects:
       lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = obj.name, lines = lines, schema = schema)
     content = '\n'.join(lines)
 
+    # prepend silent object drop
+    if obj.type.lower().replace(' ', '_') in cfg.drop_objects:
+      content = template_object_drop.lstrip().format(object_type = obj.type, object_name = obj.name) + content
+
     # append comments
     if obj.type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
       content += get_object_comments(conn, obj.name)

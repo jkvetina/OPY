@@ -60,6 +60,11 @@ objects_sorted:
   - TRIGGER
   - JOB
 
+# option to remove objects before create
+drop_objects:
+  view              : False     # mind affect grants
+  materialized_view : True      # kind of needed
+
 # patch folders, sorted
 patch_folders:
   init      : '#ROOT#/patches/10_init/'

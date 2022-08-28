@@ -336,10 +336,13 @@ WHEN NOT MATCHED THEN
         {all_values}
     );\n"""
 
-# drop MVW query
-template_mvw_drop = """
+# drop object query
+template_object_drop = """
 BEGIN
-    DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP MATERIALIZED VIEW {view_name}');
+    DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP {object_type} {object_name}');
+    DBMS_OUTPUT.PUT_LINE('--);
+    DBMS_OUTPUT.PUT_LINE('-- {object_type} {object_name} DROPPED');
+    DBMS_OUTPUT.PUT_LINE('--);
 EXCEPTION
 WHEN OTHERS THEN
     NULL;
