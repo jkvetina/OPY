@@ -497,8 +497,8 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
       #
       print('  {:32} {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
         table_name.upper(),
-        '' if not ('.U.' in file) else 'UPD',
-        '' if not ('.D.' in file) else 'DEL',
+        '' if not (cfg.merge_update in file) else 'UPD',
+        '' if not (cfg.merge_delete in file) else 'DEL',
         len(data),                # lines
         os.path.getsize(file),    # bytes
         '| NEW' if obj.hash_old == '' else '| CHANGED' if obj.hash_new != obj.hash_old else ''
@@ -518,8 +518,8 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   for file in get_files('DATA', cfg, sort = True):
     table_name  = os.path.basename(file).split('.')[0]
     target_file = cfg.patch_folders['data'] + table_name + '.sql'
-    skip_update = '--' if not ('.U.' in file) else ''
-    skip_delete = '--' if not ('.D.' in file) else ''
+    skip_update = '--' if not (cfg.merge_update in file) else ''
+    skip_delete = '--' if not (cfg.merge_delete in file) else ''
     content     = get_merge_from_csv(file, conn, skip_update, skip_delete)
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:

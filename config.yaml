@@ -105,3 +105,7 @@ ignore_columns:
   - created_at
   - created_by
 
+#
+merge_update: .U.
+merge_delete: .D.
+
