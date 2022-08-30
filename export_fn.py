@@ -63,12 +63,12 @@ def get_fixed_path(value, root, args):
     #
     if '#TODAY#' in value:
       value = value.replace('#TODAY#', datetime.datetime.today().strftime('%Y-%m-%d'))  # YYYY-MM-DD
-    #
-    if '#PATCH#' in value and len(args.output or '') > 0:
-      value = value.replace('#PATCH#', args.output)
-    #
-    if '#ENV_NAME#' in value and len(args.env_name or '') > 0:
-      value = value.replace('#ENV_NAME#', args.env_name)
+
+    # replace all tags matching args (patch_name, env_name)
+    for (arg_name, arg_value) in args._asdict().items():
+      arg_name = '#{}#'.format(arg_name).upper()
+      if arg_name in value:
+        value = value.replace(arg_name, str(arg_value) or '')
   return value
 
 
