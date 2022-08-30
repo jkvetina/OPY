@@ -103,7 +103,10 @@ if cfg_project != {}:
     print('CONFIG UPDATE:')
     print('--------------')
   for key, nested_dict in cfg_project.items():
-    cfg[key].update(nested_dict)
+    if isinstance(cfg[key], dict):
+      cfg[key].update(nested_dict)
+    else:
+      cfg[key] = nested_dict
     if args.debug:
       print('  ', key, nested_dict)
   if args.debug:
