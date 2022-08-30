@@ -16,8 +16,8 @@ parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in dat
 parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                         default = False,  nargs = '?',  const = True)
 parser.add_argument('-d', '-debug',   '--debug',    help = 'Show some extra stuff when debugging',                    default = False,  nargs = '?',  const = True)
 parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',                   default = False,  nargs = '?',  const = True)
-parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch',                                           default = False,  nargs = '?',  const = True)
-parser.add_argument(      '-rollout', '--rollout',  help = 'Mark rollout as done',                                    default = False,  nargs = '?',  const = True)
+parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch (allow to pass env and opt. name)',                           nargs = '+')
+parser.add_argument('-o', '-rollout', '--rollout',  help = 'Mark rollout as done (pass env)',                                           nargs = '+')
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                                            default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-lock',    '--lock',     help = 'Lock existing files into locked.log',                     default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                 default = False,  nargs = '?',  const = True)
@@ -927,7 +927,7 @@ if args.patch:
       changed_objects.append(curr_object)
       #
       if obj.type in ('TABLE', 'DATA'):
-        tables_todo.append(obj.name)         # to process tables first
+        tables_todo.append(obj.name)                # to process tables first
         #
         if obj.name in table_relations:
           for table_name in table_relations[obj.name]:
@@ -981,12 +981,12 @@ if args.patch:
     #
     # @TODO: ^ switch this to shortcut
     #
-    obj   = get_file_details(object_type, object_name, file, cfg, hashed_old)
+    obj   = get_file_details(object_type, object_name, '', cfg, hashed_old)
     flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
     #
     processed_names.append(object_code)             # to final check if order is correct
     processed_objects.append(obj)
-    hashed_new[obj.shortcut] = obj. hash_new      # store value for new patch.log
+    hashed_new[obj.shortcut] = obj.hash_new         # store value for new patch.log
     #
     if ((last_type != object_type and last_type != '') or (len(references[object_code]) and args.verbose)):
       patch_notes.append('{:<20} |'.format(''))
@@ -1007,12 +1007,13 @@ if args.patch:
     if len(ordered_objects):
       patch_notes.append('{:<20} |'.format(''))
     #
-    files = get_files(object_type, cfg, sorted = True)
+    files = get_files(object_type, cfg, sort = True)
     if len(files):
       for file in files:
         obj = get_file_details(object_type, '', file, cfg, hashed_old)
         if obj.hash_old != obj.hash_new:
           patch_notes.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
+          last_type = obj.type
       patch_notes.append('{:<20} |'.format(''))
 
   # create list of files to process
@@ -1037,11 +1038,11 @@ if args.patch:
     if type in cfg.patch_map:
       header_printed = False
       for obj in processed_objects:
-        if not (obj.type in cfg.patch_map[type]):    # ignore non related types
+        if not (obj.type in cfg.patch_map[type]):     # ignore non related types
           continue
-        if not (obj.type in cfg.folders):            # ignore unknown types
+        if not (obj.type in cfg.folders):             # ignore unknown types
           continue
-        if obj.shortcut in processed_files:        # ignore processed objects/files
+        if obj.shortcut in processed_files:           # ignore processed objects/files
           continue
         #
         if not header_printed:
