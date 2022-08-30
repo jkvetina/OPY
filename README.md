@@ -80,20 +80,17 @@ Export only locked objects (when locked.log file exists) changed today\
 
 #### Patching
 
-Create patch from changed files (against rollout.log)\
-```python export.py -n PROJECT -patch```
-
 Create patch for PROD environment from changed files (against rollout.PROD.log)\
 ```python export.py -n PROJECT -patch PROD```
 
-Mark recently created patch as executed (merge files in patch to rollout.log)\
-```python export.py -n PROJECT -rollout```
+Create patch named as patches/CARD_NUMBER.sql for PROD environment...\
+```python export.py -n PROJECT -patch PROD CARD_NUMBER```
 
 Mark recently created PROD patch as executed (merge files in patch to rollout.PROD.log)\
 ```python export.py -n PROJECT -rollout PROD```
 
 Mark recently created patch as executed + keep just existing files in log\
-```python export.py -n PROJECT -rollout -delete```
+```python export.py -n PROJECT -rollout PROD -delete```
 
 <br />
 

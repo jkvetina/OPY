@@ -24,6 +24,26 @@ parser.add_argument(      '-add',     '--add',      help = 'Add new objects/file
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
 #
 args = vars(parser.parse_args())
+
+# adjust args for patching
+args['env_name']    = ''
+args['patch_name']  = ''
+#
+if 'patch' in args and args['patch'] != None:
+  if len(args['patch']) > 1:
+    args['patch_name']  = args['patch'][1]
+  args['env_name']      = args['patch'][0]
+  args['patch']         = True
+  args['rollout']       = False
+  #
+elif 'rollout' in args and args['rollout'] != None:
+  args['env_name']      = args['rollout'][0]
+  args['patch']         = False
+  args['rollout']       = True
+else:
+  args['patch']     = False
+  args['rollout']   = False
+#
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
 #
 start_timer = timeit.default_timer()
@@ -235,14 +255,15 @@ if args.patch:
       w.write('')
 
 # switch to alternative log file (typically from PROD when preparing new patch for PROD)
-if args.patch and args.patch != True:
-  cfg.rollout_log = cfg.rollout_log.replace('.', '.{}.'.format(args.patch))
-  if not os.path.exists(cfg.rollout_log):
-    print('#')
-    print('# REQUESTED PATCH FILE MISSING')
-    print('#', cfg.rollout_log)
-    print('#')
-    print()
+if args.patch and args.patch_name:
+  cfg = cfg._replace(patch_today = cfg.patch_named)
+#
+if args.patch and not os.path.exists(cfg.rollout_log):
+  print('#')
+  print('# REQUESTED PATCH FILE MISSING')
+  print('#', cfg.rollout_log)
+  print('#')
+  print()
 
 # get old hashes
 hashed_old = {}
@@ -1103,9 +1124,6 @@ if args.rollout:
         print('  [-] {}'.format(file))
 
   # store hashes for next patch
-  if args.rollout != True:
-    cfg.rollout_log = cfg.rollout_log.replace('.', '.{}.'.format(args.rollout))
-  #
   with open(cfg.rollout_log, 'w', encoding = 'utf-8') as w:
     # get files and hashes from patch.log file and overwrite old hashes
     if os.path.exists(cfg.patch_log):
