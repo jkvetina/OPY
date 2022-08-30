@@ -896,7 +896,7 @@ if count_objects or apex_apps != {} or (args.csv or isinstance(args.csv, list)):
 # PREPARE PATCH
 #
 if args.patch:
-  header = 'PREPARING PATCH FOR {}:'.format(args.patch).replace(' FOR True:', ':')
+  header = 'PREPARING PATCH FOR {} AT {}:'.format(args.env_name, get_file_shortcut(cfg.patch_today, cfg)).replace(' FOR  ', ' ')
   print()
   print(header)
   print('-' * len(header))
