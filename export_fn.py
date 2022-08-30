@@ -3,6 +3,11 @@ from export_queries import *
 
 
 
+def get_file_shortcut(file, cfg):
+  return os.path.normpath(file).replace(cfg.git_root, '').replace('\\', '/').lstrip('/').strip()
+
+
+
 def get_file_details(object_type, object_name, file, cfg, hashed_old):
   obj = {
     'type'      : object_type or '',
@@ -30,7 +35,7 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old):
   obj['name'] = obj['name'].upper()
 
   # get short file use in all log files
-  obj['shortcut'] = obj['file'].replace(cfg.git_root, '').replace('\\', '/').lstrip('/').strip()
+  obj['shortcut'] = get_file_shortcut(obj['file'], cfg)
   obj['hash_old'] = hashed_old.get(obj['shortcut'], '')
   obj['hash_new'] = ''
 

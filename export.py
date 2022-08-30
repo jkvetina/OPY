@@ -1022,7 +1022,7 @@ if args.patch:
     if len(files):
       patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
-        shortcut = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
+        shortcut = get_file_shortcut(file, cfg)
         #
         if os.path.basename(shortcut) == '__.sql':    # ignore file with all data files merged
           continue
@@ -1117,7 +1117,6 @@ if args.rollout:
     # keep all previous hashes
     content = []
     for file in sorted(hashed_old.keys()):
-      shortcut = file.replace(cfg.git_root, '').replace('\\', '/').lstrip('/')
       # ignore/remove non existing files only on -delete mode
       if args.delete and not os.path.exists(cfg.git_root + file):
         continue
