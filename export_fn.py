@@ -54,7 +54,7 @@ def get_files(object_type, cfg, sort):
 
 
 
-def get_fixed_path(value, root):
+def get_fixed_path(value, root, args):
   if isinstance(value, str):
     if '#ROOT#' in value:
       value = value.replace('#ROOT#', root)
@@ -63,6 +63,12 @@ def get_fixed_path(value, root):
     #
     if '#TODAY#' in value:
       value = value.replace('#TODAY#', datetime.datetime.today().strftime('%Y-%m-%d'))  # YYYY-MM-DD
+    #
+    if '#PATCH#' in value and len(args.output or '') > 0:
+      value = value.replace('#PATCH#', args.output)
+    #
+    if '#ENV_NAME#' in value and len(args.env_name or '') > 0:
+      value = value.replace('#ENV_NAME#', args.env_name)
   return value
 
 

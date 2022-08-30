@@ -117,18 +117,18 @@ for name, value in cfg.items():
   if isinstance(value, dict):
     cfg[name] = {}
     for key, val in value.items():
-      cfg[name][key] = get_fixed_path(val, cfg_root)
+      cfg[name][key] = get_fixed_path(val, cfg_root, args)
       if isinstance(cfg[name][key], list):
         for idx, val2 in enumerate(cfg[name][key]):
-          cfg[name][key][idx] = get_fixed_path(val2, cfg_root)
+          cfg[name][key][idx] = get_fixed_path(val2, cfg_root, args)
   #
   elif isinstance(value, list):
     cfg[name] = []
     for key, val in enumerate(value):
-      cfg[name].append(get_fixed_path(val, cfg_root))
+      cfg[name].append(get_fixed_path(val, cfg_root, args))
   #
   else:
-    cfg[name] = get_fixed_path(value, cfg_root)
+    cfg[name] = get_fixed_path(value, cfg_root, args)
 #
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
 #
