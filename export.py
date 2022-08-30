@@ -409,7 +409,7 @@ if count_objects:
     content = '\n'.join(lines)
 
     # prepend silent object drop
-    if obj.type.lower().replace(' ', '_') in cfg.drop_objects:
+    if obj.type in cfg.drop_objects:
       content = template_object_drop.lstrip().format(object_type = obj.type, object_name = obj.name) + content
 
     # append comments

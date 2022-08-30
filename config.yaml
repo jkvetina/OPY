@@ -19,7 +19,7 @@ apex_tmp        : apex.#.tmp
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 
 # APEX exports
-apex_embedded   : False           # export embedded code
+apex_embedded   : True            # export embedded code
 apex_splited    : True            # export splited application
 apex_full       : True            # traditional full export
 apex_files      : True            # export workspace files
@@ -62,8 +62,7 @@ objects_sorted:
 
 # option to remove objects before create
 drop_objects:
-  view              : False     # mind affect grants
-  materialized_view : True      # kind of needed
+  - MATERIALIZED VIEW
 
 # patch folders, sorted
 patch_folders:
