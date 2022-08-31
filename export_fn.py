@@ -10,14 +10,15 @@ def get_file_shortcut(file, cfg):
 
 def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj):
   obj = {
-    'type'      : object_type or '',
-    'name'      : object_name or '',
-    'shortcut'  : '',
-    'file'      : file or '',
     'folder'    : '',
-    'group'     : '',
-    'hash_old'  : '',
-    'hash_new'  : ''
+    'type'        : object_type or '',
+    'name'        : object_name or '',
+    'file'        : file or '',
+    'patch_file'  : '',
+    'group'       : '',
+    'shortcut'    : '',
+    'hash_old'    : '',
+    'hash_new'    : ''
   }
   #
   if not (obj['type'] in cfg.folders):   # unsupported object type
@@ -28,20 +29,39 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
   if obj['file'] == '':
     obj['file'] = os.path.normpath(obj_folder[0] + obj['name'].lower() + obj_folder[1])
   obj['folder'] = obj_folder[0]
+    #
+    # @TODO: group is missing
+    #
 
   # missing object name
   if obj['name'] == '':
     obj['name'] = os.path.basename(obj['file']).split('.')[0]
   obj['name'] = obj['name'].upper()
 
+  # return from cache
+  if obj['type'] in cached_obj and obj['name'] in cached_obj[obj['type']]:
+    return cached_obj[obj['type']][obj['name']]
+
+  # shorten file for logs
+  obj['shortcut']   = get_file_shortcut(obj['file'], cfg)
+  obj['patch_file'] = obj['shortcut']
+
+  # search for subfolder
+  for file in glob.glob(obj_folder[0] + '**/' + obj['name'].lower() + obj_folder[1]):
+    groups = obj['shortcut'].split('/')
+    if len(groups) > 2:
+      obj['group']      = groups[1]
+      obj['file']       = file
+      obj['shortcut']   = obj['shortcut'].replace('/{}/'.format(obj['group']), '/')
+      break
+
   # get short file use in all log files
-  obj['shortcut'] = get_file_shortcut(obj['file'], cfg)
   obj['hash_old'] = hashed_old.get(obj['shortcut'], '')
   obj['hash_new'] = ''
 
   # calculate new file hash
   if os.path.exists(obj['file']):
-    obj['hash_new']  = hashlib.md5(open(obj['file'], 'rb').read()).hexdigest()
+    obj['hash_new'] = hashlib.md5(open(obj['file'], 'rb').read()).hexdigest()
 
   # cache object
   if not (obj['type'] in cached_obj):
@@ -54,11 +74,14 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
 
 def get_files(object_type, cfg, sort):
   folder  = cfg.folders[object_type]
-  files   = glob.glob(folder[0] + '/*' + folder[1])
+  files   = []
+  files   += glob.glob(folder[0] + '/*' + folder[1])
+  files   += glob.glob(folder[0] + '/**/*' + folder[1])   # sub folders
 
   # add alternative file names
   if len(folder) > 2:
     files += glob.glob(folder[0] + '/*' + folder[2])
+    files += glob.glob(folder[0] + '/**/*' + folder[2])   # sub folders
   #
   return files if not sort else sorted(files)
 
