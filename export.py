@@ -506,7 +506,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   print()
   print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
   if args.verbose:
-    print('------------------- {:14} {:>3} | {:>3} | {:>8} | {:>8} | {}'.format('', 'UPD', 'DEL', 'LINES', 'BYTES', 'STATUS'))
+    print('------------------- {:16} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} | {}'.format('', 'INS', 'UPD', 'DEL', 'LINES', 'BYTES', 'STATUS'))
   #
   for (i, table_name) in enumerate(sorted(tables)):
     flag = tables_flags[table_name] if table_name in tables_flags else ''
@@ -555,10 +555,12 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     if args.verbose:
       obj = get_file_details('DATA', '', file, cfg, hashed_old)
       #
-      print('  {:32} {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
+      print('  {:1} {:32} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
+        '*' if len(where_filter) else '',
         table_name.upper(),
-        '' if not (cfg.merge_update in file) else 'UPD',
-        '' if not (cfg.merge_delete in file) else 'DEL',
+        ' Y ' if (cfg.merge_insert in file or cfg.merge_auto_insert) else '',
+        ' Y ' if (cfg.merge_update in file or cfg.merge_auto_update) else '',
+        ' Y ' if (cfg.merge_delete in file or cfg.merge_auto_delete) else '',
         len(data),                # lines
         os.path.getsize(file),    # bytes
         '| NEW' if obj.hash_old == '' else '| CHANGED' if obj.hash_new != obj.hash_old else ''
@@ -578,8 +580,9 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   for file in get_files('DATA', cfg, sort = True):
     table_name  = os.path.basename(file).split('.')[0]
     target_file = cfg.patch_folders['data'] + table_name + '.sql'
-    skip_update = '--' if not (cfg.merge_update in file) else ''
-    skip_delete = '--' if not (cfg.merge_delete in file) else ''
+    skip_insert = '' if (cfg.merge_insert in file or cfg.merge_auto_insert) else '--'
+    skip_update = '' if (cfg.merge_update in file or cfg.merge_auto_update) else '--'
+    skip_delete = '' if (cfg.merge_delete in file or cfg.merge_auto_delete) else '--'
 
     # re-apply filter to remove correct rows when requested
     where_filter = ''

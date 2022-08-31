@@ -329,13 +329,14 @@ ON ({primary_cols_set})
 {skip_update}WHEN MATCHED THEN
 {skip_update}    UPDATE SET
 {skip_update}        {non_primary_cols_set}
-WHEN NOT MATCHED THEN
-    INSERT (
-        {all_cols}
-    )
-    VALUES (
-        {all_values}
-    );\n"""
+{skip_insert}WHEN NOT MATCHED THEN
+{skip_insert}    INSERT (
+{skip_insert}        {all_cols}
+{skip_insert}    )
+{skip_insert}    VALUES (
+{skip_insert}        {all_values}
+{skip_insert}    )
+;\n"""
 
 # drop object query
 template_object_drop = """

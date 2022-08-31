@@ -109,9 +109,15 @@ ignore_columns:
   - created_at
   - created_by
 
-#
+# flags in filenames to adjust which operations do in MERGE
+merge_insert: .I.
 merge_update: .U.
 merge_delete: .D.
+
+# provide option to skip flags
+merge_auto_insert: True
+merge_auto_update: False
+merge_auto_delete: True
 
 # filter table data before export to CSV file
 csv_export_filters:
