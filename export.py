@@ -1085,14 +1085,14 @@ if args.patch:
           continue
         if not (obj.type in cfg.folders):             # ignore unknown types
           continue
-        if obj.shortcut in processed_files:           # ignore processed objects/files
+        if obj.shortcut in processed_files:         # ignore processed objects/files
           continue
         #
         if not header_printed:
           header_printed = True
           patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
         #
-        patch_content.append(cfg.patch_line.format(obj.shortcut))
+        patch_content.append(cfg.patch_line.format(obj.patch_file))
         processed_files.append(obj.shortcut)
 
   # append APEX apps
@@ -1102,7 +1102,7 @@ if args.patch:
     for file in apex_apps:
       obj = get_file_details('APEX', '', file, cfg, hashed_old, cached_obj)
       processed_files.append(obj.shortcut)
-      patch_content.append(cfg.patch_line.format(obj.shortcut))
+      patch_content.append(cfg.patch_line.format(obj.patch_file))
   patch_content.append('')
 
   # store new hashes for rollout
