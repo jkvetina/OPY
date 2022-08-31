@@ -1024,6 +1024,10 @@ if args.patch:
     processed_names.append(object_code)             # to final check if order is correct
     processed_objects.append(obj)
     hashed_new[obj.shortcut] = obj.hash_new         # store value for new patch.log
+
+    # dont show jobs in notes, but process them
+    if object_type in ('JOB',):                     # ignore jobs, they have own handler later
+      continue
     #
     if ((last_type != object_type and last_type != '') or (len(references[object_code]) and args.verbose)):
       patch_notes.append('{:<20} |'.format(''))
