@@ -34,8 +34,8 @@ folders:
   INDEX               : ['#ROOT#/database/indexes/',      .sql]
   JOB                 : ['#ROOT#/database/jobs/',         .sql]
   MATERIALIZED VIEW   : ['#ROOT#/database/mviews/',       .sql]
-  PACKAGE             : ['#ROOT#/database/packages/',     .spec.sql]
-  PACKAGE BODY        : ['#ROOT#/database/packages/',     .sql]
+  PACKAGE             : ['#ROOT#/database/packages/',     .spec.sql, .pks]   # alternative ext.
+  PACKAGE BODY        : ['#ROOT#/database/packages/',     .sql,      .pkb]
   PROCEDURE           : ['#ROOT#/database/procedures/',   .sql]
   SEQUENCE            : ['#ROOT#/database/sequences/',    .sql]
   SYNONYM             : ['#ROOT#/database/synonyms/',     .sql]

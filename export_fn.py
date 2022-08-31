@@ -50,6 +50,11 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old):
 def get_files(object_type, cfg, sort):
   folder  = cfg.folders[object_type]
   files   = glob.glob(folder[0] + '/*' + folder[1])
+
+  # add alternative file names
+  if len(folder) > 2:
+    files += glob.glob(folder[0] + '/*' + folder[2])
+  #
   return files if not sort else sorted(files)
 
 
