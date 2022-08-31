@@ -395,8 +395,9 @@ if count_objects:
           continue                              # skip files not on the locked list
 
     # make sure we have target folders ready
-    if not (os.path.isdir(obj.folder)):
-      os.makedirs(obj.folder)
+    file_folder = os.path.dirname(obj.file)
+    if not (os.path.isdir(file_folder)):
+      os.makedirs(file_folder)
 
     # check object
     content = get_object(conn, obj.type, obj.name)

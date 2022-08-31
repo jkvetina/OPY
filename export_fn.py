@@ -10,7 +10,6 @@ def get_file_shortcut(file, cfg):
 
 def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj):
   obj = {
-    'folder'    : '',
     'type'        : object_type or '',
     'name'        : object_name or '',
     'file'        : file or '',
@@ -28,7 +27,6 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
   obj_folder = cfg.folders[obj['type']]
   if obj['file'] == '':
     obj['file'] = os.path.normpath(obj_folder[0] + obj['name'].lower() + obj_folder[1])
-  obj['folder'] = obj_folder[0]
     #
     # @TODO: group is missing
     #
