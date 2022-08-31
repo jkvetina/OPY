@@ -268,6 +268,7 @@ if args.patch and not os.path.exists(cfg.rollout_log):
 # get old hashes
 hashed_old = {}
 hashed_new = {}   # files/objects changed since last rollout
+cached_obj = {}
 #
 if os.path.exists(cfg.rollout_log):
   with open(cfg.rollout_log, 'r', encoding = 'utf-8') as r:
@@ -304,7 +305,7 @@ if os.path.exists(cfg.locked_log):
 if args.lock and not args.delete and not args.add:
   for object_type in cfg.objects_sorted:
     for file in get_files(object_type, cfg, sort = True):
-      obj = get_file_details(object_type, '', file, cfg, hashed_old)
+      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
       if not (obj.shortcut in locked_objects):
         locked_objects.append(obj.shortcut)
 
@@ -331,7 +332,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for row in data_objects:
     # show just locked files
     if (len(locked_objects) or args.lock):
-      obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old)
+      obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
       if (obj == {} or not (obj.shortcut in locked_objects)):
         continue                              # skip files not on the locked list
     #
@@ -382,7 +383,7 @@ if count_objects:
       continue
 
     # prepare shortcut before we even create the file
-    obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old)
+    obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
 
     # check locked objects
     flag = ''
@@ -470,7 +471,7 @@ if (len(locked_objects) or args.lock):
 if args.lock and args.delete:
   for object_type in cfg.objects_sorted:
     for file in get_files(object_type, cfg, sort = True):
-      obj = get_file_details(object_type, '', file, cfg, hashed_old)
+      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
       if not (obj.shortcut in locked_objects):
         os.remove(file)
 
@@ -553,7 +554,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
     # show progress
     if args.verbose:
-      obj = get_file_details('DATA', '', file, cfg, hashed_old)
+      obj = get_file_details('DATA', '', file, cfg, hashed_old, cached_obj)
       #
       print('  {:1} {:32} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
         '*' if len(where_filter) else '',
@@ -615,7 +616,7 @@ if not args.rollout:
       if not row.type in cfg.folders:  # skip unsupported object types
         continue
       #
-      obj = get_file_details('GRANT', row.table_name, '', cfg, hashed_old)
+      obj = get_file_details('GRANT', row.table_name, '', cfg, hashed_old, cached_obj)
       if not obj.shortcut in locked_objects:
         continue
 
@@ -951,7 +952,7 @@ if args.patch:
   # get list of changed objects and their references
   for object_type in cfg.objects_sorted:
     for file in get_files(object_type, cfg, sort = True):
-      obj = get_file_details(object_type, '', file, cfg, hashed_old)
+      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
 
       # check if object changed
       if obj.hash_old == obj.hash_new:              # ignore unchanged objects
@@ -1018,7 +1019,7 @@ if args.patch:
     #
     # @TODO: ^ switch this to shortcut
     #
-    obj   = get_file_details(object_type, object_name, '', cfg, hashed_old)
+    obj   = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
     flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
     #
     processed_names.append(object_code)             # to final check if order is correct
@@ -1051,7 +1052,7 @@ if args.patch:
     files = get_files(object_type, cfg, sort = True)
     if len(files):
       for file in files:
-        obj = get_file_details(object_type, '', file, cfg, hashed_old)
+        obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
         if obj.hash_old != obj.hash_new:
           patch_notes.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
           last_type = obj.type
@@ -1098,7 +1099,7 @@ if args.patch:
   if len(apex_apps):
     patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
-      obj = get_file_details('APEX', '', file, cfg, hashed_old)
+      obj = get_file_details('APEX', '', file, cfg, hashed_old, cached_obj)
       processed_files.append(obj.shortcut)
       patch_content.append(cfg.patch_line.format(obj.shortcut))
   patch_content.append('')

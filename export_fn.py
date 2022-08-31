@@ -8,7 +8,7 @@ def get_file_shortcut(file, cfg):
 
 
 
-def get_file_details(object_type, object_name, file, cfg, hashed_old):
+def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj):
   obj = {
     'type'      : object_type or '',
     'name'      : object_name or '',
@@ -42,8 +42,13 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old):
   # calculate new file hash
   if os.path.exists(obj['file']):
     obj['hash_new']  = hashlib.md5(open(obj['file'], 'rb').read()).hexdigest()
+
+  # cache object
+  if not (obj['type'] in cached_obj):
+    cached_obj[obj['type']] = {}
+  cached_obj[obj['type']][obj['name']] = collections.namedtuple('OBJ', obj.keys())(*obj.values())  # convert to named tuple
   #
-  return collections.namedtuple('OBJ', obj.keys())(*obj.values())  # convert to named tuple
+  return cached_obj[obj['type']][obj['name']]
 
 
 
