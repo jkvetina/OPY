@@ -113,3 +113,7 @@ ignore_columns:
 merge_update: .U.
 merge_delete: .D.
 
+# filter table data before export to CSV file
+csv_export_filters:
+  NAVIGATION : 'app_id > 0'
+

@@ -557,7 +557,7 @@ def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
 
 
 
-def get_merge_from_csv(csv_file, conn, skip_update, skip_delete):
+def get_merge_from_csv(csv_file, conn, skip_insert, skip_update, skip_delete, where_filter):
   table_name  = os.path.basename(csv_file).split('.')[0].lower()
   columns     = []
   csv_select  = []
@@ -613,8 +613,10 @@ def get_merge_from_csv(csv_file, conn, skip_update, skip_delete):
     non_primary_cols_set  = update_cols,
     all_cols              = all_cols,
     all_values            = all_values,
+    skip_insert           = skip_insert,
     skip_update           = skip_update,
-    skip_delete           = skip_delete
+    skip_delete           = skip_delete,
+    where_filter          = where_filter
   )
 
   # some fixes

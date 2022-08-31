@@ -526,9 +526,16 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
     columns   = [col for col in conn.cols if not (col in cfg.ignore_columns)]
     order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
-    #
+
+    # filter table rows if requested
+    where_filter = ''
+    if table_name.upper() in cfg.csv_export_filters:
+      where_filter = ' WHERE ' + cfg.csv_export_filters[table_name.upper()]
+
+    # fetch data from table
     try:
-      data    = conn.fetch('SELECT {} FROM {} ORDER BY {}'.format(', '.join(columns), table_name, order_by))
+      query = 'SELECT {} FROM {}{} ORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
+      data  = conn.fetch(query)
     except Exception:
       print()
       print('#')
@@ -573,7 +580,13 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     target_file = cfg.patch_folders['data'] + table_name + '.sql'
     skip_update = '--' if not (cfg.merge_update in file) else ''
     skip_delete = '--' if not (cfg.merge_delete in file) else ''
-    content     = get_merge_from_csv(file, conn, skip_update, skip_delete)
+
+    # re-apply filter to remove correct rows when requested
+    where_filter = ''
+    if table_name.upper() in cfg.csv_export_filters:
+      where_filter = '\n{}WHERE {}'.format(skip_delete, cfg.csv_export_filters[table_name.upper()])
+    #
+    content = get_merge_from_csv(file, conn, skip_insert, skip_update, skip_delete, where_filter)
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:
         w.write(content)

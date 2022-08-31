@@ -319,7 +319,8 @@ FROM (
 
 # template for MERGE statement from CSV file
 template_csv_merge = """
-{skip_delete}DELETE FROM {table_name};
+{skip_delete}DELETE FROM {table_name}{where_filter};
+--
 MERGE INTO {table_name} t
 USING (
     {csv_content_query}
