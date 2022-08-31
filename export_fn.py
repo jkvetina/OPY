@@ -616,6 +616,11 @@ def get_merge_from_csv(csv_file, conn, skip_update, skip_delete):
     skip_update           = skip_update,
     skip_delete           = skip_delete
   )
+
+  # some fixes
+  query = query.replace('\'\' AS ', 'NULL AS ')
+  query = query.replace('.0 AS ', ' AS ')
+  query = query.replace('\n    )\n;\n', '\n    );\n')
   #
   return query
 
