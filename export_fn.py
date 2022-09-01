@@ -80,6 +80,12 @@ def get_files(object_type, cfg, sort):
   if len(folder) > 2:
     files += glob.glob(folder[0] + '/*' + folder[2])
     files += glob.glob(folder[0] + '/**/*' + folder[2])   # sub folders
+
+  # since I use .spec.sql for specifications and .sql for body, I need to remove spec files
+  if object_type == 'PACKAGE BODY':
+    for file in files:
+      if cfg.folders['PACKAGE'][1] in file:
+        files.remove(file)
   #
   return files if not sort else sorted(files)
 
