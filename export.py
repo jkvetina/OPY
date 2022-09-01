@@ -469,12 +469,12 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
   # export/refresh existing files
   tables = []
-  tables_flags = {}  # to keep flags and use them in MERGE statements
+  table_files = {}  # to keep flags and use them in MERGE statements
   for file in get_files('DATA', cfg, sort = True):
-    file = os.path.basename(file).split('.')
-    tables.append(file[0])
-    if file[1] in ('U', 'D'):
-      tables_flags[file[0]] = file[1]
+    # basically we need to extract table_name from the filename
+    table_name = os.path.basename(file).split('.')[0]
+    tables.append(table_name)
+    table_files[table_name] = file
 
   # when passing values to -csv arg, find relevant tables
   if isinstance(args.csv, list) and len(args.csv):
@@ -492,16 +492,20 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   if args.verbose:
     print('------------------- {:16} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} | {}'.format('', 'INS', 'UPD', 'DEL', 'LINES', 'BYTES', 'STATUS'))
   #
-  for (i, table_name) in enumerate(sorted(tables)):
-    flag = tables_flags[table_name] if table_name in tables_flags else ''
-    file = '{}{}.{}{}'.format(cfg.folders['DATA'][0], table_name, flag, cfg.folders['DATA'][1]).replace('..', '.')
+  for (i, table_name) in enumerate(tables):
+    obj = get_file_details('DATA', table_name, '', cfg, hashed_old, cached_obj)
+
+    # create file for new tables
+    if not (table_name in table_files):
+      table_files[table_name] = obj.file
+    file = table_files[table_name]
     #
     try:
       table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       if args.verbose:
-        print('  {:64} | REMOVED'.format(table_name))
+        print('  {:72} | REMOVED'.format(table_name))
       if os.path.exists(file):
         os.remove(file)
       continue
