@@ -1117,8 +1117,14 @@ if args.patch:
         patch_content.append(cfg.patch_line.format(obj.patch_file))
         processed_files.append(obj.shortcut)
 
-  # append APEX apps
+  # append (changed) APEX apps
   apex_apps = glob.glob(cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1])
+  for file in ([] + apex_apps):
+    shortcut = get_file_shortcut(file, cfg)
+    hashed_new[shortcut] = get_file_hash(file)
+    if hashed_old.get(shortcut, '') == hashed_new[shortcut]:
+      apex_apps.remove(file)
+  #
   if len(apex_apps):
     patch_content.append('\n--\n-- APEX\n--')
     for file in apex_apps:
