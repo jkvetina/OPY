@@ -586,7 +586,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:
         w.write(content)
-        all_data += 'DELETE FROM {};\n{}\n\n\n'.format(table_name, content)
+        all_data += '{}\n\n\n'.format(content)
   #
   with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
     w.write(all_data + 'COMMIT;\n\n')
