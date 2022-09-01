@@ -8,6 +8,11 @@ def get_file_shortcut(file, cfg):
 
 
 
+def get_file_hash(file):
+  return hashlib.md5(open(file, 'rb').read()).hexdigest()
+
+
+
 def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj):
   obj = {
     'type'        : object_type or '',
@@ -59,7 +64,7 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
 
   # calculate new file hash
   if os.path.exists(obj['file']):
-    obj['hash_new'] = hashlib.md5(open(obj['file'], 'rb').read()).hexdigest()
+    obj['hash_new'] = get_file_hash(obj['file'])
 
   # cache object
   if not (obj['type'] in cached_obj):
