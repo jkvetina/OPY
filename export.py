@@ -461,24 +461,6 @@ if count_objects:
 
 
 #
-# UPDATE LOCKED FILE
-#
-if (len(locked_objects) or args.lock):
-  content = '\n'.join(sorted(locked_objects)) + '\n'
-  with open(cfg.locked_log, 'w', encoding = 'utf-8') as w:
-    w.write(content)
-
-# delete all database object files not on the list and except APEX folder
-if args.lock and args.delete:
-  for object_type in cfg.objects_sorted:
-    for file in get_files(object_type, cfg, sort = True):
-      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
-      if not (obj.shortcut in locked_objects):
-        os.remove(file)
-
-
-
-#
 # EXPORT DATA
 #
 if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout:
@@ -898,6 +880,24 @@ if apex_apps != {} and not args.patch and not args.rollout:
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
+
+
+
+#
+# UPDATE LOCKED FILE
+#
+if (len(locked_objects) or args.lock):
+  content = '\n'.join(sorted(locked_objects)) + '\n'
+  with open(cfg.locked_log, 'w', encoding = 'utf-8') as w:
+    w.write(content)
+
+# delete all database object files not on the list and except APEX folder
+if args.lock and args.delete:
+  for object_type in cfg.objects_sorted:
+    for file in get_files(object_type, cfg, sort = True):
+      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
+      if not (obj.shortcut in locked_objects):
+        os.remove(file)
 
 
 
