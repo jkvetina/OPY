@@ -1066,6 +1066,7 @@ if args.patch:
         if obj.hash_old != obj.hash_new:
           patch_notes.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
           last_type = obj.type
+          hashed_new[obj.shortcut] = obj.hash_new
       patch_notes.append('{:<20} |'.format(''))
 
   # create list of files to process
