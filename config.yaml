@@ -84,6 +84,13 @@ patch_folders:
   jobs      : '#ROOT#/patches/80_jobs/'
   finally   : '#ROOT#/patches/90_finally/'
 
+# track changes in some folders + track all files starting with YYYY-MM-DD
+# other patch folders will be treated as repeatable
+patch_tracked:
+  - tables
+  - changes
+  - data
+
 # @@ = relative to script from which it is called from
 patch_line  : '@@"../{}"'
 

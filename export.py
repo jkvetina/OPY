@@ -1075,17 +1075,29 @@ if args.patch:
     type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
     files   = glob.glob(target_dir + '/*.sql')
 
+    # remove processed files
+    if type in cfg.patch_tracked:
+      for file in ([] + files):  # to modify original list
+        shortcut = get_file_shortcut(file, cfg)
+        hash_old = hashed_old[shortcut] if shortcut in hashed_old else ''
+        hash_new = get_file_hash(file)
+        #
+        if hash_old == hash_new:                      # ignore unchanged files
+          files.remove(file)
+        #
+        if os.path.basename(shortcut) == '__.sql':    # ignore file with all data files merged
+          files.remove(file)
+
     # process files in patch folder first
     if len(files):
       patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
       for file in files:
         shortcut = get_file_shortcut(file, cfg)
-        #
-        if os.path.basename(shortcut) == '__.sql':    # ignore file with all data files merged
-          continue
-        #
         patch_content.append(cfg.patch_line.format(shortcut))
         processed_files.append(shortcut)
+        #
+        if type in cfg.patch_tracked:
+          hashed_new[shortcut] = get_file_hash(file)
 
     # add objects mapped to current patch folder
     if type in cfg.patch_map:
