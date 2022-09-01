@@ -539,6 +539,11 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
       writer.writerow(row)
     csv_file.close()
 
+    # add CSV file to the locked.log
+    if (len(locked_objects) or args.lock):
+      if not (obj.shortcut in locked_objects):
+        locked_objects.append(obj.shortcut)
+
     # show progress
     if args.verbose:
       obj = get_file_details('DATA', '', file, cfg, hashed_old, cached_obj)
@@ -1089,7 +1094,7 @@ if args.patch:
           continue
         if not (obj.type in cfg.folders):             # ignore unknown types
           continue
-        if obj.shortcut in processed_files:         # ignore processed objects/files
+        if obj.shortcut in processed_files:           # ignore processed objects/files
           continue
         #
         if not header_printed:
