@@ -1134,6 +1134,13 @@ if args.patch:
       hashed_new[obj.shortcut] = obj.hash_new
   patch_content.append('')
 
+  # from processed files add all starting with date
+  start_with_date = re.compile('^([0-9]{4}-[0-9]{2}-[0-9]{2})')
+  for shortcut in processed_files:
+    if not (shortcut in hashed_new):
+      if start_with_date.match(os.path.basename(shortcut)):
+        hashed_new[shortcut] = get_file_hash(cfg.git_root + shortcut)
+
   # add files from changes folder
   for file in glob.glob(cfg.patch_folders['changes'] + '/*.sql'):
     shortcut = get_file_shortcut(file, cfg)
