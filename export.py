@@ -1131,7 +1131,13 @@ if args.patch:
       obj = get_file_details('APEX', '', file, cfg, hashed_old, cached_obj)
       processed_files.append(obj.shortcut)
       patch_content.append(cfg.patch_line.format(obj.patch_file))
+      hashed_new[obj.shortcut] = obj.hash_new
   patch_content.append('')
+
+  # add files from changes folder
+  for file in glob.glob(cfg.patch_folders['changes'] + '/*.sql'):
+    shortcut = get_file_shortcut(file, cfg)
+    hashed_new[shortcut] = get_file_hash(file)
 
   # store new hashes for rollout
   content = []
