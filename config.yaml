@@ -23,7 +23,7 @@ locked_log      : '#ROOT#/patches_done/locked.log'
 # APEX related
 apex_dir        : '#ROOT#/database/apex/'
 apex_temp_dir   : '#ROOT#/database/apex/temp/'
-apex_tmp        : apex.#.tmp
+apex_tmp        : apex.#APP_ID#.tmp
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 
 # APEX exports
@@ -51,9 +51,10 @@ folders:
   TRIGGER             : ['#ROOT#/database/triggers/',     .sql]
   VIEW                : ['#ROOT#/database/views/',        .sql]
 
-grants_recd         : '/received/#.sql'       # received grants, under GRANT folder
-grants_privs        : '/#_schema.sql'         # grants used to create schema
-grants_directories  : '/#_directories.sql'
+# grants, resp. privileges
+grants_recd         : '/received/#SCHEMA_NAME#.sql'       # received grants, under GRANT folder
+grants_privs        : '/#SCHEMA_NAME#_schema.sql'         # grants used to create schema
+grants_directories  : '/#SCHEMA_NAME#_directories.sql'
 
 # export objects by type in this order
 objects_sorted:

@@ -170,9 +170,9 @@ if cfg_shared == {} and cfg_project == {}:
 #
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
 grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
-grants_recd_file  = os.path.dirname(grants_made_file) + cfg.grants_recd
-grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#', curr_schema)
-grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#', curr_schema)
+grants_recd_file  = (os.path.dirname(grants_made_file) + cfg.grants_recd).replace('#SCHEMA_NAME#', curr_schema)
+grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#SCHEMA_NAME#', curr_schema)
+grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#SCHEMA_NAME#', curr_schema)
 #
 if not args.rollout:
   try:
@@ -825,7 +825,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests = ['\n'.join(requests)]
 
     # export APEX stuff
-    apex_tmp = cfg.apex_tmp.replace('#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_tmp = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
     changed = []
     for (i, request) in enumerate(requests):
       request = request_conn + '\n' + request.format(dir = cfg.apex_dir, dir_temp = cfg.apex_temp_dir, dir_ws_files = cfg.apex_ws_files, app_id = app_id, since = req_today, changed = changed)
