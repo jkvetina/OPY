@@ -410,8 +410,8 @@ if count_objects:
       continue
     #
     if (args.verbose or args.recent == 1):
-      if flag == '':
-        flag = 'NEW' if obj.type == 'TABLE' and obj.hash_old == '' else '<--' if obj.type == 'TABLE' else ''
+      if flag == '' and obj.type == 'TABLE':
+        flag = 'NEW' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new else ''
       #
       if obj.type != recent_type and recent_type != '':
         print('{:>20} |'.format(''))
