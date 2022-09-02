@@ -244,7 +244,8 @@ for file in glob.glob(path, recursive = True):
   os.remove(file)
 
 # create basic dirs
-for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done]:
+for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg.patch_manually, cfg.rollout_log]:
+  dir = os.path.dirname(dir)
   if not os.path.exists(dir):
     os.makedirs(dir)
 #
