@@ -51,7 +51,8 @@ folders:
   TRIGGER             : ['#ROOT#/database/triggers/',     .sql]
   VIEW                : ['#ROOT#/database/views/',        .sql]
 
-grants_recd : '/received/#.sql'   # received grants, under GRANT folder
+grants_recd         : '/received/#.sql'       # received grants, under GRANT folder
+grants_privs        : '/#_schema.sql'         # grants used to create schema
 
 # export objects by type in this order
 objects_sorted:

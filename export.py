@@ -164,6 +164,8 @@ if cfg_shared == {} and cfg_project == {}:
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
 grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
 grants_recd_file  = os.path.dirname(grants_made_file) + cfg.grants_recd
+grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#', curr_schema)
+grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#', curr_schema)
 #
 if not args.rollout:
   try:
@@ -596,9 +598,9 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 #
 # EXPORT GRANTS
 #
-# @TODO: export also system grants/roles, credentials, ACL...
+# @TODO: export also credentials, ACL...
 #
-if not args.rollout:
+if args.recent != 0 and not args.patch and not args.rollout:
   last_type   = ''
   content     = []
   #
@@ -652,6 +654,17 @@ if not args.rollout:
       os.makedirs(os.path.dirname(grants_recd_file))
     with open(grants_recd_file.replace('#', owner), 'w', encoding = 'utf-8') as w:
       w.write(('\n'.join(content) + '\n').lstrip())
+
+  # privileges granted to user
+  content = ''
+  for row in conn.fetch_assoc(query_user_roles):
+    content += row.line + '\n'
+  content += '--\n'
+  for row in conn.fetch_assoc(query_user_privs):
+    content += row.line + '\n'
+  #
+  with open(grants_privs_file, 'w', encoding = 'utf-8') as w:
+    w.write(content.lstrip('--\n') + '\n')
 
 
 

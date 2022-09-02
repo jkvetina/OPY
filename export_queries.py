@@ -490,6 +490,17 @@ FROM user_tab_privs_recd t
 WHERE t.type NOT IN ('USER')
 ORDER BY 1, 2, 3"""
 
+# grants used to create user
+query_user_roles = """SELECT
+    'GRANT ' || RPAD(p.granted_role, 21) || ' TO ' || LOWER(p.username) || ';' AS line
+FROM user_role_privs p
+ORDER BY 1"""
+#
+query_user_privs = """SELECT
+    'GRANT ' || RPAD(p.privilege, 33) || ' TO ' || LOWER(p.username) || ';' AS line
+FROM user_sys_privs p
+ORDER BY 1"""
+
 # list objects needed before requested object
 query_objects_before = """
 SELECT DISTINCT
