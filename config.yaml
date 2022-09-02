@@ -75,28 +75,6 @@ objects_sorted:
 drop_objects:
   - MATERIALIZED VIEW
 
-# patch folders, sorted
-patch_folders:
-  init      : '#ROOT#/patches/10_init/'
-  tables    : '#ROOT#/patches/20_new_tables/'
-  changes   : '#ROOT#/patches/30_table+data_changes/'
-  objects   : '#ROOT#/patches/40_repeatable_objects/'
-  cleanup   : '#ROOT#/patches/50_cleanup/'
-  data      : '#ROOT#/patches/60_data/'
-  grants    : '#ROOT#/patches/70_grants/'
-  jobs      : '#ROOT#/patches/80_jobs/'
-  finally   : '#ROOT#/patches/90_finally/'
-
-# track changes in some folders + track all files starting with YYYY-MM-DD
-# other patch folders will be treated as repeatable
-patch_tracked:
-  - tables
-  - changes
-  - data
-
-# @@ = relative to script from which it is called from
-patch_line  : '@@"../{}"'
-
 # map objects to patch folders
 patch_map:
   init: []
@@ -119,6 +97,28 @@ patch_map:
     - GRANT
   jobs:
     - JOB
+
+# patch folders, sorted
+patch_folders:
+  init      : '#ROOT#/patches/10_init/'
+  tables    : '#ROOT#/patches/20_new_tables/'
+  changes   : '#ROOT#/patches/30_table+data_changes/'
+  objects   : '#ROOT#/patches/40_repeatable_objects/'
+  cleanup   : '#ROOT#/patches/50_cleanup/'
+  data      : '#ROOT#/patches/60_data/'
+  grants    : '#ROOT#/patches/70_grants/'
+  jobs      : '#ROOT#/patches/80_jobs/'
+  finally   : '#ROOT#/patches/90_finally/'
+
+# track changes in some folders + track all files starting with YYYY-MM-DD
+# other patch folders will be treated as repeatable
+patch_tracked:
+  - tables
+  - changes
+  - data
+
+# @@ = relative to script from which it is called from
+patch_line  : '@@"../{}"'
 
 # for CSV files dont export audit columns
 ignore_columns:
