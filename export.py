@@ -1075,13 +1075,13 @@ if args.patch:
     last_type = object_type
     #
     if args.verbose:
-      for ref_object in references[obj]:
+      for ref_object in references[object_code]:
         if ref_object != object_code and ref_object in changed_objects:
           object_type, object_name = ref_object.split('.')
-          object_code = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
+          object_line = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
           if not (ref_object in processed_names):
-            object_code = (object_code + ' <').ljust(48, '-') + ' MISSING OBJECT'
-          patch_notes.append('{:<20} |   > {}'.format('', obj))
+            object_line = (object_line + ' <').ljust(48, '-') + ' MISSING OBJECT'
+          patch_notes.append('{:<20} |   > {}'.format('', object_line))
   #
   if len(ordered_objects):
     patch_notes.append('{:<20} |'.format(''))
