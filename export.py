@@ -945,7 +945,6 @@ if args.lock and args.delete:
 #
 if count_objects or apex_apps != {} or (args.csv or isinstance(args.csv, list)):
   print('TIME:', round(timeit.default_timer() - start_timer, 2))
-  print('\n')
 
 
 
@@ -1246,6 +1245,7 @@ if args.rollout:
     # cleanup
     if os.path.exists(cfg.patch_log):
       os.remove(cfg.patch_log)
-  #
-  print()
+
+# make some space
+print('\n')
 
