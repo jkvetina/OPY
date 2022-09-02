@@ -465,6 +465,8 @@ if count_objects:
   #
   if not (args.verbose or args.recent == 1):
     print()
+  else:
+    print('{:>20} |'.format(''))
   print()
 
 
@@ -499,7 +501,8 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   print()
   print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
   if args.verbose:
-    print('------------------- {:16} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} | {}'.format('', 'INS', 'UPD', 'DEL', 'LINES', 'BYTES', 'STATUS'))
+    print('-------------------')
+    print('{:>8} | {:>3} | {:>3} | {:<30}   {:>6} | {:>8}'.format('INS', 'UPD', 'DEL', '', 'LINES', 'BYTES'))
   #
   for (i, table_name) in enumerate(tables):
     obj = get_file_details('DATA', table_name, '', cfg, hashed_old, cached_obj)
@@ -514,7 +517,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
       table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
     except Exception:
       if args.verbose:
-        print('  {:72} | REMOVED'.format(table_name))
+        print('{:74}REMOVED'.format(table_name))
       if os.path.exists(file):
         os.remove(file)
       continue
@@ -555,17 +558,15 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
 
     # show progress
     if args.verbose:
-      obj = get_file_details('DATA', '', file, cfg, hashed_old, cached_obj)
-      #
-      print('  {:1} {:32} {:>3} | {:>3} | {:>3} | {:>8} | {:>8} {}'.format(*[
+      print('   {:1} {:>3} | {:>3} | {:>3} | {:30}   {:>6} | {:>8} {}'.format(*[
         '*' if len(where_filter) else '',
-        table_name.upper(),
         ' Y ' if (cfg.merge_insert in file or cfg.merge_auto_insert) else '',
         ' Y ' if (cfg.merge_update in file or cfg.merge_auto_update) else '',
         ' Y ' if (cfg.merge_delete in file or cfg.merge_auto_delete) else '',
+        table_name.upper(),
         len(data),                # lines
         os.path.getsize(file),    # bytes
-        '| NEW' if obj.hash_old == '' else '| CHANGED' if obj.hash_new != obj.hash_old else ''
+        'NEW' if obj.hash_old == '' else 'CHANGED' if obj.hash_new != obj.hash_old else ''
       ]))
     else:
       perc = (i + 1) / len(tables)
@@ -1081,6 +1082,9 @@ if args.patch:
           if not (ref_object in processed_names):
             object_code = (object_code + ' <').ljust(48, '-') + ' MISSING OBJECT'
           patch_notes.append('{:<20} |   > {}'.format('', obj))
+  #
+  if len(ordered_objects):
+    patch_notes.append('{:<20} |'.format(''))
 
   # show changed data files
   for object_type in ('DATA',):
