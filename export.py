@@ -666,6 +666,14 @@ if args.recent != 0 and not args.patch and not args.rollout:
   with open(grants_privs_file, 'w', encoding = 'utf-8') as w:
     w.write(content.lstrip('--\n') + '\n')
 
+  # export directories
+  content = ''
+  for row in conn.fetch_assoc(query_directories):
+    content += row.line + '\n'
+  #
+  with open(grants_dirs_file, 'w', encoding = 'utf-8') as w:
+    w.write(content + '\n')
+
 
 
 #

@@ -53,6 +53,7 @@ folders:
 
 grants_recd         : '/received/#.sql'       # received grants, under GRANT folder
 grants_privs        : '/#_schema.sql'         # grants used to create schema
+grants_directories  : '/#_directories.sql'
 
 # export objects by type in this order
 objects_sorted:
@@ -126,7 +127,7 @@ ignore_columns:
   - created_by
 
 # flags in filenames to adjust which operations do in MERGE
-merge_insert: .I.
+merge_insert: .I.   # it is required to start with dot
 merge_update: .U.
 merge_delete: .D.
 

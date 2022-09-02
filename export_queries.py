@@ -501,6 +501,12 @@ query_user_privs = """SELECT
 FROM user_sys_privs p
 ORDER BY 1"""
 
+# export directories
+query_directories = """SELECT
+    'CREATE OR REPLACE DIRECTORY ' || LOWER(d.owner) || '.' || RPAD(LOWER(d.directory_name), 31) || ' AS ''' || d.directory_path || ''';' AS line
+FROM all_directories d
+ORDER BY 1"""
+
 # list objects needed before requested object
 query_objects_before = """
 SELECT DISTINCT
