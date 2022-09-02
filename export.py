@@ -997,11 +997,11 @@ if args.patch:
       if obj.hash_old == obj.hash_new:              # ignore unchanged objects
         continue
       #
-      curr_object = '{}.{}'.format(obj.type, obj.name)
+      object_code = '{}.{}'.format(obj.type, obj.name)
       #
-      references_todo[curr_object] = []
-      references[curr_object] = []
-      changed_objects.append(curr_object)
+      references_todo[object_code]  = []
+      references[object_code]       = []
+      changed_objects.append(object_code)
       #
       if obj.type in ('TABLE', 'DATA'):
         tables_todo.append(obj.name)                # to process tables first
@@ -1009,13 +1009,13 @@ if args.patch:
         if obj.name in table_relations:
           for table_name in table_relations[obj.name]:
             ref_object = '{}.{}'.format('TABLE', table_name)
-            references_todo[curr_object].append(ref_object)
-            references[curr_object].append(ref_object)
+            references_todo[object_code].append(ref_object)
+            references[object_code].append(ref_object)
       else:
         for row in conn.fetch_assoc(query_objects_before, object_name = obj.name, object_type = obj.type):
           ref_object = '{}.{}'.format(row.type, row.name)
-          references_todo[curr_object].append(ref_object)
-          references[curr_object].append(ref_object)
+          references_todo[object_code].append(ref_object)
+          references[object_code].append(ref_object)
 
   # sort objects to have them in correct order
   for i in range(0, 20):                            # adjust depending on your depth
