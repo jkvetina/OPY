@@ -445,7 +445,7 @@ if count_objects:
       content += get_object_comments(conn, obj.name)
 
     # fill in job template
-    if obj.type in ('JOB'):
+    if obj.type in ('JOB',):
       content = get_job_fixed(obj.name, content, conn)
 
     # write object to file
@@ -1077,17 +1077,18 @@ if args.patch:
 
   # show changed data files
   for object_type in ('DATA',):
-    if len(ordered_objects):
-      patch_notes.append('{:<20} |'.format(''))
-    #
     files = get_files(object_type, cfg, sort = True)
-    if len(files):
-      for file in files:
-        obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
-        if obj.hash_old != obj.hash_new:
-          patch_notes.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
-          last_type = obj.type
-          hashed_new[obj.shortcut] = obj.hash_new
+    found = []
+    for file in files:
+      obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
+      if obj.hash_old != obj.hash_new:
+        found.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
+        last_type = obj.type
+        hashed_new[obj.shortcut] = obj.hash_new
+    #
+    if len(found):
+      for line in found:
+        patch_notes.append(line)
       patch_notes.append('{:<20} |'.format(''))
 
   # create list of files to process
