@@ -21,6 +21,9 @@ Export database objects since today midnight\
 Export database objects since today midnight and show each object name\
 ```python export.py -n PROJECT -r 1 -v```
 
+Export database objects since today midnight and show flags against last PROD release\
+```python export.py -n PROJECT -r 1 -v PROD```
+
 Export database objects since yesteray midnight\
 ```python export.py -n PROJECT -r 2```
 
@@ -49,6 +52,9 @@ Export data as CSV from all tables starting with USER or ROLE\
 
 Export data from all tables listed in data/ as CSV files and show more details\
 ```python export.py -n PROJECT -r 0 -csv -v```
+
+Export data from all tables listed in data/ as CSV files and show flags against last PROD release\
+```python export.py -n PROJECT -r 0 -csv -v PROD```
 
 #### Exporting APEX
 
@@ -80,6 +86,9 @@ Delete all files not listed on locked.log list\
 
 Export only locked objects (when locked.log file exists) changed today\
 ```python export.py -n PROJECT -v -r 1```
+
+Export only locked objects changed today and show flags against last PROD release\
+```python export.py -n PROJECT -v PROD -r 1```
 
 #### Patching
 

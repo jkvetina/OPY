@@ -13,7 +13,7 @@ parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compi
 parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type',                             default = '',     nargs = '?')
 parser.add_argument('-a', '-apex',    '--apex',     help = 'APEX application(s) to export',             type = int,                     nargs = '*')
 parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ to CSV files',                                       nargs = '*')
-parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                         default = False,  nargs = '?',  const = True)
+parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                                           nargs = '*')
 parser.add_argument('-d', '-debug',   '--debug',    help = 'Show some extra stuff when debugging',                    default = False,  nargs = '?',  const = True)
 parser.add_argument('-i', '-info',    '--info',     help = 'Show DB/APEX versions and app details',                   default = False,  nargs = '?',  const = True)
 parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch (allow to pass env and opt. name)',                           nargs = '+')
@@ -41,8 +41,15 @@ elif 'rollout' in args and args['rollout'] != None:
   args['patch']         = False
   args['rollout']       = True
 else:
-  args['patch']     = False
-  args['rollout']   = False
+  args['patch']         = False
+  args['rollout']       = False
+
+# adjust args to see changed objects
+if 'verbose' in args and args['verbose'] != None:
+  args['env_name']      = args['verbose'][0] if len(args['verbose']) else ''
+  args['verbose']       = True
+else:
+  args['verbose']       = True if args['recent'] == 1 else False
 #
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
 #
