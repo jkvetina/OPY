@@ -7,7 +7,9 @@
 - export APEX applications
 
 Read this for more info:
-http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-apps.html
+- http://www.oneoracledeveloper.com/2022/07/database-versioning-with-data-apex-apps.html
+- http://www.oneoracledeveloper.com/2022/07/converting-csv-data-to-merge-statements.html
+- http://www.oneoracledeveloper.com/2022/09/database-versioning-for-feature-branches.html
 
 <br />
 
