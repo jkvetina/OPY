@@ -22,22 +22,24 @@ parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',      
 parser.add_argument(      '-lock',    '--lock',     help = 'Lock existing files into locked.log',                     default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                 default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
+parser.add_argument('-e', '-env',     '--env',      help = 'Target environment',                                                        nargs = '?')
 #
 args = vars(parser.parse_args())
 
 # adjust args for patching
-args['env_name']    = ''
+args['env_name']    = args['env'] if 'env' in args else ''
 args['patch_name']  = ''
+args.pop('env', '')
 #
 if 'patch' in args and args['patch'] != None:
   if len(args['patch']) > 1:
     args['patch_name']  = args['patch'][1]
-  args['env_name']      = args['patch'][0]
+  args['env_name']      = args['patch'][0] if not args['env_name'] else args['env_name']
   args['patch']         = True
   args['rollout']       = False
   #
 elif 'rollout' in args and args['rollout'] != None:
-  args['env_name']      = args['rollout'][0]
+  args['env_name']      = args['rollout'][0] if not args['env_name'] else args['env_name']
   args['patch']         = False
   args['rollout']       = True
 else:
@@ -46,7 +48,7 @@ else:
 
 # adjust args to see changed objects
 if 'verbose' in args and args['verbose'] != None:
-  args['env_name']      = args['verbose'][0] if len(args['verbose']) else ''
+  args['env_name']      = args['verbose'][0] if len(args['verbose']) and not args['env_name'] else args['env_name']
   args['verbose']       = True
 else:
   args['verbose']       = True if args['recent'] == 1 else False
