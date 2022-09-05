@@ -326,8 +326,9 @@ if args.lock and not args.delete and not args.add:
 #
 # PREVIEW OBJECTS
 #
-data_objects  = []
-count_objects = 0
+data_objects      = []
+exported_objects  = []
+count_objects     = 0
 #
 if args.recent != 0 and not args.patch and not args.rollout:
   print()
@@ -465,6 +466,7 @@ if count_objects:
     #
     with open(obj.file, 'w', encoding = 'utf-8') as w:
       w.write(content + '\n\n')
+    exported_objects.append(obj.shortcut)
   #
   if not (args.verbose or args.recent == 1):
     print()
@@ -891,8 +893,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
       # cleanup files after each loop
       clean_apex_files(app_id, cfg.folders['APEX'][0], apex_replacements, default_authentication)
     #
-    print()
-    print()
+    print('\n')
 
     # rename workspace files
     ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
@@ -921,6 +922,40 @@ if apex_apps != {} and not args.patch and not args.rollout:
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
+
+
+
+#
+# FIND REMOVED DATABASE OBJECTS
+#
+if args.recent < 0:
+  removed_files = []
+  for file in sorted(hashed_old.keys()):
+    if os.path.exists(cfg.git_root + file) and not (file in exported_objects):
+      skip_file = False
+      for type in ['APEX', 'DATA']:
+        if file.startswith(cfg.folders[type][0].replace(cfg.git_target, '').replace('\\', '/')):
+          skip_file = True
+          break
+      #
+      if not skip_file:
+        for type, folder in cfg.patch_folders.items():
+          if file.startswith(folder.replace(cfg.git_target, '').replace('\\', '/')):
+            skip_file = True
+            break
+      #
+      if not skip_file:
+        removed_files.append(file)
+#
+if len(removed_files):
+  print()
+  print('REMOVING DROPPED OBJECTS:')
+  print('-------------------------\n')
+  #
+  for file in removed_files:
+    os.remove(cfg.git_root + file)
+    print('  [-] {}'.format(file))
+  print('\n')
 
 
 
