@@ -118,7 +118,7 @@ patch_tracked:
   - data
 
 # @@ = relative to script from which it is called from
-patch_line  : '@@"../{}"'
+patch_line  : '@@"../../{}"'
 
 # for CSV files dont export audit columns
 ignore_columns:
