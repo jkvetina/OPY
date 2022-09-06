@@ -172,7 +172,7 @@ if cfg_shared == {} and cfg_project == {}:
 #
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
 grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
-grants_recd_file  = (os.path.dirname(grants_made_file) + cfg.grants_recd).replace('#SCHEMA_NAME#', curr_schema)
+grants_recd_file  = (os.path.dirname(grants_made_file) + cfg.grants_recd)
 grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#SCHEMA_NAME#', curr_schema)
 grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#SCHEMA_NAME#', curr_schema)
 #
@@ -652,7 +652,6 @@ if args.recent != 0 and not args.patch and not args.rollout:
     query = 'GRANT {:<17} ON {}.{:<30} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower())
     received_grants[row.owner][row.type][row.table_name].append(query)
   #
-  switch_schema = 'ALTER SESSION SET CURRENT_SCHEMA = {};\n'
   for owner, types in received_grants.items():
     content = [switch_schema.format(owner.lower())]
     for type in types:
@@ -665,7 +664,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
     #
     if not os.path.exists(os.path.dirname(grants_recd_file)):
       os.makedirs(os.path.dirname(grants_recd_file))
-    with open(grants_recd_file.replace('#', owner), 'w', encoding = 'utf-8') as w:
+    with open(grants_recd_file.replace('#SCHEMA_NAME#', owner), 'w', encoding = 'utf-8') as w:
       w.write(('\n'.join(content) + '\n').lstrip())
 
   # privileges granted to user

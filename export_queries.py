@@ -528,3 +528,5 @@ WHERE d.referenced_name     = :object_name
     AND d.name              != d.referenced_name
 ORDER BY 1, 2"""
 
+switch_schema = 'ALTER SESSION SET CURRENT_SCHEMA = {};\n'
+
