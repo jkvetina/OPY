@@ -329,6 +329,7 @@ if args.lock and not args.delete and not args.add:
 data_objects      = []
 exported_objects  = []
 count_objects     = 0
+removed_files     = []
 #
 if args.recent != 0 and not args.patch and not args.rollout:
   print()
@@ -928,7 +929,6 @@ if apex_apps != {} and not args.patch and not args.rollout:
 # FIND REMOVED DATABASE OBJECTS
 #
 if args.recent < 0:
-  removed_files = []
   for file in sorted(hashed_old.keys()):
     if os.path.exists(cfg.git_root + file) and not (file in exported_objects):
       skip_file = False
