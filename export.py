@@ -385,7 +385,16 @@ if count_objects:
   if (args.verbose or args.recent == 1):
     print('-' * len(header.split(':')[0]) + '-')
     print('{:54}{:>8} | {:>8}'.format('', 'LINES', 'BYTES'))
-  #
+
+  # cleanup target folders (to cleanup Git from removed objects)
+  if args.recent < 0 and args.delete:
+    for object_type in cfg.folders.keys():
+      if object_type in ('APEX', 'DATA'):
+        continue
+      for file in get_files(object_type, cfg, sort = False):
+        os.remove(file)
+
+  # go thru objects
   recent_type = ''
   for (i, row) in enumerate(data_objects):
     # make sure we have target folders ready
@@ -922,39 +931,6 @@ if apex_apps != {} and not args.patch and not args.rollout:
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
-
-
-
-#
-# FIND REMOVED DATABASE OBJECTS
-#
-if args.recent < 0:
-  for file in sorted(hashed_old.keys()):
-    if os.path.exists(cfg.git_root + file) and not (file in exported_objects):
-      skip_file = False
-      for type in ['APEX', 'DATA']:
-        if file.startswith(cfg.folders[type][0].replace(cfg.git_target, '').replace('\\', '/')):
-          skip_file = True
-          break
-      #
-      if not skip_file:
-        for type, folder in cfg.patch_folders.items():
-          if file.startswith(folder.replace(cfg.git_target, '').replace('\\', '/')):
-            skip_file = True
-            break
-      #
-      if not skip_file:
-        removed_files.append(file)
-#
-if len(removed_files):
-  print()
-  print('REMOVING DROPPED OBJECTS:')
-  print('-------------------------\n')
-  #
-  for file in removed_files:
-    os.remove(cfg.git_root + file)
-    print('  [-] {}'.format(file))
-  print('\n')
 
 
 
