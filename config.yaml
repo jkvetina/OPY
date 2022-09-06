@@ -15,7 +15,7 @@ patch_done      : '#ROOT#/patches_done/'    # output files from patching
 patch_today     : '#ROOT#/patches_done/#ENV_NAME#/#TODAY#.sql'          # when no patch name is provided
 patch_zip       : '#ROOT#/patches_done/#ENV_NAME#/#TODAY#.zip'
 patch_named     : '#ROOT#/patches_done/#ENV_NAME#/#PATCH_NAME#.sql'     # when patch name is provided
-patch_log       : '#ROOT#/patches_done/patch.log'
+patch_log       : '#ROOT#/patches_done/#ENV_NAME#/patch.log'
 patch_manually  : '#ROOT#/patches/30_table+data_changes/#TODAY#.sql'
 rollout_log     : '#ROOT#/patches_done/#ENV_NAME#/rollout.log'
 locked_log      : '#ROOT#/patches_done/locked.log'
