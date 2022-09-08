@@ -694,7 +694,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
     content += row.line + '\n'
   #
   with open(grants_dirs_file, 'w', encoding = 'utf-8') as w:
-    w.write(content + '\n')
+    w.write((content + '\n').lstrip())
 
 
 
