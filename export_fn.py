@@ -110,7 +110,7 @@ def get_fixed_path(value, root, args):
     for (arg_name, arg_value) in args._asdict().items():
       arg_name = '#{}#'.format(arg_name).upper()
       if arg_name in value:
-        value = value.replace(arg_name, str(arg_value) or '')
+        value = value.replace(arg_name, str(arg_value) if arg_value != None else '')
         value = value.replace('..', '.')  # avoid filenames with double dots
   return value
 
