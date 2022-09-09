@@ -3,6 +3,8 @@
 #   #TODAY#           - todays date
 #   #PATCH_NAME#      - name for prepared patch file (run/install script)
 #   #ENV_NAME#        - environemnt name used for logs
+#   #APP_ID#          - APEX app id, translated during processing
+#   #SCHEMA_NAME#     - schema name, translated during processing
 #
 
 # basic folders
@@ -16,19 +18,19 @@ patch_today     : '#ROOT#/patches_done/#ENV_NAME#/#TODAY#.sql'          # when n
 patch_zip       : '#ROOT#/patches_done/#ENV_NAME#/#TODAY#.zip'
 patch_named     : '#ROOT#/patches_done/#ENV_NAME#/#PATCH_NAME#.sql'     # when patch name is provided
 patch_log       : '#ROOT#/patches_done/#ENV_NAME#/patch.log'
-patch_manually  : '#ROOT#/patches/30_table+data_changes/#TODAY#.sql'
 rollout_log     : '#ROOT#/patches_done/#ENV_NAME#/rollout.log'
 locked_log      : '#ROOT#/patches_done/locked.log'
+patch_manually  : '#ROOT#/patches/30_table+data_changes/#TODAY#.sql'    # dedicated for table changes
 
 # APEX related
 apex_dir        : '#ROOT#/database/apex/'
 apex_temp_dir   : '#ROOT#/database/apex/temp/'
-apex_tmp        : apex.#APP_ID#.tmp
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
+apex_tmp        : apex.#APP_ID#.tmp
 
 # APEX exports
 apex_embedded   : True            # export embedded code
-apex_splited    : True            # export splited application
+apex_splited    : True            # export splitted application
 apex_full       : True            # traditional full export
 apex_files      : True            # export workspace files
 apex_changes    : True            # show app changes made in -recent days
