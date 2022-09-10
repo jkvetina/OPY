@@ -560,7 +560,7 @@ def get_job_fixed(object_name, obj, conn):
 
 
 
-def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
+def clean_apex_files(app_id, folder, apex_replacements, default_authentication, cfg):
   # remove timestamps from all apex files (related to the exported app)
   path  = '{}f{}/**/*.sql'.format(folder, app_id)
   files = sorted(glob.glob(path, recursive = True))
@@ -572,21 +572,24 @@ def clean_apex_files(app_id, folder, apex_replacements, default_authentication):
       old_content = ''
       with open(file, 'r') as h:
         old_content = h.read()
+      new_content = old_content
 
       # change page attributes to make changes in Git minimal
-      new_content = old_content
-      new_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", new_content)
-      new_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", new_content)
+      if cfg.apex_clean_authors:
+        new_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", new_content)
+      if cfg.apex_clean_timestamps:
+        new_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", new_content)
 
       # replace default authentication
-      if default_authentication > 0:
+      if cfg.apex_switch_auth and default_authentication > 0:
         new_content = re.sub(r",p_authentication_id=>wwv_flow_api.id[(]([\d]+)[)]", ',p_authentication_id=>wwv_flow_api.id({})'.format(default_authentication), new_content)
 
       # convert component id to names
-      for (type, components) in apex_replacements.items():
-        for (component_id, component_name) in components.items():
-          search      = '.id({})\n'.format(component_id)
-          new_content = new_content.replace(search, '{}  -- {}\n'.format(search.strip(), component_name))
+      if cfg.apex_add_name_comments:
+        for (type, components) in apex_replacements.items():
+          for (component_id, component_name) in components.items():
+            search      = '.id({})\n'.format(component_id)
+            new_content = new_content.replace(search, '{}  -- {}\n'.format(search.strip(), component_name))
 
       # store new content in the same file
       if new_content != old_content:  # close the file first

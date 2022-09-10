@@ -29,11 +29,15 @@ apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 apex_tmp        : apex.#APP_ID#.tmp
 
 # APEX exports
-apex_embedded   : True            # export embedded code
-apex_splited    : True            # export splitted application
-apex_full       : True            # traditional full export
-apex_files      : True            # export workspace files
-apex_changes    : True            # show app changes made in -recent days
+apex_embedded           : True        # export embedded code
+apex_splited            : True        # export splitted application
+apex_full               : True        # traditional full export
+apex_files              : True        # export workspace files
+apex_show_changes       : True        # show app changes made in -recent days
+apex_clean_timestamps   : True        # convert timestamps to a single value
+apex_clean_authors      : True        # convert authors to a single value
+apex_add_name_comments  : True        # add (some) component names as comments
+apex_switch_auth        : True        # switch authentication scheme to default
 
 # target folders by object types
 folders:

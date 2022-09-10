@@ -810,7 +810,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
       ])
 
     # always do full APEX export, but when -r > 0 then show changed components
-    if args.recent > 0 and cfg.apex_changes:
+    if args.recent > 0 and cfg.apex_show_changes:
       # partial export, get list of changed objects since that, show it to user
       requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
@@ -900,7 +900,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(app_id, cfg.folders['APEX'][0], apex_replacements, default_authentication)
+      clean_apex_files(app_id, cfg.folders['APEX'][0], apex_replacements, default_authentication, cfg)
     #
     print('\n')
 
