@@ -900,7 +900,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         sys.stdout.flush()
 
       # cleanup files after each loop
-      clean_apex_files(app_id, cfg.folders['APEX'][0], apex_replacements, default_authentication, cfg)
+      clean_apex_files(app_id, apex_replacements, default_authentication, cfg)
     #
     print('\n')
 

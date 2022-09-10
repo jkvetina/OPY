@@ -560,9 +560,9 @@ def get_job_fixed(object_name, obj, conn):
 
 
 
-def clean_apex_files(app_id, folder, apex_replacements, default_authentication, cfg):
+def clean_apex_files(app_id, apex_replacements, default_authentication, cfg):
   # remove timestamps from all apex files (related to the exported app)
-  path  = '{}f{}/**/*.sql'.format(folder, app_id)
+  path  = '{}f{}/**/*.sql'.format(cfg.folders['APEX'][0], app_id)
   files = sorted(glob.glob(path, recursive = True))
   files.append(path.replace('/**/*', ''))   # add full export
   #
