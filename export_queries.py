@@ -319,6 +319,11 @@ FROM (
 
 # template for MERGE statement from CSV file
 template_csv_merge = """
+--
+-- {table_name}
+--
+DBMS_OUTPUT.PUT_LINE('{table_name}');
+--
 {skip_delete}DELETE FROM {table_name}{where_filter};
 --
 MERGE INTO {table_name} t
