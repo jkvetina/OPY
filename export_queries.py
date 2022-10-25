@@ -322,7 +322,7 @@ template_csv_merge = """
 --
 -- {table_name}
 --
-DBMS_OUTPUT.PUT_LINE('{table_name}');
+DBMS_OUTPUT.PUT_LINE(UPPER('MERGE {table_name}...'));
 --
 {skip_delete}DELETE FROM {table_name}{where_filter};
 --
