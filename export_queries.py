@@ -176,6 +176,10 @@ job_template = """DECLARE
     in_job_name             CONSTANT VARCHAR2(30)   := '{}';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
 BEGIN
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- JOB ' || UPPER(in_job_name));
+    DBMS_OUTPUT.PUT_LINE('--');
+    --
     BEGIN
         DBMS_SCHEDULER.DROP_JOB(in_job_name, TRUE);
     EXCEPTION
@@ -319,10 +323,12 @@ FROM (
 
 # template for MERGE statement from CSV file
 template_csv_merge = """
---
--- {table_name}
---
-EXEC DBMS_OUTPUT.PUT_LINE(UPPER('MERGE {table_name}...'));
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- MERGE ' || UPPER('{table_name}'));
+    DBMS_OUTPUT.PUT_LINE('--');
+END;
+/
 --
 {skip_delete}DELETE FROM {table_name}{where_filter};
 --
