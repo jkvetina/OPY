@@ -774,8 +774,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # get component names, because the id itself wont tell you much
     apex_replacements_plan = {
-      'AUTHZ' : query_apex_authz_schemes,
-      'LOV'   : query_apex_lov_names,
+      'AUTHZ'   : query_apex_authz_schemes,
+      'LOV'     : query_apex_lov_names,
+      'GROUPS'  : query_apex_page_groups,
     }
     apex_replacements = {}
     for (type, query) in apex_replacements_plan.items():

@@ -107,6 +107,14 @@ SELECT
 FROM apex_application_lovs l
 WHERE l.application_id = :app_id"""
 
+# get APEX page groups
+query_apex_page_groups = """
+SELECT
+    p.group_id,
+    p.page_group_name
+FROM apex_application_page_groups p
+WHERE p.application_id = :app_id"""
+
 # get table comments
 query_table_comments = """
 SELECT m.table_name, m.comments
