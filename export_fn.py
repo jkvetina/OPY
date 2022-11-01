@@ -579,6 +579,8 @@ def clean_apex_files(app_id, apex_replacements, default_authentication, cfg):
         new_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'DEV'", new_content)
       if cfg.apex_clean_timestamps:
         new_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'20220101000000'", new_content)
+      if len(cfg.apex_set_version) > 0:
+        new_content = re.sub(r",p_flow_version=>'([^']+)'", ",p_flow_version=>'" + cfg.apex_set_version + "'", new_content)
 
       # replace default authentication
       if cfg.apex_switch_auth and default_authentication > 0:
