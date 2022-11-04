@@ -20,7 +20,7 @@ parser.add_argument('-p', '-patch',   '--patch',    help = 'Prepare patch (allow
 parser.add_argument('-o', '-rollout', '--rollout',  help = 'Mark rollout as done (pass env)',                                           nargs = '+')
 parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',                                            default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-lock',    '--lock',     help = 'Lock existing files into locked.log',                     default = False,  nargs = '?',  const = True)
-parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                 default = False,  nargs = '?',  const = True)
+parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                                   nargs = '*')
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
 parser.add_argument('-e', '-env',     '--env',      help = 'Target environment',                                                        nargs = '?')
 #
@@ -45,6 +45,14 @@ elif 'rollout' in args and args['rollout'] != None:
 else:
   args['patch']         = False
   args['rollout']       = False
+
+# adjust args for adding new objects
+if 'add' in args and args['add'] != None:
+  args['add_like']      = '' if args['add'] == [] else args['add'][0]
+  args['add']           = True
+else:
+  args['add_like']      = ''
+  args['add']           = False
 
 # adjust args to see changed objects
 if 'verbose' in args and args['verbose'] != None:
@@ -412,7 +420,9 @@ if count_objects:
     flag = ''
     if (len(locked_objects) or args.lock):
       if not (obj.shortcut in locked_objects):
-        if obj.hash_old == '' and args.add:     # add new files to the locked list
+        if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
+          flag = '[+]'
+        elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
           flag = '[+]'
         else:
           continue                              # skip files not on the locked list

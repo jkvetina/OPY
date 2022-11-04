@@ -80,6 +80,9 @@ Mark all current files as locked (create locked.log, then export just these obje
 Add new objects compiled today, then run just -lock to actually add them to locked.log\
 ```python export.py -n PROJECT -add -r 1```
 
+Add new objects compiled today starting with XXX\
+```python export.py -n PROJECT -add XXX -r 1```
+
 Allow to export new objects to files when -lock(ed)\
 ```python export.py -n PROJECT -lock -add```
 
