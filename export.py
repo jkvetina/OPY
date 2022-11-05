@@ -418,7 +418,7 @@ if count_objects:
 
     # check locked objects
     flag = ''
-    if (len(locked_objects) or args.lock):
+    if (len(locked_objects) or args.lock or args.add):
       if not (obj.shortcut in locked_objects):
         if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
           flag = '[+]'
