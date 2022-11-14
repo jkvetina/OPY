@@ -1041,16 +1041,17 @@ if args.patch:
           references[object_code].append(ref_object)
 
   # sort objects to have them in correct order
-  for i in range(0, 20):                            # adjust depending on your depth
+  for i in range(0, 50):                            # adjust depending on your depth
     for obj, refs in references_todo.items():
       if obj in ordered_objects:                    # object processed
         continue
 
-      # process tables first
+      # process tables first, first 20 rounds just for tables
       object_type, object_name = obj.split('.')
-      if object_type != 'TABLE' and len(tables_todo):
+      if (object_type != 'TABLE' and i <= 20) or (object_type == 'TABLE' and i > 20):
         continue
-      #
+
+      # find references
       if len(refs) == 0:
         ordered_objects.append(obj)                 # no more references
         if object_type == 'TABLE':
