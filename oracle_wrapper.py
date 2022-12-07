@@ -1,7 +1,6 @@
 # coding: utf-8
 import sys, os, collections
 import oracledb
-import cx_Oracle
 
 class Oracle:
 
@@ -38,10 +37,16 @@ class Oracle:
       #
       return
 
+    # classic, because I am not able to connect to SID using oracledb
+    #import cx_Oracle
+    oracledb.init_oracle_client()  # for password issues
+    #
     if not 'dsn' in self.tns:
-      self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+      #self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+      self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
       #self.tns['dsn'] = '{}:{}/{}'.format(self.tns['host'], self.tns['port'], self.tns['sid'])
-    self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
+    #self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
+    self.conn = oracledb.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
 
 
 
