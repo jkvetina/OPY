@@ -817,7 +817,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         connection['pwd'],
         connection['host'],
         connection['port'],
-        connection['sid']
+        connection['sid'] if 'sid' in connection else connection['service']
       ])
 
     # always do full APEX export, but when -r > 0 then show changed components

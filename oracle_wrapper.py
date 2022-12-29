@@ -42,8 +42,11 @@ class Oracle:
     oracledb.init_oracle_client()  # for password issues
     #
     if not 'dsn' in self.tns:
-      #self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
-      self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+      if 'sid' in self.tns:
+        #self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+        self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+      else:
+        self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service'])
       #self.tns['dsn'] = '{}:{}/{}'.format(self.tns['host'], self.tns['port'], self.tns['sid'])
     #self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
     self.conn = oracledb.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
