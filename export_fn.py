@@ -379,6 +379,7 @@ def clean_materialized_view(object_name, lines, schema):
       lines[i] = ''
     else:
       lines[i] = lines[i].lstrip()
+    lines[i] = lines[i].replace('BASICFILE (', 'BASICFILE')
 
   # remove empty lines
   lines[len(lines) - 1] += ';'
