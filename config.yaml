@@ -49,6 +49,7 @@ folders:
   INDEX               : ['#ROOT#/database/indexes/',      .sql]
   JOB                 : ['#ROOT#/database/jobs/',         .sql]
   MATERIALIZED VIEW   : ['#ROOT#/database/mviews/',       .sql]
+  MVIEW LOG           : ['#ROOT#/database/mview_logs/',   .sql]
   PACKAGE             : ['#ROOT#/database/packages/',     .spec.sql, .pks]   # alternative ext.
   PACKAGE BODY        : ['#ROOT#/database/packages/',     .sql,      .pkb]
   PROCEDURE           : ['#ROOT#/database/procedures/',   .sql]
@@ -70,6 +71,7 @@ objects_sorted:
   - TABLE
   - INDEX
   - MATERIALIZED VIEW
+  - MVIEW LOG
   - VIEW
   - FUNCTION
   - PROCEDURE
@@ -81,6 +83,8 @@ objects_sorted:
 # option to remove objects before create
 drop_objects:
   - MATERIALIZED VIEW
+drop_objects_mview_log:
+  - MVIEW LOG
 
 # map objects to patch folders
 patch_map:
@@ -89,7 +93,8 @@ patch_map:
     - SEQUENCE
     - TABLE
   objects:
-    - INDEX
+    - SYNONYM
+    - MVIEW LOG
     - MATERIALIZED VIEW
     - VIEW
     - TRIGGER
@@ -97,7 +102,7 @@ patch_map:
     - FUNCTION
     - PACKAGE
     - PACKAGE BODY
-    - SYNONYM
+    - INDEX
   data:
     - DATA
   grants:

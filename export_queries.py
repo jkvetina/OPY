@@ -4,10 +4,20 @@ WITH a AS (
     SELECT
         ROW_NUMBER() OVER (ORDER BY a.object_type) AS r#,
         a.object_type,
-        COUNT(*) AS object_count
-    FROM user_objects a
-    WHERE a.object_type NOT IN ('LOB', 'TABLE PARTITION')
-    GROUP BY a.object_type
+        a.object_count
+    FROM (
+        SELECT
+            a.object_type,
+            COUNT(*) AS object_count
+        FROM user_objects a
+        WHERE a.object_type NOT IN ('LOB', 'TABLE PARTITION')
+        GROUP BY a.object_type
+        UNION ALL
+        SELECT
+            'MVIEW LOG' AS object_type,
+            COUNT(*)    AS object_count
+        FROM user_mview_logs l
+    ) a
 ),
 c AS (
     SELECT
@@ -74,11 +84,20 @@ FROM (
         )
         AND o.object_type NOT IN ('JOB')
     UNION ALL
-    SELECT 'JOB' AS object_type, j.job_name AS object_name
+    SELECT
+        'JOB'           AS object_type,
+        j.job_name      AS object_name
     FROM user_scheduler_jobs j
     WHERE :recent IS NULL
         AND (:object_type = 'JOB' OR :object_type IS NULL)
         AND j.schedule_type != 'IMMEDIATE'
+    UNION ALL
+    SELECT
+        'MVIEW LOG'     AS object_type,
+        l.log_table     AS object_name
+    FROM user_mview_logs l
+    WHERE :recent IS NULL
+        AND (:object_type LIKE 'MAT%' OR :object_type IS NULL)
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
@@ -157,6 +176,11 @@ SELECT DBMS_METADATA.GET_DDL(REPLACE(o.object_type, ' ', '_'), o.object_name) AS
 FROM user_objects o
 WHERE o.object_type     = :object_type
     AND o.object_name   = :object_name"""
+
+query_describe_mview_log = """
+SELECT DBMS_METADATA.GET_DDL('MATERIALIZED_VIEW_LOG', l.log_table) AS object_desc
+FROM user_mview_logs l
+WHERE l.log_table = :object_name"""
 
 # export jobs
 query_describe_job = """
@@ -363,6 +387,20 @@ BEGIN
     DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP {object_type} {object_name}');
     DBMS_OUTPUT.PUT_LINE('--');
     DBMS_OUTPUT.PUT_LINE('-- {object_type} {object_name} DROPPED');
+    DBMS_OUTPUT.PUT_LINE('--');
+EXCEPTION
+WHEN OTHERS THEN
+    NULL;
+END;
+/
+--\n"""
+
+# drop materialized view log query
+template_object_drop_mview_log = """
+BEGIN
+    DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP MATERIALIZED VIEW LOG ON {object_name}');
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- MATERIALIZED VIEW LOG {object_name} DROPPED');
     DBMS_OUTPUT.PUT_LINE('--');
 EXCEPTION
 WHEN OTHERS THEN

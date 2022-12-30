@@ -121,6 +121,8 @@ def get_object(conn, object_type, object_name):
     # get object from database
     if object_type == 'JOB':
       desc = conn.fetch(query_describe_job, object_name = object_name)
+    elif object_type == 'MVIEW LOG':
+      desc = conn.fetch(query_describe_mview_log, object_name = object_name)
     else:
       desc = conn.fetch(query_describe_object, object_type = object_type, object_name = object_name)
     #
@@ -385,6 +387,35 @@ def clean_materialized_view(object_name, lines, schema):
   lines[len(lines) - 1] += ';'
   lines = list(filter(None, lines[0:splitter])) + lines[splitter:]
   #
+  return lines
+
+
+
+def clean_mview_log(object_name, lines, schema):
+  lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
+  lines[0] = fix_simple_name(lines[0], schema)
+
+  # found query start
+  splitter = 0
+  for (i, line) in enumerate(lines):
+    # search for line where real query starts
+    if line.startswith('  AS '):
+      lines[i] = line.replace('  AS ', 'AS\n')
+      splitter = i
+      break
+
+    # throw away some distrators
+    if line.startswith(' PCT') or\
+      line.startswith('  PCT') or\
+      line.startswith('  STORAGE') or\
+      line.startswith('  TABLESPACE') or\
+      line.startswith('  BUFFER_POOL'):
+      lines[i] = ''
+    else:
+      lines[i] = lines[i].lstrip()
+
+  # remove empty lines
+  lines = list(filter(None, ('\n'.join(lines).rstrip() + ';').split('\n')))
   return lines
 
 
