@@ -93,8 +93,8 @@ FROM (
         AND j.schedule_type != 'IMMEDIATE'
     UNION ALL
     SELECT
-        'MVIEW LOG'     AS object_type,
-        l.log_table     AS object_name
+        'MVIEW LOG'                     AS object_type,
+        REPLACE(l.log_table, 'MLOG$_')  AS object_name
     FROM user_mview_logs l
     WHERE :recent IS NULL
         AND (:object_type LIKE 'MAT%' OR :object_type IS NULL)

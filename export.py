@@ -424,8 +424,6 @@ if count_objects:
           flag = '[+]'
         elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
           flag = '[+]'
-        elif args.add and row.object_type == 'MVIEW LOG' and row.object_name.startswith('MLOG$_' + args.add_like):           # add mview logs
-          flag = '[+]'
         else:
           continue                              # skip files not on the locked list
 
@@ -473,7 +471,7 @@ if count_objects:
     if obj.type in cfg.drop_objects:
       content = template_object_drop.lstrip().format(object_type = obj.type, object_name = obj.name) + content
     elif obj.type in cfg.drop_objects_mview_log:
-      content = template_object_drop_mview_log.lstrip().format(object_name = obj.name.replace('MLOG$_', '')) + content
+      content = template_object_drop_mview_log.lstrip().format(object_name = obj.name) + content
 
     # append comments
     if obj.type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):

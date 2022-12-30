@@ -122,7 +122,7 @@ def get_object(conn, object_type, object_name):
     if object_type == 'JOB':
       desc = conn.fetch(query_describe_job, object_name = object_name)
     elif object_type == 'MVIEW LOG':
-      desc = conn.fetch(query_describe_mview_log, object_name = object_name)
+      desc = conn.fetch(query_describe_mview_log, object_name = 'MLOG$_' + object_name)
     else:
       desc = conn.fetch(query_describe_object, object_type = object_type, object_name = object_name)
     #
