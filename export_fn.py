@@ -324,7 +324,11 @@ def clean_table(object_name, lines, schema):
   # return as array
   lines = lines.split('\n')
   lines[len(lines) - 1] = lines[len(lines) - 1].rstrip() + ';'
-  return lines
+
+  # fix extra bracket for some reason
+  lines = '\n'.join(lines)
+  lines = lines.replace('\n)\n);', '\n);')
+  return lines.split('\n')
 
 
 
