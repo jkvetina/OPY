@@ -632,7 +632,15 @@ def clean_apex_files(app_id, apex_replacements, default_authentication, cfg):
       # store new content in the same file
       if new_content != old_content:  # close the file first
         with open(file, 'w') as z:
-          z.write(new_content)
+          try:
+            z.write(new_content)
+          except Exception:
+            print()
+            print('#')
+            print('# APEX_FILE_EXPORT_FAILED:', file)
+            print('#')
+            print(traceback.format_exc())
+            print(sys.exc_info()[2])
 
 
 
