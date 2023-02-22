@@ -863,11 +863,11 @@ if apex_apps != {} and not args.patch and not args.rollout:
           w.write(request + '\nexit;')
 
       # run SQLcl and capture the output
-      result  = subprocess.run(process, shell = True, capture_output = not args.debug, text = True)
+      result  = subprocess.run(process, shell = True, capture_output = True, text = True)
       output  = (result.stdout or '').strip()
 
       # for Windows remove temp file
-      if os.name == 'nt' and os.path.exists(apex_tmp):
+      if os.name == 'nt' and os.path.exists(apex_tmp) and not args.debug:
         os.remove(apex_tmp)
 
       # check output for recent APEX changes
@@ -900,10 +900,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
       # show progress
       if args.debug:
-        print()
-        print(process)
-        print()
-        print(output)
+        print('--\nREQUEST:\n' + process, request)
+        print('--\nRESULT:\n'  + output)
       else:
         perc = (i + 1) / len(requests)
         dots = int(70 * perc)
