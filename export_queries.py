@@ -103,6 +103,29 @@ ORDER BY
     CASE object_type {}ELSE 999 END,
     object_name"""
 
+# export APEX files in a RAW format
+query_apex_files = """
+SELECT f.filename, f.blob_content f
+FROM wwv_flow_files f
+WHERE f.flow_id = :app_id
+    AND f.filename NOT IN ('f' || f.flow_id || '.zip')"""
+
+# setup APEX security context to access APEX views
+query_apex_security_context = """BEGIN
+    FOR c IN (
+        SELECT a.workspace
+        FROM apex_applications a
+        WHERE a.application_id = :app_id
+    ) LOOP
+        APEX_UTIL.SET_WORKSPACE (
+            p_workspace => c.workspace
+        );
+        APEX_UTIL.SET_SECURITY_GROUP_ID (
+            p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => c.workspace)
+        );
+    END LOOP;
+END;"""
+
 # get APEX security (authorization) schemes names
 query_apex_authz_schemes = """
 SELECT

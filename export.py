@@ -22,6 +22,7 @@ parser.add_argument('-z', '-zip',     '--zip',      help = 'Patch as ZIP',      
 parser.add_argument(      '-lock',    '--lock',     help = 'Lock existing files into locked.log',                     default = False,  nargs = '?',  const = True)
 parser.add_argument(      '-add',     '--add',      help = 'Add new objects/files even when -locked',                                   nargs = '*')
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
+parser.add_argument('-f', '-files',   '--files',    help = 'Export app/ws files',                                     default = False,  nargs = '?',  const = True)
 parser.add_argument('-e', '-env',     '--env',      help = 'Target environment',                                                        nargs = '?')
 #
 args = vars(parser.parse_args())
@@ -834,8 +835,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
     if cfg.apex_full:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-    if cfg.apex_files:
-      requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
+    #if cfg.apex_files:
+    #  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
     #
     #-expOriginalIds -> strange owner and app_id
     #
@@ -843,9 +844,6 @@ if apex_apps != {} and not args.patch and not args.rollout:
     #
     #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML')
     #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML')
-    #
-    # @TODO: export app+ws files + decode
-    #
 
     # trade progress for speed, creating all the JVM is so expensive
     if not args.debug:
@@ -916,6 +914,28 @@ if apex_apps != {} and not args.patch and not args.rollout:
       clean_apex_files(app_id, apex_replacements, default_authentication, cfg)
     #
     print('\n')
+
+    # export APEX files in a RAW format
+    if args.files:
+      conn.execute(query_apex_security_context, app_id = app_id)
+      #
+      for row in conn.fetch_assoc(query_apex_files, app_id = app_id):
+        file = cfg.apex_app_files.replace('#APP_ID#', str(app_id)) + row.filename
+        os.makedirs(os.path.dirname(file), exist_ok = True)
+        #
+        with open(file, 'wb') as w:
+          if args.debug:
+            print(row.filename)
+          w.write(row.f.read())  # blob_content
+
+      # workspace files
+      for row in conn.fetch_assoc(query_apex_files, app_id = 0):
+        file = cfg.apex_ws_files + row.filename
+        #
+        with open(file, 'wb') as w:
+          if args.debug:
+            print(row.filename)
+          w.write(row.f.read())  # blob_content
 
     # rename workspace files
     ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
