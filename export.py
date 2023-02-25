@@ -756,6 +756,15 @@ if apex_apps != {} and not args.patch and not args.rollout:
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
     os.makedirs(cfg.apex_temp_dir)
 
+    # remove app/ws files
+    if args.files:
+      if os.path.exists(cfg.apex_ws_files):
+        shutil.rmtree(cfg.apex_ws_files, ignore_errors = True, onerror = None)
+      #
+      app_dir = cfg.apex_app_files.replace('#APP_ID#', str(app_id))
+      if os.path.exists(app_dir):
+        shutil.rmtree(app_dir, ignore_errors = True, onerror = None)
+
     # delete folder to remove obsolete objects only on full export
     apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
     if os.path.exists(apex_app_folder):
