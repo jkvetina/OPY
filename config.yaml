@@ -70,15 +70,15 @@ objects_sorted:
   - SYNONYM
   - SEQUENCE
   - TABLE
-  - INDEX
-  - MATERIALIZED VIEW
-  - MVIEW LOG
   - VIEW
   - FUNCTION
   - PROCEDURE
   - PACKAGE
   - PACKAGE BODY
   - TRIGGER
+  - INDEX
+  - MVIEW LOG
+  - MATERIALIZED VIEW
   - JOB
 
 # option to remove objects before create
@@ -90,19 +90,24 @@ drop_objects_mview_log:
 # map objects to patch folders
 patch_map:
   init: []
-  tables:
+  sequences:
     - SEQUENCE
+  tables:
     - TABLE
-  objects:
+  synonyms:
     - SYNONYM
-    - MVIEW LOG
-    - MATERIALIZED VIEW
+  objects:
     - VIEW
-    - TRIGGER
     - PROCEDURE
     - FUNCTION
     - PACKAGE
     - PACKAGE BODY
+  triggers:
+    - TRIGGER
+  mviews:
+    - MVIEW LOG
+    - MATERIALIZED VIEW
+  indexes:
     - INDEX
   data:
     - DATA
@@ -114,10 +119,14 @@ patch_map:
 # patch folders, sorted
 patch_folders:
   init      : '#ROOT#/patches/10_init/'
-  tables    : '#ROOT#/patches/20_new_tables/'
+  sequences : '#ROOT#/patches/20_new_sequences/'
+  tables    : '#ROOT#/patches/25_new_tables/'
   changes   : '#ROOT#/patches/30_table+data_changes/'
+  synonyms  : '#ROOT#/patches/35_synonyms/'
   objects   : '#ROOT#/patches/40_repeatable_objects/'
-  cleanup   : '#ROOT#/patches/50_cleanup/'
+  triggers  : '#ROOT#/patches/45_triggers/'
+  mviews    : '#ROOT#/patches/50_mviews/'
+  indexes   : '#ROOT#/patches/55_indexes/'
   data      : '#ROOT#/patches/60_data/'
   grants    : '#ROOT#/patches/70_grants/'
   jobs      : '#ROOT#/patches/80_jobs/'
