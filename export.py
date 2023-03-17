@@ -1034,7 +1034,7 @@ if args.patch:
   last_type         = ''
   table_relations   = {}
   tables_todo       = []
-  patch_notes       = []
+  patch_notes       = {}
   patch_content     = []
 
   # start with tables, get referenced tables for each table
@@ -1112,22 +1112,17 @@ if args.patch:
     #
     # @TODO: ^ switch this to shortcut
     #
-    obj   = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
-    flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
+    obj = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
     #
     processed_names.append(object_code)             # to final check if order is correct
     processed_objects.append(obj)
     hashed_new[obj.shortcut] = obj.hash_new         # store value for new patch.log
+    #
+    if not (object_type in patch_notes):
+      patch_notes[object_type] = []
+    patch_notes[object_type].append(object_name)
 
-    # dont show jobs in notes, but process them
-    if object_type in ('JOB',):                     # ignore jobs, they have own handler later
-      continue
-    #
-    if ((last_type != object_type and last_type != '') or (len(references[object_code]) and args.verbose)):
-      patch_notes.append('{:<20} |'.format(''))
-    patch_notes.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
-    last_type = object_type
-    #
+    # QA check
     if args.verbose:
       for ref_object in references[object_code]:
         if ref_object != object_code and ref_object in changed_objects:
@@ -1135,10 +1130,7 @@ if args.patch:
           object_line = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
           if not (ref_object in processed_names):
             object_line = (object_line + ' <').ljust(48, '-') + ' MISSING OBJECT'
-          patch_notes.append('{:<20} |   > {}'.format('', object_line))
-  #
-  if len(ordered_objects):
-    patch_notes.append('{:<20} |'.format(''))
+          print('{:<20} |   > {}'.format('', object_line))
 
   # show changed data files
   for object_type in ('DATA',):
@@ -1199,7 +1191,10 @@ if args.patch:
         #
         if not header_printed:
           header_printed = True
-          patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
+          if len(files):
+            patch_content.append('--')                # shorter splitter when there are files in patch folder
+          else:
+            patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
         #
         patch_content.append(cfg.patch_line.format(obj.patch_file))
         processed_files.append(obj.shortcut)
@@ -1241,12 +1236,24 @@ if args.patch:
     content = '\n'.join(content) + '\n'
     w.write(content)
 
+  # show sorted overview
+  patch_log = []
+  for object_type in cfg.objects_sorted:
+    if object_type in patch_notes:
+      for object_name in sorted(patch_notes[object_type]):
+        obj   = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
+        flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
+        #
+        patch_log.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
+        last_type = object_type
+      patch_log.append('{:<20} |'.format(''))
+
   # show to user and store in the patch file
-  print('\n'.join(patch_notes))
+  print('\n'.join(patch_log))
   print('\n'.join(patch_content))
   #
   with open(cfg.patch_today, 'w', encoding = 'utf-8') as w:
-    w.write('--\n--' + '\n--'.join(patch_notes) + '\n' + '\n'.join(patch_content) + '\n')
+    w.write('--\n--' + '\n--'.join(patch_log) + '\n' + '\n'.join(patch_content) + '\n')
 
   # create binary to whatever purpose
   if args.zip:
