@@ -756,14 +756,15 @@ if apex_apps != {} and not args.patch and not args.rollout:
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
     os.makedirs(cfg.apex_temp_dir)
 
-    # remove app/ws files
+    # remove ws files
     if args.files:
       if os.path.exists(cfg.apex_ws_files):
         shutil.rmtree(cfg.apex_ws_files, ignore_errors = True, onerror = None)
-      #
-      app_dir = cfg.apex_app_files.replace('#APP_ID#', str(app_id))
-      if os.path.exists(app_dir):
-        shutil.rmtree(app_dir, ignore_errors = True, onerror = None)
+
+    # always remove app files
+    app_dir = cfg.apex_app_files.replace('#APP_ID#', str(app_id))
+    if os.path.exists(app_dir):
+      shutil.rmtree(app_dir, ignore_errors = True, onerror = None)
 
     # delete folder to remove obsolete objects only on full export
     apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
@@ -923,19 +924,19 @@ if apex_apps != {} and not args.patch and not args.rollout:
     print('\n')
 
     # export APEX files in a RAW format
-    if args.files:
-      conn.execute(query_apex_security_context, app_id = app_id)
+    conn.execute(query_apex_security_context, app_id = app_id)
+    #
+    for row in conn.fetch_assoc(query_apex_files, app_id = app_id):
+      file = cfg.apex_app_files.replace('#APP_ID#', str(app_id)) + row.filename
+      os.makedirs(os.path.dirname(file), exist_ok = True)
       #
-      for row in conn.fetch_assoc(query_apex_files, app_id = app_id):
-        file = cfg.apex_app_files.replace('#APP_ID#', str(app_id)) + row.filename
-        os.makedirs(os.path.dirname(file), exist_ok = True)
-        #
-        with open(file, 'wb') as w:
-          if args.debug:
-            print(row.filename)
-          w.write(row.f.read())  # blob_content
+      with open(file, 'wb') as w:
+        if args.debug:
+          print(row.filename)
+        w.write(row.f.read())  # blob_content
 
-      # workspace files
+    # export APEX workspace files
+    if args.files:
       for row in conn.fetch_assoc(query_apex_files, app_id = 0):
         file = cfg.apex_ws_files + row.filename
         #
