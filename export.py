@@ -173,6 +173,9 @@ if 'auto_lock_add_prefix' in cfg and len(cfg['auto_lock_add_prefix']) > 0:
   args = args._replace(add_like = cfg['auto_lock_add_prefix'])
   args = args._replace(add      = True)
   args = args._replace(lock     = True)
+#
+if 'auto_verbose' in cfg and cfg['auto_verbose']:
+  args = args._replace(verbose = cfg['auto_verbose'])
 
 # convert to tuple
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
