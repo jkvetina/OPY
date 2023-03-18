@@ -163,3 +163,7 @@ merge_auto_delete: True
 csv_export_filters:
   NAVIGATION : 'app_id > 0'
 
+# auto add and lock new object with the prefix
+auto_lock_add_prefix : ''
+
+

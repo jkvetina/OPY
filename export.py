@@ -167,7 +167,14 @@ for name, value in cfg.items():
   #
   else:
     cfg[name] = get_fixed_path(value, cfg_root, args)
-#
+
+# overwrite args based on config file
+if 'auto_lock_add_prefix' in cfg and len(cfg['auto_lock_add_prefix']) > 0:
+  args = args._replace(add_like = cfg['auto_lock_add_prefix'])
+  args = args._replace(add      = True)
+  args = args._replace(lock     = True)
+
+# convert to tuple
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
 #
 if cfg_shared == {} and cfg_project == {}:
@@ -357,7 +364,14 @@ if args.recent != 0 and not args.patch and not args.rollout:
     if (len(locked_objects) or args.lock):
       obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
       if (obj == {} or not (obj.shortcut in locked_objects)):
-        continue                              # skip files not on the locked list
+        if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
+          if not (obj.shortcut in locked_objects):
+            locked_objects.append(obj.shortcut)
+        elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
+          if not (obj.shortcut in locked_objects):
+            locked_objects.append(obj.shortcut)
+        else:
+          continue  # skip files not on the locked list
     #
     if row.object_type in cfg.folders:
       if not (row.object_type) in summary:
