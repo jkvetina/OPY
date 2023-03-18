@@ -1139,20 +1139,51 @@ if args.patch:
     for file in files:
       obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
       if obj.hash_old != obj.hash_new:
-        found.append('{:>20} | {:<54}'.format(obj.type if last_type != obj.type else '', obj.name))
-        last_type = obj.type
+        found.append(obj.name)
         hashed_new[obj.shortcut] = obj.hash_new
     #
     if len(found):
-      for line in found:
-        patch_notes.append(line)
-      patch_notes.append('{:<20} |'.format(''))
+      if not (object_type in patch_notes):
+        patch_notes[object_type] = []
+      patch_notes[object_type].append(table_name)
 
   # create list of files to process
   processed_files = []
   for target_dir in sorted(cfg.patch_folders.values()):
     type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
     files   = glob.glob(target_dir + '/*.sql')
+
+    # sort data files into installable order
+    if type == 'data':
+      tables_map = {}
+      found_done = []
+      found_todo = []
+      #
+      for file in files:
+        table_name = os.path.basename(file).split('.')[0].upper()
+        if not (table_name in ('__',)):
+          tables_map[table_name] = file
+          found_todo.append(table_name)
+      #
+      for i in range(0, 1000):
+        if not len(found_todo):
+          break
+        for table_name in tables_map.keys():
+          file = tables_map[table_name]
+          if table_name in table_relations:
+            related_found = False
+            for related_table in table_relations[table_name]:
+              if related_table in found_todo and related_table != table_name:
+                related_found = True
+                break
+            if related_found:
+              continue
+          if not (file in found_done):
+            found_done.append(file)
+          if table_name in found_todo:
+            found_todo.remove(table_name)
+      #
+      files = found_done  # overwrite with sorted files
 
     # remove processed files
     if type in cfg.patch_tracked:
