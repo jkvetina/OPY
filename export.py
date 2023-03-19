@@ -24,6 +24,7 @@ parser.add_argument(      '-add',     '--add',      help = 'Add new objects/file
 parser.add_argument(      '-delete',  '--delete',   help = 'Delete unchanged files in patch or...',                   default = False,  nargs = '?',  const = True)
 parser.add_argument('-f', '-files',   '--files',    help = 'Export app/ws files',                                     default = False,  nargs = '?',  const = True)
 parser.add_argument('-e', '-env',     '--env',      help = 'Target environment',                                                        nargs = '?')
+parser.add_argument('-x', '-fix',     '--fix',      help = 'Fix iCloud dupe files',                                   default = False,  nargs = '?',  const = True)
 #
 args = vars(parser.parse_args())
 
@@ -192,6 +193,19 @@ if cfg_shared == {} and cfg_project == {}:
 
 
 #
+# CLEANUP FILES
+# cleanup junk files created on Mac by iCloud sync
+#
+if args.fix:
+  path = cfg.git_root + '**/* [0-9].*'
+  for file in glob.glob(path, recursive = True):
+    os.remove(file)
+    print(file.replace(cfg.git_root, ''))
+  sys.exit()
+
+
+
+#
 # CONNECT TO DATABASE
 #
 curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
@@ -263,11 +277,6 @@ if not args.rollout:
 #
 # PREP FOLDERS AND GET OLD HASHES
 #
-
-# cleanup junk files created on Mac probably by iCloud sync
-path = cfg.apex_dir + '**/* [0-9].*'
-for file in glob.glob(path, recursive = True):
-  os.remove(file)
 
 # create basic dirs
 for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg.patch_manually, cfg.rollout_log]:
