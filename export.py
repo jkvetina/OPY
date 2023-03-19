@@ -968,10 +968,10 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # move readable files
     if len(apex_readable):
-      from_dir = apex_readable + 'readable/'
+      from_dir = os.path.normpath(apex_readable + 'readable/')
       #
-      shutil.copytree(from_dir, apex_readable, dirs_exist_ok = True)
       if os.path.exists(from_dir):
+        shutil.copytree(from_dir, apex_readable, dirs_exist_ok = True)
         shutil.rmtree(from_dir, ignore_errors = True, onerror = None)
 
       # move some files close to the original files
@@ -986,7 +986,10 @@ if apex_apps != {} and not args.patch and not args.rollout:
     if len(apex_full):
       if os.path.exists(apex_full):
         os.remove(apex_full)
-      os.rename('{}f{}.sql'.format(cfg.apex_dir, app_id), apex_full)
+      file = '{}f{}.sql'.format(cfg.apex_dir, app_id)
+      if os.path.exists(file):
+        os.makedirs(os.path.dirname(apex_full), exist_ok = True)
+        os.rename(file, apex_full)
 
     # export APEX files in a RAW format
     conn.execute(query_apex_security_context, app_id = app_id)
@@ -1195,7 +1198,7 @@ if args.patch:
           object_line = '{:<30} {}'.format((object_name + ' ').ljust(32, '.'), object_type[0:12])
           if not (ref_object in processed_names):
             object_line = (object_line + ' <').ljust(48, '-') + ' MISSING OBJECT'
-          print('{:<20} |   > {}'.format('', object_line))
+            print('{:<20} |   > {}'.format('', object_line))
 
   # show changed data files
   for object_type in ('DATA',):
@@ -1207,7 +1210,7 @@ if args.patch:
         found.append(obj.name)
         hashed_new[obj.shortcut] = obj.hash_new
     #
-    if len(found):
+    for table_name in found:
       if not (object_type in patch_notes):
         patch_notes[object_type] = []
       patch_notes[object_type].append(table_name)
@@ -1273,6 +1276,9 @@ if args.patch:
         #
         if type in cfg.patch_tracked:
           hashed_new[shortcut] = get_file_hash(file)
+      #
+      if type == 'data':
+        patch_content.append('--\nCOMMIT;')
 
     # add objects mapped to current patch folder
     if type in cfg.patch_map:
