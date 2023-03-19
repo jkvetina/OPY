@@ -28,6 +28,7 @@ apex_temp_dir   : '#ROOT#/database/apex/temp/'
 apex_ws_files   : '#ROOT#/database/apex/workspace_files/'
 apex_app_files  : '#ROOT#/database/apex/f#APP_ID#/files/'
 apex_full_file  : '#ROOT#/database/apex/f#APP_ID#/f#APP_ID#.sql'
+apex_readable   : '#ROOT#/database/apex/f#APP_ID#/'
 apex_tmp        : apex.#APP_ID#.tmp
 
 # APEX exports

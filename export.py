@@ -196,11 +196,14 @@ if cfg_shared == {} and cfg_project == {}:
 # CLEANUP FILES
 # cleanup junk files created on Mac by iCloud sync
 #
-if args.fix:
-  path = cfg.git_root + '**/* [0-9].*'
-  for file in glob.glob(path, recursive = True):
-    os.remove(file)
+files = glob.glob(cfg.git_root + '**/* [0-9].*', recursive = True)
+for file in files:
+  os.remove(file)
+  if args.fix:
     print(file.replace(cfg.git_root, ''))
+#
+if args.fix:
+  print('\n  {} files removed\n'.format(len(files)))
   sys.exit()
 
 
@@ -887,8 +890,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests = ['\n'.join(requests)]
 
     # export APEX stuff
-    apex_tmp  = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
-    apex_full = cfg.apex_full_file.replace('#APP_ID#', '{}'.format(app_id))
+    apex_tmp      = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_full     = cfg.apex_full_file.replace('#APP_ID#', '{}'.format(app_id))
+    apex_readable = cfg.apex_readable.replace('#APP_ID#', '{}'.format(app_id))
     changed = []
     for (i, request) in enumerate(requests):
       replace_list = {
@@ -962,6 +966,28 @@ if apex_apps != {} and not args.patch and not args.rollout:
     #
     print('\n')
 
+    # move readable files
+    if len(apex_readable):
+      from_dir = apex_readable + 'readable/'
+      #
+      shutil.copytree(from_dir, apex_readable, dirs_exist_ok = True)
+      if os.path.exists(from_dir):
+        shutil.rmtree(from_dir, ignore_errors = True, onerror = None)
+
+      # move some files close to the original files
+      for file_type in ('yaml', 'json'):
+        file = '{}application/f{}.{}'.format(apex_readable, app_id, file_type)
+        if os.path.exists(file):
+          os.rename(file, file.replace('application/', ''))
+        for file in glob.glob('{}application/pages/*.{}'.format(apex_readable, file_type)):
+          os.rename(file, file.replace('/pages/p', '/pages/page_'))
+
+    # move APEX full export file
+    if len(apex_full):
+      if os.path.exists(apex_full):
+        os.remove(apex_full)
+      os.rename('{}f{}.sql'.format(cfg.apex_dir, app_id), apex_full)
+
     # export APEX files in a RAW format
     conn.execute(query_apex_security_context, app_id = app_id)
     #
@@ -1007,12 +1033,6 @@ if apex_apps != {} and not args.patch and not args.rollout:
           os.remove(file)
       #
       shutil.copytree(apex_partial, '{}f{}'.format(cfg.apex_dir, app_id), dirs_exist_ok = True)
-
-    # move APEX full export file
-    if len(apex_full):
-      if os.path.exists(apex_full):
-        os.remove(apex_full)
-      os.rename('{}f{}.sql'.format(cfg.apex_dir, app_id), apex_full)
 
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
