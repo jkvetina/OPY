@@ -64,6 +64,9 @@ folders:
   TRIGGER             : ['#ROOT#/database/triggers/',     .sql]
   VIEW                : ['#ROOT#/database/views/',        .sql]
 
+# keep tablespace in some object types
+keep_tablespace : ['MATERIALIZED VIEW', 'INDEX']
+
 # grants, resp. privileges
 grants_recd         : '/received/#SCHEMA_NAME#.sql'       # received grants, under GRANT folder
 grants_privs        : '/#SCHEMA_NAME#_schema.sql'         # grants used to create schema

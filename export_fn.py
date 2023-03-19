@@ -196,7 +196,7 @@ def fix_next_sequence(obj):
 
 
 
-def clean_table(object_name, lines, schema):
+def clean_table(object_name, lines, schema, cfg):
   lines[0] = fix_simple_name(lines[0], schema) + ' ('
   lines[1] = lines[1].lstrip().lstrip('(').lstrip()  # fix fisrt column
 
@@ -332,7 +332,7 @@ def clean_table(object_name, lines, schema):
 
 
 
-def clean_view(object_name, lines, schema):
+def clean_view(object_name, lines, schema, cfg):
   lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
   lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
@@ -360,7 +360,7 @@ def clean_view(object_name, lines, schema):
 
 
 
-def clean_materialized_view(object_name, lines, schema):
+def clean_materialized_view(object_name, lines, schema, cfg):
   lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
   lines[0] = fix_simple_name(lines[0], schema)
 
@@ -378,10 +378,14 @@ def clean_materialized_view(object_name, lines, schema):
       line.startswith('  DEFAULT COLLATION') or\
       line.startswith('  ORGANIZATION') or\
       line.startswith('  STORAGE') or\
-      line.startswith('  TABLESPACE') or\
       line.startswith('  PCTINCREASE') or\
       line.startswith('  BUFFER_POOL') or\
+      (' LOB '          in line) or\
+      (' TABLESPACE '   in line and 'STORAGE IN ROW' in line) or\
+      line.startswith('  NOCACHE LOGGING') or\
       line.startswith('  USING'):
+      lines[i] = ''
+    elif line.startswith('  TABLESPACE') and not ('MATERIALIZED VIEW' in cfg.keep_tablespace):
       lines[i] = ''
     else:
       lines[i] = lines[i].lstrip()
@@ -395,7 +399,7 @@ def clean_materialized_view(object_name, lines, schema):
 
 
 
-def clean_mview_log(object_name, lines, schema):
+def clean_mview_log(object_name, lines, schema, cfg):
   lines[0] = replace(lines[0], r'\s*\([^)]+\)', '')                         # remove columns
   lines[0] = fix_simple_name(lines[0], schema)
 
@@ -412,8 +416,9 @@ def clean_mview_log(object_name, lines, schema):
     if line.startswith(' PCT') or\
       line.startswith('  PCT') or\
       line.startswith('  STORAGE') or\
-      line.startswith('  TABLESPACE') or\
       line.startswith('  BUFFER_POOL'):
+      lines[i] = ''
+    elif line.startswith('  TABLESPACE') and not ('MVIEW LOG' in cfg.keep_tablespace):
       lines[i] = ''
     else:
       lines[i] = lines[i].lstrip()
@@ -424,8 +429,8 @@ def clean_mview_log(object_name, lines, schema):
 
 
 
-def clean_package(object_name, lines, schema):
-  lines = clean_procedure(object_name, lines, schema)
+def clean_package(object_name, lines, schema, cfg):
+  lines = clean_procedure(object_name, lines, schema, cfg)
 
   # remove body
   for (i, line) in enumerate(lines):
@@ -438,12 +443,12 @@ def clean_package(object_name, lines, schema):
 
 
 
-def clean_package_body(object_name, lines, schema):
-  return clean_procedure(object_name, lines, schema)
+def clean_package_body(object_name, lines, schema, cfg):
+  return clean_procedure(object_name, lines, schema, cfg)
 
 
 
-def clean_procedure(object_name, lines, schema):
+def clean_procedure(object_name, lines, schema, cfg):
   if len(lines):
     lines[0] = fix_simple_name(lines[0], schema)
     lines[0] = lines[0].replace(' EDITIONABLE', '')
@@ -452,12 +457,12 @@ def clean_procedure(object_name, lines, schema):
 
 
 
-def clean_function(object_name, lines, schema):
-  return clean_procedure(object_name, lines, schema)
+def clean_function(object_name, lines, schema, cfg):
+  return clean_procedure(object_name, lines, schema, cfg)
 
 
 
-def clean_sequence(object_name, lines, schema):
+def clean_sequence(object_name, lines, schema, cfg):
   lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')
   lines[0] = lines[0].replace(' INCREMENT BY 1', '')
   lines[0] = lines[0].replace(' NOORDER', '')
@@ -485,7 +490,7 @@ def clean_sequence(object_name, lines, schema):
 
 
 
-def clean_trigger(object_name, lines, schema):
+def clean_trigger(object_name, lines, schema, cfg):
   if not len(lines):
     return lines
   #
@@ -513,7 +518,7 @@ def clean_trigger(object_name, lines, schema):
 
 
 
-def clean_index(object_name, lines, schema):
+def clean_index(object_name, lines, schema, cfg):
   for (i, line) in enumerate(lines):
     # throw away some distrators
     if line.startswith('  STORAGE') or\
@@ -533,7 +538,7 @@ def clean_index(object_name, lines, schema):
 
 
 
-def clean_synonym(object_name, lines, schema):
+def clean_synonym(object_name, lines, schema, cfg):
   if len(lines):
     lines[0] = lines[0].replace(' EDITIONABLE', '')
     lines[0] = fix_simple_name(lines[0], schema)
@@ -543,7 +548,7 @@ def clean_synonym(object_name, lines, schema):
 
 
 
-def clean_job(object_name, lines, schema):
+def clean_job(object_name, lines, schema, cfg):
   for (i, line) in enumerate(lines):
     #if line.startswith('sys.dbms_scheduler.set_attribute(') or\
     #  line.startswith('COMMIT;') or\

@@ -499,7 +499,7 @@ if count_objects:
     lines = get_lines(content)
     cleanup_fn = 'clean_' + obj.type.replace(' ', '_').lower()
     if getattr(sys.modules[__name__], cleanup_fn, None):
-      lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = obj.name, lines = lines, schema = schema)
+      lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = obj.name, lines = lines, schema = schema, cfg = cfg)
     content = '\n'.join(lines)
 
     # prepend silent object drop
