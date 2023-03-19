@@ -887,7 +887,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests = ['\n'.join(requests)]
 
     # export APEX stuff
-    apex_tmp = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_tmp  = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_full = cfg.apex_full_file.replace('#APP_ID#', '{}'.format(app_id))
     changed = []
     for (i, request) in enumerate(requests):
       replace_list = {
@@ -1006,6 +1007,12 @@ if apex_apps != {} and not args.patch and not args.rollout:
           os.remove(file)
       #
       shutil.copytree(apex_partial, '{}f{}'.format(cfg.apex_dir, app_id), dirs_exist_ok = True)
+
+    # move APEX full export file
+    if len(apex_full):
+      if os.path.exists(apex_full):
+        os.remove(apex_full)
+      os.rename('{}f{}.sql'.format(cfg.apex_dir, app_id), apex_full)
 
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
