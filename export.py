@@ -524,7 +524,7 @@ if count_objects:
 #
 # EXPORT DATA
 #
-if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout:
+if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout and not (args.apex or isinstance(args.apex, list)):
   if not (os.path.isdir(cfg.folders['DATA'][0])):
     os.makedirs(cfg.folders['DATA'][0])
 
@@ -738,7 +738,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
 # APEX APPLICATIONS OVERVIEW (for the same schema)
 #
 apex_apps = {}
-if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout and not (args.csv or isinstance(args.csv, list)):
+if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.rollout:
   all_apps  = conn.fetch_assoc(query_apex_applications, schema = curr_schema)
   workspace = ''
   #
