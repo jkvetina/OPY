@@ -862,10 +862,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests.append('apex export -applicationid {app_id} -list -changesSince {since}')  # -list must be first
 
     # export full app in several formats
-    if cfg.apex_embedded:
-      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE')
     if cfg.apex_splited:
-      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -split')
+      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
     if cfg.apex_full:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
     #if cfg.apex_files:
@@ -886,7 +884,18 @@ if apex_apps != {} and not args.patch and not args.rollout:
     apex_tmp = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
     changed = []
     for (i, request) in enumerate(requests):
-      request = request_conn + '\n' + request.format(dir = cfg.apex_dir, dir_temp = cfg.apex_temp_dir, dir_ws_files = cfg.apex_ws_files, app_id = app_id, since = req_today, changed = changed)
+      replace_list = {
+        'dir'           : cfg.apex_dir,
+        'dir_temp'      : cfg.apex_temp_dir,
+        'dir_ws_files'  : cfg.apex_ws_files,
+        'app_id'        : app_id,
+        'since'         : req_today,
+        'changed'       : changed,
+        'apex_json'     : ',READABLE_JSON' if cfg.apex_readable_json else '',
+        'apex_yaml'     : ',READABLE_YAML' if cfg.apex_readable_yaml else '',
+        'apex_embed'    : ',EMBEDDED_CODE' if cfg.apex_embedded      else ''
+      }
+      request = request_conn + '\n' + request.format(**replace_list)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
       # for Windows create temp file
@@ -933,7 +942,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
       # show progress
       if args.debug:
-        print('--\nREQUEST:\n' + process, request)
+        print('--\nREQUEST:\n' + process, request if not (request in process) else '')
         print('--\nRESULT:\n'  + output)
       else:
         perc = (i + 1) / len(requests)

@@ -31,6 +31,8 @@ apex_tmp        : apex.#APP_ID#.tmp
 
 # APEX exports
 apex_embedded           : True        # export embedded code
+apex_readable_json      : False       # export readable pages/components in JSON
+apex_readable_yaml      : True        # export readable pages/components in YAML
 apex_splited            : True        # export splitted application
 apex_full               : True        # traditional full export
 apex_files              : True        # export workspace files
