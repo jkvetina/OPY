@@ -175,7 +175,12 @@ if 'auto_lock_add_prefix' in cfg and len(cfg['auto_lock_add_prefix']) > 0:
   args = args._replace(lock     = True)
 #
 if 'auto_verbose' in cfg and cfg['auto_verbose']:
-  args = args._replace(verbose = cfg['auto_verbose'])
+  args = args._replace(verbose  = cfg['auto_verbose'])
+#
+if 'auto_csv_add' in cfg and cfg['auto_csv_add']:
+  args = args._replace(csv      = cfg['auto_csv_add'])
+elif 'auto_csv_refresh' in cfg and cfg['auto_csv_refresh']:
+  args = args._replace(csv      = cfg['auto_csv_refresh'])
 
 # convert to tuple
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
@@ -533,8 +538,9 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     table_files[table_name] = file
 
   # when passing values to -csv arg, find relevant tables
-  if isinstance(args.csv, list) and len(args.csv):
-    tables = []
+  if (isinstance(args.csv, list) and len(args.csv) or cfg.auto_csv_refresh):
+    if not (cfg.auto_csv_refresh):
+      tables = []
     for tables_like in args.csv:
       data = conn.fetch_assoc(query_csv_tables, tables_like = tables_like.upper())
       for row in data:
