@@ -866,15 +866,12 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
     if cfg.apex_full:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+
     #if cfg.apex_files:
     #  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
     #
     #-expOriginalIds -> strange owner and app_id
     #
-    # @TODO: export readable version(s) when switch to 22.1
-    #
-    #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE,READABLE_YAML')
-    #requests.append('apex export -applicationid {} -split -skipExportDate -expComments -expTranslations -expType READABLE_YAML')
 
     # trade progress for speed, creating all the JVM is so expensive
     if not args.debug:
