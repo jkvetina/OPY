@@ -1303,6 +1303,8 @@ if args.patch:
 
   # append (changed) APEX apps
   apex_apps = glob.glob(cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1])
+  apex_apps += glob.glob(cfg.apex_full_file.replace('#APP_ID#', '*'))
+  #
   for file in ([] + apex_apps):
     shortcut = get_file_shortcut(file, cfg)
     hashed_new[shortcut] = get_file_hash(file)
