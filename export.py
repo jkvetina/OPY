@@ -977,9 +977,11 @@ if apex_apps != {} and not args.patch and not args.rollout:
       # move some files close to the original files
       for file_type in ('yaml', 'json'):
         file = '{}application/f{}.{}'.format(apex_readable, app_id, file_type)
+        file = file.replace('\\', '/').replace('//', '/')
         if os.path.exists(file):
           os.rename(file, file.replace('application/', ''))
         for file in glob.glob('{}application/pages/*.{}'.format(apex_readable, file_type)):
+          file = file.replace('\\', '/').replace('//', '/')
           os.rename(file, file.replace('/pages/p', '/pages/page_'))
 
     # move APEX full export file
