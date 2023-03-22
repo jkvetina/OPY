@@ -44,6 +44,9 @@ Export all tables changed today and show each table name\
 Export all object types starting with ABC\
 ```python export.py -n PROJECT -t % ABC%```
 
+Export all object and show object status against latest PROD patch \
+```python export.py -n PROJECT -e PROD```
+
 #### Exporting CSV
 
 Export data from all tables listed in data/ as CSV files\
