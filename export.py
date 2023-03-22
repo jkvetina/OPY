@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-g', '-target',  '--target',   help = 'Target folder (Git root)')
 parser.add_argument('-n', '-name',    '--name',     help = 'Connection name')
 parser.add_argument('-r', '-recent',  '--recent',   help = 'Filter objects compiled recently',          type = int,   default = -1)
-parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type',                             default = '',     nargs = '?')
+parser.add_argument('-t', '-type',    '--type',     help = 'Filter specific object type',                             default = '',     nargs = '*')
 parser.add_argument('-a', '-apex',    '--apex',     help = 'APEX application(s) to export',             type = int,                     nargs = '*')
 parser.add_argument('-c', '-csv',     '--csv',      help = 'Export tables in data/ to CSV files',                                       nargs = '*')
 parser.add_argument('-v', '-verbose', '--verbose',  help = 'Show object names during export',                                           nargs = '*')
@@ -379,7 +379,13 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for (i, object_type) in enumerate(cfg.objects_sorted):
     sort += 'WHEN \'{}\' THEN {}'.format(object_type, i)
   #
-  data_objects = conn.fetch_assoc(query_objects.format(sort), object_type = args.type.upper(), recent = args.recent if args.recent >= 0 else '')
+  binds = {
+    'object_type' : args.type[0].upper() if len(args.type) > 0 else '',
+    'object_name' : args.type[1].upper().rstrip('%') if len(args.type) > 1 else '',
+    'recent'      : args.recent if args.recent >= 0 else ''
+  }
+  #
+  data_objects = conn.fetch_assoc(query_objects.format(sort), **binds)
   summary = {}
   for row in data_objects:
     # show just locked files
@@ -545,13 +551,20 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     os.makedirs(cfg.folders['DATA'][0])
 
   # export/refresh existing files
-  tables = []
+  tables      = []
   table_files = {}  # to keep flags and use them in MERGE statements
+  #
   for file in get_files('DATA', cfg, sort = True):
     # basically we need to extract table_name from the filename
     table_name = os.path.basename(file).split('.')[0]
     tables.append(table_name)
     table_files[table_name] = file
+
+  # overwrite prefix when requesting specific object type
+  if len(args.type) > 1:
+    args        = args._replace(csv = [args.type[1]])
+    tables      = []
+    table_files = {}
 
   # when passing values to -csv arg, find relevant tables
   if (isinstance(args.csv, list) and len(args.csv) or cfg.auto_csv_refresh):

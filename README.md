@@ -41,6 +41,9 @@ Export all tables (or other object types - PACKAGE, VIEW...)\
 Export all tables changed today and show each table name\
 ```python export.py -n PROJECT -t TABLE -r 1 -v```
 
+Export all object types starting with ABC\
+```python export.py -n PROJECT -t % ABC%```
+
 #### Exporting CSV
 
 Export data from all tables listed in data/ as CSV files\
@@ -71,6 +74,9 @@ Export just the APEX application 100 without db objects\
 
 Export APEX application 100, and show changes made today\
 ```python export.py -n PROJECT -r 1 -a 100```
+
+Export APEX application 100 with application and workspace files\
+```python export.py -n PROJECT -a 100 -f```
 
 #### Exporting locked objects
 

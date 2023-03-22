@@ -47,6 +47,7 @@ FROM (
     WHERE 1 = 1
         AND o.object_type NOT IN ('LOB', 'TABLE PARTITION')
         AND o.object_type LIKE :object_type || '%'
+        AND o.object_name LIKE :object_name || '%' ESCAPE '\\'
         AND o.object_name NOT LIKE 'SYS\\_%' ESCAPE '\\'
         AND o.object_name NOT LIKE 'ISEQ$$_%'
         AND (o.last_ddl_time >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
@@ -89,7 +90,8 @@ FROM (
         j.job_name      AS object_name
     FROM user_scheduler_jobs j
     WHERE :recent IS NULL
-        AND (:object_type = 'JOB' OR :object_type IS NULL)
+        AND (:object_type   = 'JOB' OR :object_type IS NULL)
+        AND j.job_name      LIKE :object_name || '%' ESCAPE '\\'
         AND j.schedule_type != 'IMMEDIATE'
     UNION ALL
     SELECT
@@ -98,6 +100,7 @@ FROM (
     FROM user_mview_logs l
     WHERE :recent IS NULL
         AND (:object_type LIKE 'MAT%' OR :object_type IS NULL)
+        AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
@@ -340,7 +343,9 @@ FROM product_component_version p
 WHERE p.product LIKE 'Oracle Database%'"""
 
 query_csv_tables = """
-SELECT table_name FROM user_tables WHERE table_name LIKE :tables_like"""
+SELECT t.table_name
+FROM user_tables t
+WHERE t.table_name LIKE :tables_like"""
 
 # get all compatible columns to export table to CSV
 query_csv_columns = """
