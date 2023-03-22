@@ -791,15 +791,14 @@ if apex_apps != {} and not args.patch and not args.rollout:
       shutil.rmtree(cfg.apex_temp_dir, ignore_errors = True, onerror = None)
     os.makedirs(cfg.apex_temp_dir)
 
-    # remove ws files
-    if args.files:
+    # remove app/ws files
+    app_dir = os.path.normpath(cfg.apex_app_files.replace('#APP_ID#', str(app_id)))
+    if (cfg.apex_files or args.files):
       if os.path.exists(cfg.apex_ws_files):
         shutil.rmtree(cfg.apex_ws_files, ignore_errors = True, onerror = None)
-
-    # always remove app files
-    app_dir = cfg.apex_app_files.replace('#APP_ID#', str(app_id))
-    if os.path.exists(app_dir):
-      shutil.rmtree(app_dir, ignore_errors = True, onerror = None)
+      #
+      if os.path.exists(app_dir):
+        shutil.rmtree(app_dir, ignore_errors = True, onerror = None)
 
     # delete folder to remove obsolete objects only on full export
     apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
@@ -878,12 +877,6 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
     if cfg.apex_full:
       requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
-
-    #if cfg.apex_files:
-    #  requests.append('apex export -dir {dir_ws_files} -expFiles -workspaceid ' + str(apex_apps[app_id].workspace_id))
-    #
-    #-expOriginalIds -> strange owner and app_id
-    #
 
     # trade progress for speed, creating all the JVM is so expensive
     if not args.debug:
@@ -993,51 +986,55 @@ if apex_apps != {} and not args.patch and not args.rollout:
         os.makedirs(os.path.dirname(apex_full), exist_ok = True)
         os.rename(file, apex_full)
 
-    # export APEX files in a RAW format
-    conn.execute(query_apex_security_context, app_id = app_id)
-    #
-    for row in conn.fetch_assoc(query_apex_files, app_id = app_id):
-      file = cfg.apex_app_files.replace('#APP_ID#', str(app_id)) + row.filename
-      os.makedirs(os.path.dirname(file), exist_ok = True)
+    # export APEX app and workspace files (app_id=0) in a RAW format
+    if (cfg.apex_files or args.files):
+      print()
+      print('EXPORTING FILES:')
+      print('----------------')
       #
-      with open(file, 'wb') as w:
-        if args.debug:
-          print(row.filename)
-        w.write(row.f.read())  # blob_content
-
-    # export APEX workspace files
-    if args.files:
-      for row in conn.fetch_assoc(query_apex_files, app_id = 0):
-        file = cfg.apex_ws_files + row.filename
+      for loop_app_id in (app_id, 0):
+        files = conn.fetch_assoc(query_apex_files, app_id = loop_app_id)
+        print('{:>12} | {}'.format(loop_app_id if loop_app_id != 0 else 'WORKSPACE', len(files)))
         #
-        with open(file, 'wb') as w:
+        if len(files):
+          for row in files:
+            file = cfg.apex_app_files.replace('#APP_ID#', str(loop_app_id)) + row.filename
+            if loop_app_id == 0:
+              file = cfg.apex_ws_files + row.filename
+            #
+            os.makedirs(os.path.dirname(file), exist_ok = True)
+            #
+            with open(file, 'wb') as w:
+              if args.debug:
+                print('    ' + row.filename)
+              w.write(row.f.read())  # blob_content
           if args.debug:
-            print(row.filename)
-          w.write(row.f.read())  # blob_content
+            print()
+      print()
 
-    # rename workspace files
-    ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
-    if os.path.exists(cfg.apex_ws_files + ws_files):
-      target_file = '{}{}.sql'.format(cfg.apex_ws_files, apex_apps[app_id].workspace)
-      if os.path.exists(target_file):
-        os.remove(target_file)
-      os.rename(cfg.apex_ws_files + ws_files, target_file)
+      # rename workspace files
+      ws_files = 'files_{}.sql'.format(apex_apps[app_id].workspace_id)
+      if os.path.exists(cfg.apex_ws_files + ws_files):
+        target_file = '{}{}.sql'.format(cfg.apex_ws_files, apex_apps[app_id].workspace)
+        if os.path.exists(target_file):
+          os.remove(target_file)
+        os.rename(cfg.apex_ws_files + ws_files, target_file)
 
-    # move some changed files to proper APEX folder
-    apex_partial = '{}f{}'.format(cfg.apex_temp_dir, app_id)
-    if os.path.exists(apex_partial):
-      remove_files = [
-        'install_component.sql',
-        'install_page.sql',
-        'application/end_environment.sql',
-        'application/set_environment.sql',
-        'application/pages/delete*.sql',
-      ]
-      for file_pattern in remove_files:
-        for file in glob.glob(apex_partial + '/' + file_pattern):
-          os.remove(file)
-      #
-      shutil.copytree(apex_partial, '{}f{}'.format(cfg.apex_dir, app_id), dirs_exist_ok = True)
+      # move some changed files to proper APEX folder
+      apex_partial = '{}f{}'.format(cfg.apex_temp_dir, app_id)
+      if os.path.exists(apex_partial):
+        remove_files = [
+          'install_component.sql',
+          'install_page.sql',
+          'application/end_environment.sql',
+          'application/set_environment.sql',
+          'application/pages/delete*.sql',
+        ]
+        for file_pattern in remove_files:
+          for file in glob.glob(apex_partial + '/' + file_pattern):
+            os.remove(file)
+        #
+        shutil.copytree(apex_partial, '{}f{}'.format(cfg.apex_dir, app_id), dirs_exist_ok = True)
 
     # cleanup
     if os.path.exists(cfg.apex_temp_dir):
