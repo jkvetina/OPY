@@ -803,14 +803,27 @@ if apex_apps != {} and not args.patch and not args.rollout:
     # delete folder to remove obsolete objects only on full export
     apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
     if os.path.exists(apex_app_folder):
-      shutil.rmtree(apex_app_folder, ignore_errors = True, onerror = None)
-    #
+      if (cfg.apex_files or args.files):
+        shutil.rmtree(apex_app_folder, ignore_errors = True, onerror = None)
+      else:
+        # we need to skip app/ws files
+        dirs = [x[0] for x in os.walk(apex_app_folder)]
+        for d in dirs:
+          if not (app_dir in d or d in app_dir):
+            shutil.rmtree(d, ignore_errors = True, onerror = None)
+        #
+        files = glob.glob(apex_app_folder + '/*.*', recursive = False)
+        for f in files:
+          os.remove(f)
+
+    # create empty dirs
     if not os.path.exists(cfg.apex_dir):
       os.makedirs(cfg.apex_dir)
     if not os.path.exists(cfg.apex_ws_files):
       os.makedirs(cfg.apex_ws_files)
 
     # get app details
+    conn.execute(query_apex_security_context, app_id = app_id)
     apex = conn.fetch_assoc(query_apex_app_detail, app_id = app_id)[0]
     #
     print()
@@ -946,8 +959,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
       # show progress
       if args.debug:
-        print('--\nREQUEST:\n' + process, request if not (request in process) else '')
-        print('--\nRESULT:\n'  + output)
+        print('--\n-- REQUEST:\n--\n' + process, request if not (request in process) else '')
+        print('--\n-- RESULT:\n--\n'  + output)
       else:
         perc = (i + 1) / len(requests)
         dots = int(70 * perc)
@@ -969,10 +982,12 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
       # move some files close to the original files
       for file_type in ('yaml', 'json'):
+        # full app file
         file = '{}application/f{}.{}'.format(apex_readable, app_id, file_type)
         file = file.replace('\\', '/').replace('//', '/')
         if os.path.exists(file):
           os.rename(file, file.replace('application/', ''))
+        # individual pages
         for file in glob.glob('{}application/pages/*.{}'.format(apex_readable, file_type)):
           file = file.replace('\\', '/').replace('//', '/')
           os.rename(file, file.replace('/pages/p', '/pages/page_'))
