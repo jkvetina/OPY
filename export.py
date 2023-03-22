@@ -318,13 +318,15 @@ hashed_old = {}
 hashed_new = {}   # files/objects changed since last rollout
 cached_obj = {}
 #
-if os.path.exists(cfg.rollout_log):
-  with open(cfg.rollout_log, 'r', encoding = 'utf-8') as r:
-    for line in r.readlines():
-      (hash, file) = line.split('|')
-      if '/' in hash:
-        hash, file = file, hash  # swap columns for backward compatibility
-      hashed_old[file.strip()] = hash.strip()
+for hash_file in (cfg.rollout_log, cfg.patch_log):
+  if os.path.exists(hash_file):
+    with open(hash_file, 'r', encoding = 'utf-8') as r:
+      for line in r.readlines():
+        (hash, file) = line.split('|')
+        if '/' in hash:
+          hash, file = file, hash  # swap columns for backward compatibility
+        hashed_old[file.strip()] = hash.strip()
+    break
 
 
 
@@ -478,6 +480,8 @@ if count_objects:
     if (args.verbose or args.recent == 1):
       if flag == '' and obj.type == 'TABLE':
         flag = 'NEW' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new else ''
+      elif flag == '':
+        flag = 'NEW' if obj.hash_old == '' else 'CHANGED' if obj.hash_old != obj.hash_new else ''
       #
       if obj.type != recent_type and recent_type != '':
         print('{:>20} |'.format(''))
