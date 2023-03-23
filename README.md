@@ -130,6 +130,36 @@ Mark recently created patch as executed + keep just existing files in log\
 
 <br />
 
+### Install OPY
+
+- install Python 3.8+
+    - www.python.org/download
+    - to test run:
+        - cmd
+        - python -V
+        - pip help
+    - install python modules
+        - pip install oracledb
+        - pip install pyyaml
+- install Instant Client 19.* to home dir
+    - www.oracle.com/cis/database/technologies/instant-client/downloads.html
+- install SQLcl 22.1
+    - make sure it is 22.1, I have some issues with newer releases
+    - www.oracle.com/database/sqldeveloper/technologies/sqlcl/download/
+    - you night also need Java
+    - www.oracle.com/java/technologies/javase/jdk18-archive-downloads.html
+    - install to instant client dir
+    - to test run:
+        - cmd
+        - sql
+- install Github Desktop (Sourcetree or whatever you want to use for version control)
+    - desktop.github.com
+    - clone OPY repo from github.com/jkvetina/OPY
+
+
+
+<br />
+
 ## Connect to database
 
 #### Connect to database with SID or service name
