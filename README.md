@@ -1,5 +1,14 @@
 # Oracle wrapper for Python
 
+- this is the original name and original purpose of this tool
+- I have extend this to export database objects and APEX applications (on-premise and cloud too)
+- it can export just specified object types, object names (by LIKE pattern), recently modified objects (in days) or a combination
+- it can also export table data into CSV files (if they dont contain LOB columns) and create MERGE statements for patching
+- you can also create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
+- you can also export specific APEX application(s) including application and workspace files, also in YAML/JSON formats
+- see config.yaml file for things you can use and customize
+- you can use your config.yaml file, just store it in the root of your project
+
 ## Exporting database objects and applications
 
 - execute queries in Oracle database
