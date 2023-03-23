@@ -8,6 +8,7 @@
 - you can also export specific APEX application(s) including application and workspace files, also in YAML/JSON formats
 - see config.yaml file for things you can use and customize
 - you can use your config.yaml file, just store it in the root of your project
+- it can also create patch files so you can easily deploy you app or changes since last deployment
 
 ## Exporting database objects and applications
 
