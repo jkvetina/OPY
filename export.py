@@ -175,6 +175,9 @@ if 'auto_lock_add_prefix' in cfg and len(cfg['auto_lock_add_prefix']) > 0:
   args = args._replace(add      = True)
   args = args._replace(lock     = True)
 #
+if 'auto_filter_prefix' in cfg and len(cfg['auto_filter_prefix']) > 0 and args.type == '':
+  args = args._replace(type     = ['%', cfg['auto_filter_prefix']])
+#
 if 'auto_verbose' in cfg and cfg['auto_verbose']:
   args = args._replace(verbose  = cfg['auto_verbose'])
 #

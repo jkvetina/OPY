@@ -176,6 +176,9 @@ auto_verbose : True
 # auto add and lock new object with the prefix
 auto_lock_add_prefix : ''
 
+# auto filter object names (to reduce subset of fetched objects significantly)
+auto_filter_prefix   : '%'
+
 # auto refresh and auto add CSV files
 auto_csv_refresh  : True
 auto_csv_add      : ['LOV_%']
