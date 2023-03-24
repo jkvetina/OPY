@@ -371,6 +371,7 @@ data_objects      = []
 exported_objects  = []
 count_objects     = 0
 removed_files     = []
+adding_files      = []
 #
 if args.recent != 0 and not args.patch and not args.rollout:
   print()
@@ -387,20 +388,25 @@ if args.recent != 0 and not args.patch and not args.rollout:
     'object_name' : args.type[1].upper().rstrip('%') if len(args.type) > 1 else '',
     'recent'      : args.recent if args.recent >= 0 else ''
   }
+  if args.debug:
+    print(binds)
   #
   data_objects = conn.fetch_assoc(query_objects.format(sort), **binds)
   summary = {}
   for row in data_objects:
+    obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
+    if obj == {}:
+      continue
+
     # show just locked files
     if (len(locked_objects) or args.lock):
-      obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
-      if (obj == {} or not (obj.shortcut in locked_objects)):
+      if not (obj.shortcut in locked_objects):
         if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
-          if not (obj.shortcut in locked_objects):
-            locked_objects.append(obj.shortcut)
+          locked_objects.append(obj.shortcut)
+          adding_files.append(obj.shortcut)
         elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
-          if not (obj.shortcut in locked_objects):
-            locked_objects.append(obj.shortcut)
+          locked_objects.append(obj.shortcut)
+          adding_files.append(obj.shortcut)
         else:
           continue  # skip files not on the locked list
     #
@@ -465,13 +471,10 @@ if count_objects:
     # check locked objects
     flag = ''
     if (len(locked_objects) or args.lock or args.add):
-      if not (obj.shortcut in locked_objects):
-        if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
-          flag = '[+]'
-        elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
-          flag = '[+]'
-        else:
-          continue                              # skip files not on the locked list
+      if (obj.shortcut in adding_files):
+        flag = 'ADDING'
+      elif not (obj.shortcut in locked_objects):
+        continue                                  # skip files not on the locked list
 
     # make sure we have target folders ready
     file_folder = os.path.dirname(obj.file)
