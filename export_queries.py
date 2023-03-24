@@ -93,7 +93,7 @@ FROM (
         j.job_name      AS object_name
     FROM user_scheduler_jobs j
     WHERE :recent IS NULL
-        AND (:object_type   = 'JOB' OR :object_type IS NULL)
+        AND (:object_type   = 'JOB' OR NULLIF(:object_type, '%') IS NULL)
         AND j.job_name      LIKE :object_name || '%' ESCAPE '\\'
         AND j.schedule_type != 'IMMEDIATE'
     UNION ALL
@@ -102,7 +102,7 @@ FROM (
         REPLACE(l.log_table, 'MLOG$_')  AS object_name
     FROM user_mview_logs l
     WHERE :recent IS NULL
-        AND (:object_type LIKE 'MAT%' OR :object_type IS NULL)
+        AND (:object_type LIKE 'MAT%' OR NULLIF(:object_type, '%') IS NULL)
         AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
 )
 ORDER BY
