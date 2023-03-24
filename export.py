@@ -410,7 +410,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
       summary[row.object_type] += 1
       count_objects += 1
   #
-  all_objects = conn.fetch_assoc(query_summary)
+  all_objects = conn.fetch_assoc(query_summary, object_name = binds['object_name'])
   print('                       EXPORTING |   TOTAL')
   for row in all_objects:
     if row.object_count:

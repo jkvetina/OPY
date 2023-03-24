@@ -10,13 +10,15 @@ WITH a AS (
             a.object_type,
             COUNT(*) AS object_count
         FROM user_objects a
-        WHERE a.object_type NOT IN ('LOB', 'TABLE PARTITION')
+        WHERE a.object_type     NOT IN ('LOB', 'TABLE PARTITION')
+            AND a.object_name   LIKE :object_name || '%' ESCAPE '\\'
         GROUP BY a.object_type
         UNION ALL
         SELECT
             'MVIEW LOG' AS object_type,
             COUNT(*)    AS object_count
         FROM user_mview_logs l
+        WHERE REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
     ) a
 ),
 c AS (
@@ -25,6 +27,7 @@ c AS (
         c.constraint_type,
         COUNT(*) AS constraint_count
     FROM user_constraints c
+    WHERE c.table_name LIKE :object_name || '%' ESCAPE '\\'
     GROUP BY c.constraint_type
 )
 SELECT
