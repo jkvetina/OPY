@@ -595,7 +595,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     print('-------------------')
     print('{:>8} | {:>3} | {:>3} | {:<30}   {:>6} | {:>8}'.format('INS', 'UPD', 'DEL', '', 'LINES', 'BYTES'))
   #
-  for (i, table_name) in enumerate(tables):
+  for (i, table_name) in enumerate(sorted(tables)):
     obj = get_file_details('DATA', table_name, '', cfg, hashed_old, cached_obj)
 
     # create file for new tables
@@ -657,7 +657,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         table_name.upper(),
         len(data),                # lines
         os.path.getsize(file),    # bytes
-        'NEW' if obj.hash_old == '' else 'CHANGED' if obj.hash_new != obj.hash_old else ''
+        'NEW' if table_name in tables_new else ''
       ]))
     else:
       perc = (i + 1) / len(tables)
