@@ -810,8 +810,7 @@ if (args.apex or isinstance(args.apex, list)) and not args.patch and not args.ro
   if apex_apps != {}:
     header = 'APEX APPLICATIONS - {} WORKSPACE:'.format(workspace)
     #
-    print()
-    print(header + '\n' + '-' * len(header))
+    print('\n{}\n{}'.format(header, '-' * len(header)))
     print('{:<54}PAGES | LAST CHANGE AT'.format(''))
     for (app_id, row) in apex_apps.items():
       print('{:>12} | {:<38} {:>5} | {}'.format(app_id, row.application_name[0:36], row.pages, row.last_updated_on))
@@ -1135,10 +1134,7 @@ if count_objects or apex_apps != {} or (args.csv or isinstance(args.csv, list)):
 #
 if args.patch:
   header = 'PREPARING PATCH AT {}:'.format(get_file_shortcut(cfg.patch_today, cfg))
-  print()
-  print(header)
-  print('-' * len(header))
-  print()
+  print('\n{}\n{}'.format(header, '-' * len(header)))
 
   # remove target patch files
   for file in (cfg.patch_today, cfg.patch_zip):
@@ -1432,9 +1428,7 @@ if args.patch:
 #
 if args.rollout:
   header = 'ROLLOUT CONFIRMED FOR {}:'.format(args.rollout).replace(' FOR True:', ':')
-  print()
-  print(header)
-  print('-' * len(header))
+  print('\n{}\n{}'.format(header, '-' * len(header)))
 
   # show removed files
   if args.delete:
