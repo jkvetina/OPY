@@ -285,6 +285,11 @@ if not args.rollout:
 # PREP FOLDERS AND GET OLD HASHES
 #
 
+# copy all patch files (not just directories) if patch folders are missing
+dir = os.path.dirname(cfg.patch_root)
+if not os.path.exists(dir):
+  shutil.copytree(os.path.normpath(conn_dir + '/../patches/'), dir, dirs_exist_ok = True)
+
 # create basic dirs
 for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg.patch_manually, cfg.rollout_log]:
   dir = os.path.dirname(dir)
