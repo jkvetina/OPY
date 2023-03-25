@@ -829,7 +829,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # remove app/ws files
     app_dir = os.path.normpath(cfg.apex_app_files.replace('#APP_ID#', str(app_id)))
-    if (cfg.apex_files or args.files):
+    if (cfg.apex_auto_ws_files or args.files):
       if os.path.exists(cfg.apex_ws_files):
         shutil.rmtree(cfg.apex_ws_files, ignore_errors = True, onerror = None)
       #
@@ -839,7 +839,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
     # delete folder to remove obsolete objects only on full export
     apex_app_folder = '{}f{}'.format(cfg.apex_dir, app_id)
     if os.path.exists(apex_app_folder):
-      if (cfg.apex_files or args.files):
+      if (cfg.apex_auto_files or args.files):
         shutil.rmtree(apex_app_folder, ignore_errors = True, onerror = None)
       else:
         # we need to skip app/ws files
@@ -1038,12 +1038,18 @@ if apex_apps != {} and not args.patch and not args.rollout:
         os.rename(file, apex_full)
 
     # export APEX app and workspace files (app_id=0) in a RAW format
-    if (cfg.apex_files or args.files):
+    if (cfg.apex_auto_files or cfg.apex_auto_ws_files or args.files):
       print()
       print('EXPORTING FILES:')
       print('----------------')
       #
-      for loop_app_id in (app_id, 0):
+      apps_list = []
+      if (cfg.apex_auto_files or args.files):
+        apps_list.append(app_id)
+      if (cfg.apex_auto_ws_files or args.files):
+        apps_list.append(0)
+      #
+      for loop_app_id in apps_list:
         files = conn.fetch_assoc(query_apex_files, app_id = loop_app_id)
         print('{:>12} | {}'.format(loop_app_id if loop_app_id != 0 else 'WORKSPACE', len(files)))
         #

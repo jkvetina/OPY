@@ -37,7 +37,8 @@ apex_readable_json      : False       # export readable pages/components in JSON
 apex_readable_yaml      : True        # export readable pages/components in YAML
 apex_splited            : True        # export splitted application
 apex_full               : True        # traditional full export
-apex_files              : True        # export app and workspace files
+apex_auto_files         : True        # with app also export app files
+apex_auto_ws_files      : True        # with app also export workspace files
 apex_show_changes       : True        # show app changes made in -recent days
 apex_clean_timestamps   : True        # convert timestamps to a single value
 apex_clean_authors      : True        # convert authors to a single value
