@@ -305,6 +305,11 @@ if args.patch:
     with open(cfg.patch_manually, 'w', encoding = 'utf-8') as w:
       w.write('')
 
+# delete consolidated MERGE file
+file = cfg.patch_folders['data'] + '__.sql'
+if os.path.exists(file):
+  os.remove(file)
+
 # switch to alternative log file (typically from PROD when preparing new patch for PROD)
 if args.patch and args.patch_name:
   cfg = cfg._replace(patch_today = cfg.patch_named)
@@ -682,10 +687,10 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     if content:
       with open(target_file, 'w', encoding = 'utf-8') as w:
         w.write(content)
-        all_data += '{}\n\n\n'.format(content)
+        all_data += '@"./{}.sql"\n'.format(table_name)
   #
-  with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
-    w.write(all_data + 'COMMIT;\n\n')
+  #with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
+  #  w.write('{}--\nCOMMIT;\n\n'.format(all_data))
 
 
 
@@ -1298,9 +1303,6 @@ if args.patch:
         hash_new = get_file_hash(file)
         #
         if hash_old == hash_new:                      # ignore unchanged files
-          files.remove(file)
-        #
-        if os.path.basename(shortcut) == '__.sql':    # ignore file with all data files merged
           files.remove(file)
 
     # process files in patch folder first
