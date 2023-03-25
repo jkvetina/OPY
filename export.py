@@ -181,10 +181,11 @@ if 'auto_filter_prefix' in cfg and len(cfg['auto_filter_prefix']) > 0 and args.t
 if 'auto_verbose' in cfg and cfg['auto_verbose']:
   args = args._replace(verbose  = cfg['auto_verbose'])
 #
-if 'auto_csv_add' in cfg and cfg['auto_csv_add']:
-  args = args._replace(csv      = cfg['auto_csv_add'])
-elif 'auto_csv_refresh' in cfg and cfg['auto_csv_refresh']:
-  args = args._replace(csv      = cfg['auto_csv_refresh'])
+if not (args.csv):
+  if 'auto_csv_add' in cfg and cfg['auto_csv_add']:
+    args = args._replace(csv    = cfg['auto_csv_add'])
+  elif 'auto_csv_refresh' in cfg and cfg['auto_csv_refresh']:
+    args = args._replace(csv    = cfg['auto_csv_refresh'])
 
 # convert to tuple
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
@@ -560,33 +561,40 @@ if count_objects:
 if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.rollout and not (args.apex or isinstance(args.apex, list)):
   if not (os.path.isdir(cfg.folders['DATA'][0])):
     os.makedirs(cfg.folders['DATA'][0])
-
-  # export/refresh existing files
+  #
   tables      = []
   table_files = {}  # to keep flags and use them in MERGE statements
-  #
-  for file in get_files('DATA', cfg, sort = True):
-    # basically we need to extract table_name from the filename
-    table_name = os.path.basename(file).split('.')[0]
-    tables.append(table_name)
-    table_files[table_name] = file
+  tables_new  = []
+
+  # export/refresh existing files
+  if (args.csv or cfg.auto_csv_refresh):
+    for file in get_files('DATA', cfg, sort = True):
+      # extract table_name from the filename
+      table_name = os.path.basename(file).split('.')[0]
+      tables.append(table_name)
+      table_files[table_name] = file
+
+  if isinstance(args.csv, list) and len(args.csv):
+    args = args._replace(csv = args.csv)
 
   # overwrite prefix when requesting specific object type
-  if len(args.type) > 1:
-    args        = args._replace(csv = [args.type[1]])
-    tables      = []
-    table_files = {}
+  elif len(args.type) > 1 and cfg.auto_csv_refresh:
+    args = args._replace(csv = [args.type[1]])
 
-  # when passing values to -csv arg, find relevant tables
-  if (isinstance(args.csv, list) and len(args.csv) or cfg.auto_csv_refresh):
-    if not (cfg.auto_csv_refresh):
-      tables = []
-    for tables_like in args.csv:
-      data = conn.fetch_assoc(query_csv_tables, tables_like = tables_like.upper())
-      for row in data:
-        table_name = row.table_name.lower()
-        if not (table_name in tables):
-          tables.append(table_name)
+  # auto add new csv files based on config pattern
+  elif len(cfg.auto_csv_add):
+    args = args._replace(csv = cfg.auto_csv_add)
+
+  # search/add new tables
+  if not (isinstance(args.csv, list)):
+    args = args._replace(csv = [])
+  for tables_like in args.csv:
+    data = conn.fetch_assoc(query_csv_tables, tables_like = tables_like.upper())
+    for row in data:
+      table_name = row.table_name.lower()
+      if not (table_name in tables):
+        tables.append(table_name)
+        tables_new.append(table_name)
 
   # proceed with data export
   print()
