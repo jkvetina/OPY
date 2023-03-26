@@ -140,6 +140,8 @@ if os.path.exists(conf_file):
 if cfg_shared == {} and cfg_project == {}:
   print('#\n# MISSING CONFIG\n#\n')
   sys.exit()
+
+# adjust some config and env values
 cfg = collections.defaultdict(dict)
 cfg.update(cfg_shared)
 if cfg_project != {}:
@@ -156,6 +158,10 @@ if cfg_project != {}:
       print('  ', key, nested_dict)
   if args.debug:
     print('\n')
+
+# select default patch file
+if args.env_name == None and len(cfg['default_env']):
+  args = args._replace(env_name = cfg['default_env'])
 
 # normalize paths from config, replace #ROOT# with actual root
 for name, value in cfg.items():
@@ -264,6 +270,7 @@ if args.patch and not os.path.exists(cfg.rollout_log):
 hashed_old = {}
 hashed_new = {}   # files/objects changed since last rollout
 cached_obj = {}
+hashed_src = ''
 #
 for hash_file in (cfg.rollout_log, cfg.patch_log):
   if os.path.exists(hash_file):
@@ -273,6 +280,7 @@ for hash_file in (cfg.rollout_log, cfg.patch_log):
         if '/' in hash:
           hash, file = file, hash  # swap columns for backward compatibility
         hashed_old[file.strip()] = hash.strip()
+    hashed_src = hash_file
     break
 
 
@@ -361,6 +369,7 @@ if not args.rollout:
   print('      CONFIG | {}'.format(conf_used[0].replace(user_home, '~')))
   if len(conf_used) > 1:
     print('             | {}'.format(conf_used[1].replace(user_home, '~')))
+  print('      HASHED | {}'.format(hashed_src.replace(user_home, '~')))
   print('             |')
 
   # get versions

@@ -21,6 +21,7 @@ patch_log       : '#ROOT#/patches_done/#ENV_NAME#/patch.log'
 rollout_log     : '#ROOT#/patches_done/#ENV_NAME#/rollout.log'
 locked_log      : '#ROOT#/patches_done/locked.log'
 patch_manually  : '#ROOT#/patches/30_table+data_changes/#TODAY#.sql'    # dedicated for table changes
+default_env     : 'PROD'                                                # used to show flags when compared to objects in that patch/rollout.log
 
 # APEX related
 apex_dir        : '#ROOT#/database/apex/'
