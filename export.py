@@ -3,6 +3,10 @@ import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, shut
 from oracle_wrapper import Oracle
 from export_fn import *
 
+start_timer = timeit.default_timer()
+
+
+
 #
 # ARGS
 #
@@ -64,8 +68,6 @@ else:
   args['verbose']       = True if args['recent'] == 1 else False
 #
 args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
-#
-start_timer = timeit.default_timer()
 
 # check args
 if args.debug:
@@ -133,7 +135,11 @@ if os.path.exists(conf_file):
     cfg_project = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
     cfg_project = cfg_project[0] if len(cfg_project) > 0 else {}
     conf_used.append(conf_file)
-#
+
+# we need config file
+if cfg_shared == {} and cfg_project == {}:
+  print('#\n# MISSING CONFIG\n#\n')
+  sys.exit()
 cfg = collections.defaultdict(dict)
 cfg.update(cfg_shared)
 if cfg_project != {}:
@@ -189,10 +195,6 @@ if not (args.csv):
 
 # convert to tuple
 cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to named tuple
-#
-if cfg_shared == {} and cfg_project == {}:
-  print('#\n# MISSING CONFIG\n#\n')
-  sys.exit()
 
 
 
