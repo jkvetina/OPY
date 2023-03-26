@@ -213,75 +213,6 @@ if args.fix:
 
 
 #
-# CONNECT TO DATABASE
-#
-curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
-grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
-grants_recd_file  = (os.path.dirname(grants_made_file) + cfg.grants_recd)
-grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#SCHEMA_NAME#', curr_schema)
-grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#SCHEMA_NAME#', curr_schema)
-#
-if not args.rollout:
-  try:
-    conn = Oracle(connection)
-  except Exception:
-    print('#')
-    print('# CONNECTION FAILED')
-    print('#')
-    print()
-    print(traceback.format_exc().splitlines()[-1])
-    #print(sys.exc_info()[2])
-    sys.exit()
-  #
-  data      = conn.fetch_assoc(query_today, recent = args.recent if args.recent >= 0 else '')
-  req_today = data[0].today  # calculate date from recent arg
-  schema    = data[0].curr_user
-  user_home = os.path.expanduser('~')
-
-  # find wallet
-  wallet_file = ''
-  if 'wallet' in connection:
-    wallet_file = connection['wallet']
-  elif 'name' in connection:
-    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), connection['name'])
-    if not os.path.exists(wallet_file):
-      wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), connection['name'])
-      if not os.path.exists(wallet_file):
-        wallet_file = ''
-  #
-  print('CONNECTING:')
-  print('-----------')
-  print('      SOURCE | {}@{}/{}{}'.format(
-    connection['user'],
-    connection.get('host', ''),
-    connection.get('service', ''),
-    connection.get('sid', '')))
-  #
-  if wallet_file != '':
-    print('      WALLET | {}'.format(connection['wallet']).replace(user_home, '~'))
-  #
-  print('             | {}'.format(db_conf.replace(user_home, '~')))
-  print('      TARGET | {}'.format(cfg.git_target.replace(user_home, '~')))
-  print('      CONFIG | {}'.format(conf_used[0].replace(user_home, '~')))
-  if len(conf_used) > 1:
-    print('             | {}'.format(conf_used[1].replace(user_home, '~')))
-  print('             |')
-
-  # get versions
-  try:
-    version_apex  = conn.fetch_value(query_version_apex)
-    version_db    = conn.fetch_value(query_version_db)
-  except Exception:
-    version_apex  = version_apex or ''
-    version_db    = conn.fetch_value(query_version_db_old)
-  #
-  print('    DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
-  print('        APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
-  print()
-
-
-
-#
 # PREP FOLDERS AND GET OLD HASHES
 #
 
@@ -372,6 +303,75 @@ if args.lock and not args.delete and not args.add:
       obj = get_file_details(object_type, '', file, cfg, hashed_old, cached_obj)
       if not (obj.shortcut in locked_objects):
         locked_objects.append(obj.shortcut)
+
+
+
+#
+# CONNECT TO DATABASE
+#
+curr_schema       = connection['user'].upper().split('[')[1].rstrip(']') if '[' in connection['user'] else connection['user'].upper()
+grants_made_file  = '{}{}{}'.format(cfg.folders['GRANT'][0], curr_schema, cfg.folders['GRANT'][1])
+grants_recd_file  = (os.path.dirname(grants_made_file) + cfg.grants_recd)
+grants_privs_file = (os.path.dirname(grants_made_file) + cfg.grants_privs).replace('#SCHEMA_NAME#', curr_schema)
+grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories).replace('#SCHEMA_NAME#', curr_schema)
+#
+if not args.rollout:
+  try:
+    conn = Oracle(connection)
+  except Exception:
+    print('#')
+    print('# CONNECTION FAILED')
+    print('#')
+    print()
+    print(traceback.format_exc().splitlines()[-1])
+    #print(sys.exc_info()[2])
+    sys.exit()
+  #
+  data      = conn.fetch_assoc(query_today, recent = args.recent if args.recent >= 0 else '')
+  req_today = data[0].today  # calculate date from recent arg
+  schema    = data[0].curr_user
+  user_home = os.path.expanduser('~')
+
+  # find wallet
+  wallet_file = ''
+  if 'wallet' in connection:
+    wallet_file = connection['wallet']
+  elif 'name' in connection:
+    wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(os.path.dirname(db_conf)), connection['name'])
+    if not os.path.exists(wallet_file):
+      wallet_file = '{}/Wallet_{}.zip'.format(os.path.abspath(conn_dir), connection['name'])
+      if not os.path.exists(wallet_file):
+        wallet_file = ''
+  #
+  print('CONNECTING:')
+  print('-----------')
+  print('      SOURCE | {}@{}/{}{}'.format(
+    connection['user'],
+    connection.get('host', ''),
+    connection.get('service', ''),
+    connection.get('sid', '')))
+  #
+  if wallet_file != '':
+    print('      WALLET | {}'.format(connection['wallet']).replace(user_home, '~'))
+  #
+  print('             | {}'.format(db_conf.replace(user_home, '~')))
+  print('      TARGET | {}'.format(cfg.git_target.replace(user_home, '~')))
+  print('      CONFIG | {}'.format(conf_used[0].replace(user_home, '~')))
+  if len(conf_used) > 1:
+    print('             | {}'.format(conf_used[1].replace(user_home, '~')))
+  print('             |')
+
+  # get versions
+  try:
+    version_apex  = conn.fetch_value(query_version_apex)
+    version_db    = conn.fetch_value(query_version_db)
+  except Exception:
+    version_apex  = version_apex or ''
+    version_db    = conn.fetch_value(query_version_db_old)
+  #
+  print('    DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
+  print('        APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
+  print()
 
 
 
