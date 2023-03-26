@@ -44,6 +44,7 @@ apex_clean_timestamps   : True        # convert timestamps to a single value
 apex_clean_authors      : True        # convert authors to a single value
 apex_add_name_comments  : True        # add (some) component names as comments
 apex_switch_auth        : True        # switch authentication scheme to default
+apex_version_components : False       # track all APEX changes in patch files
 apex_set_version        : '#TODAY#'   # overwrite application version with today date
 
 # target folders by object types

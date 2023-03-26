@@ -1356,18 +1356,29 @@ if args.patch:
         processed_files.append(obj.shortcut)
 
   # append (changed) APEX apps
-  apex_apps = glob.glob(cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1])
-  apex_apps += glob.glob(cfg.apex_full_file.replace('#APP_ID#', '*'))
-  #
-  for file in ([] + apex_apps):
+  apex_files = []
+  if cfg.apex_version_components:
+    apex_files += glob.glob(cfg.apex_dir + '/**/*.sql', recursive = True)
+  else:
+    apex_paths = [
+      cfg.folders['APEX'][0] + '/f*' + cfg.folders['APEX'][1],
+      cfg.apex_full_file.replace('#APP_ID#', '*'),
+    ]
+    for path in apex_paths:
+      apex_files += glob.glob(path, recursive = False)
+
+  # remove files which did not changed
+  apex_files = sorted(apex_files)
+  for file in ([] + apex_files):  # work with copy, because we are changing it in a loop
     shortcut = get_file_shortcut(file, cfg)
     hashed_new[shortcut] = get_file_hash(file)
     if hashed_old.get(shortcut, '') == hashed_new[shortcut]:
-      apex_apps.remove(file)
-  #
-  if len(apex_apps):
+      apex_files.remove(file)
+
+  # add to patch
+  if len(apex_files):
     patch_content.append('\n--\n-- APEX\n--')
-    for file in apex_apps:
+    for file in apex_files:
       obj = get_file_details('APEX', '', file, cfg, hashed_old, cached_obj)
       processed_files.append(obj.shortcut)
       patch_content.append(cfg.patch_line.format(obj.patch_file))
