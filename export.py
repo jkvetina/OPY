@@ -586,7 +586,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
   tables_new  = []
 
   # export/refresh existing files
-  if (args.csv or cfg.auto_csv_refresh):
+  if (args.csv or args.csv == [] or cfg.auto_csv_refresh):
     for file in get_files('DATA', cfg, sort = True):
       # extract table_name from the filename
       table_name = os.path.basename(file).split('.')[0]
