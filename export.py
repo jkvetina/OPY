@@ -150,6 +150,9 @@ if cfg_project != {}:
     print('CONFIG UPDATE:')
     print('--------------')
   for key, nested_dict in cfg_project.items():
+    if not (key in cfg):
+      print('--\n-- IGNORED_CONFIG: {}\n--'.format(key))
+      continue
     if isinstance(cfg[key], dict):
       cfg[key].update(nested_dict)
     else:
