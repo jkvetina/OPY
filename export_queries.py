@@ -355,6 +355,7 @@ query_csv_columns = """
 SELECT LISTAGG(c.column_name, ', ') WITHIN GROUP (ORDER BY c.column_id) AS cols
 FROM user_tab_cols c
 WHERE c.table_name  = UPPER(:table_name)
+    AND c.column_id > 0   -- ignore virtual and hidden columns
     AND c.data_type NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')"""
 
 # get primary key columns to MERGE statement
