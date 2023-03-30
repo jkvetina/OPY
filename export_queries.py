@@ -114,7 +114,8 @@ query_apex_files = """
 SELECT f.filename, f.blob_content f
 FROM wwv_flow_files f
 WHERE f.flow_id     = :app_id
-    AND NULLIF(f.created_by, 'SYS') IS NOT NULL"""
+    --AND NULLIF(f.created_by, 'SYS') IS NOT NULL
+    AND f.created_by IS NULL"""
 
 # setup APEX security context to access APEX views
 query_apex_security_context = """BEGIN
