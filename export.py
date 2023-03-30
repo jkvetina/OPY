@@ -516,9 +516,9 @@ if count_objects:
     #
     if (args.verbose or args.recent == 1):
       if flag == '' and obj.type == 'TABLE':
-        flag = 'NEW' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new else ''
+        flag = 'NEW' if obj.hash_old == '' else 'ALTER' if obj.hash_old != obj.hash_new else ''
       elif flag == '':
-        flag = 'NEW' if obj.hash_old == '' else 'CHANGED' if obj.hash_old != obj.hash_new else ''
+        flag = 'NEW' if obj.hash_old == '' else 'CHANG' if obj.hash_old != obj.hash_new else ''
       #
       if obj.type != recent_type and recent_type != '':
         print('{:>20} |'.format(''))
