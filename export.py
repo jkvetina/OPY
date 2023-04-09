@@ -1,7 +1,12 @@
 # coding: utf-8
 import sys, os, argparse, pickle, timeit, traceback, glob, csv, subprocess, shutil, collections, inspect, yaml
+from inspect import currentframe
 from oracle_wrapper import Oracle
 from export_fn import *
+
+def get_linenumber():
+    cf = currentframe()
+    return cf.f_back.f_lineno
 
 start_timer = timeit.default_timer()
 
