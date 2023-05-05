@@ -1,6 +1,11 @@
 # coding: utf-8
-import sys, os, collections
+import sys, os, subprocess, collections
 import oracledb
+
+instant_client = subprocess.check_output('where oci.dll', shell = True).decode('utf-8').split()[0]
+oracledb.init_oracle_client(lib_dir = os.path.dirname(instant_client))
+
+
 
 class Oracle:
 
@@ -39,7 +44,7 @@ class Oracle:
 
     # classic, because I am not able to connect to SID using oracledb
     #import cx_Oracle
-    oracledb.init_oracle_client()  # for password issues
+    #oracledb.init_oracle_client()  # for password issues
     #
     if not 'dsn' in self.tns:
       if 'sid' in self.tns:
