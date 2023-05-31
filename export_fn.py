@@ -197,6 +197,8 @@ def fix_next_sequence(obj):
 
 
 def clean_table(object_name, lines, schema, cfg):
+  if len(lines) == 0:
+    return []
   lines[0] = fix_simple_name(lines[0], schema) + ' ('
   lines[1] = lines[1].lstrip().lstrip('(').lstrip()  # fix fisrt column
 
@@ -333,6 +335,8 @@ def clean_table(object_name, lines, schema, cfg):
 
 
 def clean_view(object_name, lines, schema, cfg):
+  if len(lines) == 0:
+    return []
   lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
   lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
