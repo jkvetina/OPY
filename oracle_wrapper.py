@@ -2,19 +2,15 @@
 import sys, os, subprocess, collections
 import oracledb
 
-instant_client = subprocess.check_output('where oci.dll', shell = True).decode('utf-8').split()[0]
-oracledb.init_oracle_client(lib_dir = os.path.dirname(instant_client))
-
-
-
 class Oracle:
 
-  def __init__(self, args, debug = False):
-    self.conn = None    # recent connection link
-    self.curs = None    # recent cursor
-    self.cols = []      # recent columns mapping (name to position) to avoid associative arrays
-    self.desc = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
-    self.tns = {
+  def __init__(self, args, debug = False, client = None):
+    self.client = client
+    self.conn   = None    # recent connection link
+    self.curs   = None    # recent cursor
+    self.cols   = []      # recent columns mapping (name to position) to avoid associative arrays
+    self.desc   = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
+    self.tns    = {
       'lang'    : '.AL32UTF8',
     }
     self.tns.update(args)
@@ -42,10 +38,21 @@ class Oracle:
       #
       return
 
-    # classic, because I am not able to connect to SID using oracledb
-    #import cx_Oracle
-    #oracledb.init_oracle_client()  # for password issues
+    # might need to adjust client for classic connections
+    if not self.client:
+      # find instant client
+      try:
+        self.client = subprocess.check_output('where oci.dll', shell = True).decode('utf-8').split()[0]
+      except:
+        pass
     #
+    try:
+      oracledb.init_oracle_client(lib_dir = os.path.dirname(self.client))
+      print('CLIENT =', os.path.dirname(self.client))
+    except:
+      oracledb.init_oracle_client()  # for password issues
+
+    # connect
     if not 'dsn' in self.tns:
       if 'sid' in self.tns:
         #self.tns['dsn'] = cx_Oracle.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])

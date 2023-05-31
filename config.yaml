@@ -7,6 +7,9 @@
 #   #SCHEMA_NAME#     - schema name, translated during processing
 #
 
+# you can override instant client
+instant_client  : '~/.instantclient_19_10/'
+
 # basic folders
 git_root        : '#ROOT#/'
 git_target      : '#ROOT#/database/'        # exported database objects

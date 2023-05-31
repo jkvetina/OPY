@@ -335,7 +335,7 @@ grants_dirs_file  = (os.path.dirname(grants_made_file) + cfg.grants_directories)
 #
 if not args.rollout:
   try:
-    conn = Oracle(connection)
+    conn = Oracle(connection, client = cfg.instant_client)
   except Exception:
     print('#')
     print('# CONNECTION FAILED')
