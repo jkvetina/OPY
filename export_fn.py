@@ -473,6 +473,7 @@ def clean_sequence(object_name, lines, schema, cfg):
   lines[0] = lines[0].replace(' NOCYCLE', '')
   lines[0] = lines[0].replace(' NOKEEP', '')
   lines[0] = lines[0].replace(' NOSCALE', '')
+  lines[0] = lines[0].replace(' NOPARTITION', '')
   lines[0] = lines[0].replace(' GLOBAL', '')
   #
   lines[0] = fix_simple_name(lines[0], schema)
