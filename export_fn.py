@@ -631,6 +631,7 @@ def clean_apex_files(app_id, apex_replacements, default_authentication, cfg):
       # replace default authentication
       if cfg.apex_switch_auth and default_authentication > 0:
         new_content = re.sub(r",p_authentication_id=>wwv_flow_api.id[(]([\d]+)[)]", ',p_authentication_id=>wwv_flow_api.id({})'.format(default_authentication), new_content)
+        new_content = re.sub(r",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]", ',p_authentication_id=>wwv_flow_imp.id({})'.format(default_authentication), new_content)
 
       # convert component id to names
       if cfg.apex_add_name_comments:
