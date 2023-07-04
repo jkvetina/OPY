@@ -50,7 +50,10 @@ class Oracle:
       oracledb.init_oracle_client(lib_dir = os.path.dirname(self.client))
       print('CLIENT =', os.path.dirname(self.client))
     except:
-      oracledb.init_oracle_client()  # for password issues
+      try:
+        oracledb.init_oracle_client()  # for password issues
+      except:
+        pass
 
     # connect
     if not 'dsn' in self.tns:
