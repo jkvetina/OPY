@@ -922,7 +922,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # prepare requests (multiple exports)
     request_conn = ''
-    requests = []
+    requests = ['cd {dir}']
     if wallet_file != '' and 'wallet' in connection:
       request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
       request_conn += 'connect {}/"{}"@{}\n'.format(*[
@@ -946,9 +946,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # export full app in several formats
     if cfg.apex_splited:
-      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
+      requests.append('apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
     if cfg.apex_full:
-      requests.append('apex export -dir {dir} -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+      requests.append('apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
 
     # trade progress for speed, creating all the JVM is so expensive
     if not args.debug:
