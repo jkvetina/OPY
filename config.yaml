@@ -34,6 +34,7 @@ apex_app_files  : '#ROOT#/database/apex/f#APP_ID#/files/'
 apex_full_file  : '#ROOT#/database/apex/f#APP_ID#/f#APP_ID#.sql'
 apex_readable   : '#ROOT#/database/apex/f#APP_ID#/'
 apex_tmp        : apex.#APP_ID#.tmp
+apex_rest       : '#ROOT#/database/rest/'
 
 # APEX exports
 apex_embedded           : False       # export embedded code, unfortunatelly code inside is not ordered consistently

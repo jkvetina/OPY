@@ -950,6 +950,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
     if cfg.apex_full:
       requests.append('apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
 
+    if cfg.apex_rest:
+      requests.append('rest export')
+
     # trade progress for speed, creating all the JVM is so expensive
     if not args.debug:
       requests = ['\n'.join(requests)]
@@ -1015,6 +1018,38 @@ if apex_apps != {} and not args.patch and not args.rollout:
               print('{:>20} | {}'.format(obj_type if j == 0 else '', name))
           print()
         changed = ' '.join(changed)
+
+      # export REST sources
+      if cfg.apex_rest and 'rest export' in request:
+        lines   = output.splitlines(); lines.append('ORDS.DEFINE_MODULE')
+        content = []
+        modules = []
+        append  = False 
+        #
+        for (f, line) in enumerate(lines):
+          if 'ORDS.DEFINE_MODULE' in line:
+            if len(content):
+              modules.append(content)
+            content = []
+            append  = True
+          if line.strip().startswith('COMMIT;') and lines[f + 1].startswith('END;') and lines[f + 2].startswith('Disconnected'):
+            append = False
+          if append:
+            content.append(line)
+        #
+        if os.path.exists(cfg.apex_rest):
+          shutil.rmtree(cfg.apex_rest, ignore_errors = True, onerror = None)
+        #
+        for content in modules:
+          name = re.findall('[\'][^\']+[\']', content[1])[0].replace('\'', '')
+          path = re.findall('[\'][^\']+[\']', content[2])[0].replace('\'', '').replace('/', '')
+          file = cfg.apex_rest + '/' + path + '/' + name + '.sql'
+          #
+          os.makedirs(os.path.dirname(file), exist_ok = True)
+          with open(file, 'w', encoding = 'utf-8') as w:
+            w.write('BEGIN\n' + ('\n'.join(content)).rstrip() + '\nEND;\n/\n')
+          #
+          print('  REST:', path, name, len(content))
 
       # show progress
       if args.debug:
