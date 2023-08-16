@@ -1021,7 +1021,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
       # export REST sources
       if cfg.apex_rest and 'rest export' in request:
-        lines   = output.splitlines(); lines.append('ORDS.DEFINE_MODULE')
+        lines   = output.splitlines(); lines.append('ORDS.DEFINE_MODULE')  # to process inside of the loop
         content = []
         modules = []
         append  = False 
@@ -1040,16 +1040,31 @@ if apex_apps != {} and not args.patch and not args.rollout:
         if os.path.exists(cfg.apex_rest):
           shutil.rmtree(cfg.apex_rest, ignore_errors = True, onerror = None)
         #
+        groups = {}
+        max_groups = 0
         for content in modules:
           name = re.findall('[\'][^\']+[\']', content[1])[0].replace('\'', '')
           path = re.findall('[\'][^\']+[\']', content[2])[0].replace('\'', '').replace('/', '')
           file = cfg.apex_rest + '/' + path + '/' + name + '.sql'
           #
+          if not path in groups:
+            groups[path] = []
+            max_groups = max([max_groups, len(path)])
+          groups[path].append(name)
+          #
           os.makedirs(os.path.dirname(file), exist_ok = True)
           with open(file, 'w', encoding = 'utf-8') as w:
             w.write('BEGIN\n' + ('\n'.join(content)).rstrip() + '\nEND;\n/\n')
-          #
-          print('  REST:', path, name, len(content))
+        #
+        last_path = ''
+        print()
+        print('REST SOURCES:')
+        print('-------------')
+        for path in sorted(groups.keys()):
+          for name in sorted(groups[path]):
+            print(('  {:>' + str(max_groups) + '} | {}').format(path if path != last_path else '', name))
+            last_path = path
+        print('')
 
       # show progress
       if args.debug:
