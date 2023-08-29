@@ -1475,16 +1475,20 @@ if args.patch:
     w.write(content)
 
   # show sorted overview
-  patch_log = []
-  for object_type in cfg.objects_sorted:
+  patch_log = ['--']
+  for object_type in sorted(cfg.objects_sorted):
     if object_type in patch_notes:
-      for object_name in sorted(patch_notes[object_type]):
-        obj   = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
-        flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
-        #
-        patch_log.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
-        last_type = object_type
-      patch_log.append('{:<20} |'.format(''))
+      # simplified format, just show counts
+      patch_log.append('-- {}{}'.format((object_type + ' ').ljust(20, '.'), (' ' + str(len(patch_notes[object_type]))).rjust(6, '.')))
+
+      #for object_name in sorted(patch_notes[object_type]):
+      #  obj   = get_file_details(object_type, object_name, '', cfg, hashed_old, cached_obj)
+      #  flag  = '[+]' if obj.hash_old == '' else 'ALTERED' if obj.hash_old != obj.hash_new and object_type == 'TABLE' else ''
+      #  #
+      #  patch_log.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
+      #  last_type = object_type
+      #patch_log.append('{:<20} |'.format(''))
+  patch_log.append('--')
 
   # show to user and store in the patch file
   print('\n'.join(patch_log))
