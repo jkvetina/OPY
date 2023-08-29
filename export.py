@@ -1491,11 +1491,13 @@ if args.patch:
   patch_log.append('--')
 
   # show to user and store in the patch file
-  print('\n'.join(patch_log))
-  print('\n'.join(patch_content))
+  patch_log     = '\n'.join(patch_log)
+  patch_content = '\n'.join(patch_content)
+  print(patch_log)
+  print(patch_content)
   #
   with open(cfg.patch_today, 'w', encoding = 'utf-8') as w:
-    w.write('--\n--' + '\n--'.join(patch_log) + '\n' + '\n'.join(patch_content) + '\n')
+    w.write(patch_log + '\n' + patch_content + '\n')
 
   # create binary to whatever purpose
   if args.zip:
