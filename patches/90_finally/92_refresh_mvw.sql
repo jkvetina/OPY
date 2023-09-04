@@ -6,7 +6,7 @@ BEGIN
     FOR c IN (
         SELECT m.mview_name, SYSDATE AS start_at
         FROM all_mviews m
-        WHERE m.owner           = USER                      -- adjust
+        WHERE m.owner           = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
             AND m.mview_name    LIKE 'TRC%' ESCAPE '\'      -- adjust
         ORDER BY 1
     ) LOOP
