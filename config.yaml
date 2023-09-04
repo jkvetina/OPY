@@ -8,7 +8,7 @@
 #
 
 # you can override instant client
-instant_client  : '~/.instantclient_19_10/'
+instant_client  : ''
 
 # basic folders
 git_root        : '#ROOT#/'

@@ -102,7 +102,7 @@ if not os.path.exists(args['target']):
 #
 # check connectivity
 #
-ora = Oracle(args)
+ora = Oracle(args, client = '')
 data = ora.fetch("SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') FROM DUAL")
 print('CONNECTED:\n--\n  SERVER TIME =', data[0][0])  # data[row][col]
 print()
