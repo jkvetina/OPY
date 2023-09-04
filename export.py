@@ -1024,7 +1024,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         lines   = output.splitlines(); lines.append('ORDS.DEFINE_MODULE')  # to process inside of the loop
         content = []
         modules = []
-        append  = False 
+        append  = False
         #
         for (f, line) in enumerate(lines):
           if 'ORDS.DEFINE_MODULE' in line:
@@ -1475,7 +1475,13 @@ if args.patch:
     w.write(content)
 
   # show sorted overview
-  patch_log = ['--']
+  patch_log = [
+    '--',
+    '-- YOU HAVE TO INSTALL THE CORE PACKAGE FIRST',
+    '-- https://github.com/jkvetina/CORE23/tree/main/database',
+    '--'
+  ]
+  #
   for object_type in sorted(cfg.objects_sorted):
     if object_type in patch_notes:
       # simplified format, just show counts
@@ -1488,16 +1494,18 @@ if args.patch:
       #  patch_log.append('{:>20} | {:<46}{:>8}'.format(object_type if last_type != object_type else '', object_name, flag))
       #  last_type = object_type
       #patch_log.append('{:<20} |'.format(''))
-  patch_log.append('--')
 
   # show to user and store in the patch file
   patch_log     = '\n'.join(patch_log)
   patch_content = '\n'.join(patch_content)
-  print(patch_log)
-  print(patch_content)
   #
   with open(cfg.patch_today, 'w', encoding = 'utf-8') as w:
+    if args.env_name == 'INSTALL':
+      patch_content = patch_content.replace(cfg.patch_line.split('{}')[0], cfg.patch_line.split('.')[0] + './')
     w.write(patch_log + '\n' + patch_content + '\n')
+  #
+  print(patch_log)
+  print(patch_content)
 
   # create binary to whatever purpose
   if args.zip:
@@ -1506,6 +1514,13 @@ if args.patch:
     #
     shutil.make_archive(cfg.git_root + 'patch', 'zip', cfg.git_root)  # everything in folder
     os.rename(cfg.git_root + 'patch.zip', cfg.patch_zip)
+
+  # cleanup for INSTALL script
+  if args.env_name == 'INSTALL':
+    if os.path.exists(cfg.patch_log):
+      os.remove(cfg.patch_log)
+    os.rename(cfg.patch_today, os.path.dirname(cfg.patch_today.replace(args.env_name, '..')) + '/' + args.env_name + '.sql')
+    shutil.rmtree(os.path.dirname(cfg.patch_today), ignore_errors = True, onerror = None)
 
 
 
