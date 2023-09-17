@@ -45,10 +45,15 @@ BEGIN
             ), object_name DESC
     ) LOOP
         DBMS_OUTPUT.PUT('.');
-        DBMS_UTILITY.EXEC_DDL_STATEMENT(
-            'DROP ' || c.object_type || ' ' || c.owner || '.' || '"' || c.object_name || '"' ||
-            CASE WHEN c.object_type = 'TABLE' THEN ' CASCADE CONSTRAINTS' END
-        );
+        BEGIN
+            DBMS_UTILITY.EXEC_DDL_STATEMENT(
+                'DROP ' || c.object_type || ' ' || c.owner || '.' || '"' || c.object_name || '"' ||
+                CASE WHEN c.object_type = 'TABLE' THEN ' CASCADE CONSTRAINTS' END
+            );
+        EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(c.object_type || ':' || c.object_name);
+        END;
     END LOOP;
 
     -- drop constraints
