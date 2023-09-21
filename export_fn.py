@@ -597,7 +597,7 @@ def get_job_fixed(object_name, obj, conn):
       kind  = 'name'
       name = '\'{}\''.format(row.argument_name)
     #
-    args += '\n    DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE(in_job_name, argument_{} => {}, argument_value => {});'.format(kind, name, value)
+    args += '\n    DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE(in_job_name, argument_{} => {}, argument_value => \'{}\');'.format(kind, name, value)
   #
   if len(args) > 0:
     args += '\n    --'
