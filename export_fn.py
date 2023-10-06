@@ -224,11 +224,11 @@ def clean_table(object_name, lines, schema, cfg):
       lines[i] = lines[i].replace(' NOORDER', '')
       lines[i] = lines[i].replace(' NOCYCLE', '')
       lines[i] = lines[i].replace(' NOCACHE', '')
-      lines[i] = lines[i].replace(' MINVALUE 1', '')
+      lines[i] = lines[i].replace(' MINVALUE 1 ', ' ')
       lines[i] = lines[i].replace(' MAXVALUE 9999999999999999999999999999', '')
-      lines[i] = lines[i].replace(' INCREMENT BY 1', '')
-      #lines[i] = lines[i].replace(' START WITH 1', '')
+      lines[i] = lines[i].replace(' INCREMENT BY 1 ', ' ')
       lines[i] = lines[i].replace('  ', ' ').replace('  ', ' ')
+      lines[i] = re.sub(' START WITH [0-9]+', '', lines[i])
 
   # fix column alignment
   lines = '\n'.join(lines).split('\n')
