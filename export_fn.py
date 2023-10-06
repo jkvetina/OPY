@@ -227,7 +227,7 @@ def clean_table(object_name, lines, schema, cfg):
       lines[i] = lines[i].replace(' MINVALUE 1', '')
       lines[i] = lines[i].replace(' MAXVALUE 9999999999999999999999999999', '')
       lines[i] = lines[i].replace(' INCREMENT BY 1', '')
-      lines[i] = lines[i].replace(' START WITH 1', '')
+      #lines[i] = lines[i].replace(' START WITH 1', '')
       lines[i] = lines[i].replace('  ', ' ').replace('  ', ' ')
 
   # fix column alignment
