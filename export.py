@@ -986,7 +986,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         'apex_yaml'     : ',READABLE_YAML' if cfg.apex_readable_yaml else '',
         'apex_embed'    : ',EMBEDDED_CODE' if cfg.apex_embedded      else ''
       }
-      request = request_conn + '\n' + request.format(**replace_list)
+      request = (request_conn + '\n' + request).format(**replace_list)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
       # for Windows create temp file
