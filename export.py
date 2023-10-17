@@ -216,23 +216,24 @@ cfg = collections.namedtuple('CFG', cfg.keys())(*cfg.values())  # convert to nam
 # CLEANUP FILES
 # cleanup junk files created on Mac by iCloud sync
 #
-files = glob.glob(cfg.git_root + '**/* [0-9].*', recursive = True)
-for file in files:
-  os.remove(file)
-  if args.fix:
-    print(file.replace(cfg.git_root, ''))
-
-# remove empty folders
-folders_removed = 0
-for i in range(5):
-  for path, _, _ in os.walk(cfg.git_root, topdown = False):
-    if not (path.startswith(cfg.patch_root)) and len(os.listdir(path)) == 0:
-      os.rmdir(path)
-      folders_removed += 1
-#
 if args.fix:
   print('REMOVED:')
   print('--------')
+
+  # remove duplicated files
+  files = glob.glob(cfg.git_root + '**/* [0-9].*', recursive = True)
+  for file in files:
+    os.remove(file)
+
+  # remove empty folders
+  folders_removed = 0
+  folders = os.walk(cfg.git_root, topdown = False)
+  for i in range(5):
+    for path, _, _ in folders:
+      if not (path.startswith(cfg.patch_root)) and len(os.listdir(path)) == 0:
+        os.rmdir(path)
+        folders_removed += 1
+  #
   print('  {} files'.format(len(files)))
   print('  {} folders'.format(folders_removed))
   print('\n')
