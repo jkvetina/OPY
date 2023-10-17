@@ -293,7 +293,7 @@ hashed_new = {}   # files/objects changed since last rollout
 cached_obj = {}
 hashed_src = ''
 #
-for hash_file in (cfg.rollout_log, cfg.patch_log):
+for hash_file in (cfg.rollout_log,):
   if os.path.exists(hash_file):
     with open(hash_file, 'r', encoding = 'utf-8') as r:
       for line in r.readlines():
