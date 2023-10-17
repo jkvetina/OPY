@@ -267,7 +267,7 @@ for file in glob.glob(os.path.dirname(cfg.patch_manually) + '/*.sql'):
 # create new patch file for manual changes (ALTER statements, related data changes...)
 if args.patch:
   if not os.path.exists(cfg.patch_manually):
-    with open(cfg.patch_manually, 'w', encoding = 'utf-8') as w:
+    with open(cfg.patch_manually, 'w', encoding = 'utf-8', newline = '\n') as w:
       w.write('')
 
 # delete consolidated MERGE file
@@ -579,7 +579,7 @@ if count_objects:
     if content.rstrip('/') != content:
       content = content.rstrip('/').rstrip() + '\n/'
     #
-    with open(obj.file, 'w', encoding = 'utf-8') as w:
+    with open(obj.file, 'w', encoding = 'utf-8', newline = '\n') as w:
       w.write(content + '\n\n')
     exported_objects.append(obj.shortcut)
   #
@@ -657,7 +657,7 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         os.remove(file)
       continue
     #
-    csv_file  = open(file, 'w', encoding = 'utf-8')
+    csv_file  = open(file, 'w', encoding = 'utf-8', newline = '\n')
     writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
     columns   = [col for col in conn.cols if not (col in cfg.ignore_columns)]
     order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
@@ -729,11 +729,11 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
     #
     content = get_merge_from_csv(file, conn, skip_insert, skip_update, skip_delete, where_filter)
     if content:
-      with open(target_file, 'w', encoding = 'utf-8') as w:
+      with open(target_file, 'w', encoding = 'utf-8', newline = '\n') as w:
         w.write(content)
         all_data += '@"./{}.sql"\n'.format(table_name)
   #
-  #with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8') as w:
+  #with open(cfg.patch_folders['data'] + '/__.sql', 'w', encoding = 'utf-8', newline = '\n') as w:
   #  w.write('{}--\nCOMMIT;\n\n'.format(all_data))
 
 
@@ -766,7 +766,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
   #
   if not os.path.exists(os.path.dirname(grants_made_file)):
     os.makedirs(os.path.dirname(grants_made_file))
-  with open(grants_made_file, 'w', encoding = 'utf-8') as w:
+  with open(grants_made_file, 'w', encoding = 'utf-8', newline = '\n') as w:
     w.write(content)
 
   # received grants
@@ -794,7 +794,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
     #
     if not os.path.exists(os.path.dirname(grants_recd_file)):
       os.makedirs(os.path.dirname(grants_recd_file))
-    with open(grants_recd_file.replace('#SCHEMA_NAME#', owner), 'w', encoding = 'utf-8') as w:
+    with open(grants_recd_file.replace('#SCHEMA_NAME#', owner), 'w', encoding = 'utf-8', newline = '\n') as w:
       w.write(('\n'.join(content) + '\n').lstrip())
 
   # privileges granted to user
@@ -805,7 +805,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for row in conn.fetch_assoc(query_user_privs):
     content += row.line + '\n'
   #
-  with open(grants_privs_file, 'w', encoding = 'utf-8') as w:
+  with open(grants_privs_file, 'w', encoding = 'utf-8', newline = '\n') as w:
     w.write(content.lstrip('--\n') + '\n')
 
   # export directories
@@ -813,7 +813,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
   for row in conn.fetch_assoc(query_directories):
     content += row.line + '\n'
   #
-  with open(grants_dirs_file, 'w', encoding = 'utf-8') as w:
+  with open(grants_dirs_file, 'w', encoding = 'utf-8', newline = '\n') as w:
     w.write((content + '\n').lstrip())
 
 
@@ -992,7 +992,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
       # for Windows create temp file
       if os.name == 'nt':
         process = 'sql /nolog @' + apex_tmp
-        with open(apex_tmp, 'w', encoding = 'utf-8') as w:
+        with open(apex_tmp, 'w', encoding = 'utf-8', newline = '\n') as w:
           w.write(request + '\nexit;')
 
       # run SQLcl and capture the output
@@ -1065,7 +1065,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
           groups[path].append(name)
           #
           os.makedirs(os.path.dirname(file), exist_ok = True)
-          with open(file, 'w', encoding = 'utf-8') as w:
+          with open(file, 'w', encoding = 'utf-8', newline = '\n') as w:
             w.write('BEGIN\n' + ('\n'.join(content)).rstrip() + '\nEND;\n/\n')
         #
         last_path = ''
@@ -1189,7 +1189,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 #
 if (len(locked_objects) or args.lock):
   content = '\n'.join(sorted(locked_objects)) + '\n'
-  with open(cfg.locked_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.locked_log, 'w', encoding = 'utf-8', newline = '\n') as w:
     w.write(content)
 
 # delete all database object files not on the list and except APEX folder
@@ -1480,7 +1480,7 @@ if args.patch:
 
   # store new hashes for rollout
   content = []
-  with open(cfg.patch_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.patch_log, 'w', encoding = 'utf-8', newline = '\n') as w:
     for file in sorted(hashed_new.keys()):
       content.append('{} | {}'.format(hashed_new[file], file))
     content = '\n'.join(content) + '\n'
@@ -1511,7 +1511,7 @@ if args.patch:
   patch_log     = '\n'.join(patch_log)
   patch_content = '\n'.join(patch_content)
   #
-  with open(cfg.patch_today, 'w', encoding = 'utf-8') as w:
+  with open(cfg.patch_today, 'w', encoding = 'utf-8', newline = '\n') as w:
     if args.env_name == 'INSTALL':
       patch_content = patch_content.replace(cfg.patch_line.split('{}')[0], cfg.patch_line.split('.')[0] + './')
     w.write(patch_log + '\n' + patch_content + '\n')
@@ -1550,7 +1550,7 @@ if args.rollout:
         print('  [-] {}'.format(file))
 
   # store hashes for next patch
-  with open(cfg.rollout_log, 'w', encoding = 'utf-8') as w:
+  with open(cfg.rollout_log, 'w', encoding = 'utf-8', newline = '\n') as w:
     # get files and hashes from patch.log file and overwrite old hashes
     if os.path.exists(cfg.patch_log):
       with open(cfg.patch_log, 'r', encoding = 'utf-8') as r:
