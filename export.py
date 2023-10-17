@@ -1358,7 +1358,7 @@ if args.patch:
   processed_files = []
   for target_dir in sorted(cfg.patch_folders.values()):
     type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
-    files   = glob.glob(target_dir + '/*.sql')
+    files   = glob.glob(target_dir + '/**/*.sql', recursive = True)
 
     # sort data files into installable order
     if type == 'data':
@@ -1475,7 +1475,7 @@ if args.patch:
         hashed_new[shortcut] = get_file_hash(cfg.git_root + shortcut)
 
   # add files from changes folder
-  for file in glob.glob(cfg.patch_folders['changes'] + '/*.sql'):
+  for file in glob.glob(cfg.patch_folders['changes'] + '/**/*.sql', recursive = True):
     shortcut = get_file_shortcut(file, cfg)
     hashed_new[shortcut] = get_file_hash(file)
 
