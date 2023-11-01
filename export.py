@@ -987,7 +987,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
         'apex_yaml'     : ',READABLE_YAML' if cfg.apex_readable_yaml else '',
         'apex_embed'    : ',EMBEDDED_CODE' if cfg.apex_embedded      else ''
       }
-      request = (request_conn + '\n' + request).format(**replace_list)
+      request = request.format(**replace_list)    # to allow not usual chars in passwords
+      request = (request_conn + '\n' + request)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
       # for Windows create temp file
