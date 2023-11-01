@@ -5,7 +5,7 @@ PROMPT MOVE AUDIT COLUMNS
 --
 DECLARE
     in_table_name       CONSTANT VARCHAR2(30)   := 'XX\_%';
-    in_columns          CONSTANT VARCHAR2(4000) := 'CREATED_BY,CREATED_AT,UPDATED_BY,UPDATED_AT,DELETED_BY,DELETED_AT';
+    in_columns          CONSTANT VARCHAR2(4000) := 'IS\_%,IS_ACTIVE,CREATED_BY,CREATED_AT,UPDATED_BY,UPDATED_AT,DELETED_BY,DELETED_AT';
 BEGIN
     FOR t IN (
         SELECT t.table_name
@@ -19,16 +19,16 @@ BEGIN
             WITH x AS (
                 SELECT
                     LEVEL AS r#,
-                    UPPER(REGEXP_SUBSTR(in_columns, '[^,]+', 1, LEVEL)) AS column_name
+                    TRIM(UPPER(REGEXP_SUBSTR(in_columns, '[^,]+', 1, LEVEL))) AS column_name
                 FROM DUAL
                 CONNECT BY LEVEL <= REGEXP_COUNT(in_columns, ',') + 1
             )
             SELECT c.table_name, c.column_name
             FROM user_tab_cols c
             JOIN x
-                ON x.column_name    = c.column_name
+                ON c.column_name    LIKE x.column_name ESCAPE '\'
             WHERE c.table_name      = t.table_name
-            ORDER BY x.r# ASC
+            ORDER BY x.r#, c.column_id
         ) LOOP
             DBMS_OUTPUT.PUT_LINE('  MOVING ' || c.table_name || '.' || c.column_name);
             --
