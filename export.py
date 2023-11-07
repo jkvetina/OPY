@@ -450,6 +450,9 @@ if args.recent != 0 and not args.patch and not args.rollout:
         elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
           locked_objects.append(obj.shortcut)
           adding_files.append(obj.shortcut)
+        elif len(cfg.auto_filter_prefix) > 0:
+          locked_objects.append(obj.shortcut)
+          adding_files.append(obj.shortcut)
         else:
           continue  # skip files not on the locked list
     #

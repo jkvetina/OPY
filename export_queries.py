@@ -10,7 +10,7 @@ WITH a AS (
             a.object_type,
             COUNT(*) AS object_count
         FROM user_objects a
-        WHERE a.object_type     NOT IN ('LOB', 'TABLE PARTITION')
+        WHERE a.object_type     NOT IN ('LOB', 'TABLE PARTITION', 'INDEX')
             AND a.object_name   LIKE :object_name || '%' ESCAPE '\\'
         GROUP BY a.object_type
         UNION ALL
@@ -19,6 +19,14 @@ WITH a AS (
             COUNT(*)    AS object_count
         FROM user_mview_logs l
         WHERE REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
+        UNION ALL
+        SELECT
+            'INDEX'     AS object_type,
+            COUNT(*)    AS object_count
+        FROM user_indexes t
+        WHERE (t.table_name     LIKE :object_name || '%' ESCAPE '\\'
+            OR t.index_name     LIKE :object_name || '%' ESCAPE '\\')
+            AND t.index_name    NOT LIKE 'SYS%$$'
     ) a
 ),
 c AS (
@@ -48,7 +56,7 @@ FROM (
     SELECT DISTINCT o.object_type, o.object_name
     FROM user_objects o
     WHERE 1 = 1
-        AND o.object_type NOT IN ('LOB', 'TABLE PARTITION')
+        AND o.object_type NOT IN ('LOB', 'TABLE PARTITION', 'INDEX')
         AND o.object_type LIKE :object_type || '%'
         AND o.object_name LIKE :object_name || '%' ESCAPE '\\'
         AND o.object_name NOT LIKE 'SYS\\_%' ESCAPE '\\'
@@ -104,6 +112,16 @@ FROM (
     WHERE :recent IS NULL
         AND (:object_type LIKE 'MAT%' OR NULLIF(:object_type, '%') IS NULL)
         AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
+    UNION ALL
+    SELECT
+        'INDEX'             AS object_type,
+        t.index_name        AS object_name
+    FROM user_indexes t
+    WHERE (:object_type     LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)
+        AND (t.table_name   LIKE :object_name || '%' ESCAPE '\\'
+            OR t.index_name LIKE :object_name || '%' ESCAPE '\\'
+        )
+        AND t.index_name    NOT LIKE 'SYS%$$'
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
