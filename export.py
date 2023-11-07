@@ -428,7 +428,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
   #
   binds = {
     'object_type' : args.type[0].upper() if len(args.type) > 0 else '',
-    'object_name' : args.type[1].upper().rstrip('%') if len(args.type) > 1 else '',
+    'object_name' : args.type[1].upper().rstrip('%') if len(args.type) > 1 else cfg.auto_filter_prefix,
     'recent'      : args.recent if args.recent >= 0 else ''
   }
   if args.debug:
