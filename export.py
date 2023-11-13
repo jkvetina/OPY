@@ -528,29 +528,29 @@ if count_objects:
       os.makedirs(file_folder)
 
     # check object
-    content = get_object(conn, obj.type, obj.name)
+    content = get_object(conn, obj.type_, obj.name)
     if content == None and args.debug:
       print('#')
-      print('# OBJECT_EMPTY:', obj.type, obj.name)
+      print('# OBJECT_EMPTY:', obj.type_, obj.name)
       print('#\n')
       continue
     #
     if (args.verbose or args.recent == 1):
-      if flag == '' and obj.type == 'TABLE':
+      if flag == '' and obj.type_ == 'TABLE':
         flag = 'NEW' if obj.hash_old == '' else 'ALTER' if obj.hash_old != obj.hash_new else ''
       elif flag == '':
         flag = 'NEW' if obj.hash_old == '' else 'CHANG' if obj.hash_old != obj.hash_new else ''
       #
-      if obj.type != recent_type and recent_type != '':
+      if obj.type_ != recent_type and recent_type != '':
         print('{:>20} |'.format(''))
       print('{:>20} | {:<30} {:>8} | {:>8} {}'.format(*[
-        obj.type if obj.type != recent_type else '',
+        obj.type_ if obj.type_ != recent_type else '',
         obj.name if len(obj.name) <= 30 else obj.name[0:27] + '...',
         (content.count('\n') + 1) if content else 0,                                    # count lines
         len(content) if content else '',                                                # count bytes
         flag
       ]))
-      recent_type = obj.type
+      recent_type = obj.type_
     elif count_objects > 0:
       perc = min((i + 1) / count_objects, 1)
       dots = int(70 * perc)
@@ -559,23 +559,23 @@ if count_objects:
 
     # call cleanup function for specific object type, if exists
     lines = get_lines(content)
-    cleanup_fn = 'clean_' + obj.type.replace(' ', '_').lower()
+    cleanup_fn = 'clean_' + obj.type_.replace(' ', '_').lower()
     if getattr(sys.modules[__name__], cleanup_fn, None):
       lines = getattr(sys.modules[__name__], cleanup_fn)(object_name = obj.name, lines = lines, schema = schema, cfg = cfg)
     content = '\n'.join(lines)
 
     # prepend silent object drop
-    if obj.type in cfg.drop_objects:
-      content = template_object_drop.lstrip().format(object_type = obj.type, object_name = obj.name) + content
-    elif obj.type in cfg.drop_objects_mview_log:
+    if obj.type_ in cfg.drop_objects:
+      content = template_object_drop.lstrip().format(object_type = obj.type_, object_name = obj.name) + content
+    elif obj.type_ in cfg.drop_objects_mview_log:
       content = template_object_drop_mview_log.lstrip().format(object_name = obj.name) + content
 
     # append comments
-    if obj.type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
+    if obj.type_ in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
       content += get_object_comments(conn, obj.name)
 
     # fill in job template
-    if obj.type in ('JOB',):
+    if obj.type_ in ('JOB',):
       content = get_job_fixed(obj.name, content, conn)
 
     # write object to file
@@ -1263,13 +1263,13 @@ if args.patch:
       if obj.hash_old == obj.hash_new:              # ignore unchanged objects
         continue
       #
-      object_code = '{}.{}'.format(obj.type, obj.name)
+      object_code = '{}.{}'.format(obj.type_, obj.name)
       #
       references_todo[object_code]  = []
       references[object_code]       = []
       changed_objects.append(object_code)
       #
-      if obj.type in ('TABLE', 'DATA'):
+      if obj.type_ in ('TABLE', 'DATA'):
         tables_todo.append(obj.name)                # to process tables first
         #
         if obj.name in table_relations:
@@ -1278,7 +1278,7 @@ if args.patch:
             references_todo[object_code].append(ref_object)
             references[object_code].append(ref_object)
       else:
-        for row in conn.fetch_assoc(query_objects_before, object_name = obj.name, object_type = obj.type):
+        for row in conn.fetch_assoc(query_objects_before, object_name = obj.name, object_type = obj.type_):
           ref_object = '{}.{}'.format(row.type, row.name)
           references_todo[object_code].append(ref_object)
           references[object_code].append(ref_object)
@@ -1426,9 +1426,9 @@ if args.patch:
     if type_ in cfg.patch_map:
       header_printed = False
       for obj in processed_objects:
-        if not (obj.type in cfg.patch_map[type]):     # ignore non related types
+        if not (obj.type_ in cfg.patch_map[type_]):    # ignore non related types
           continue
-        if not (obj.type in cfg.folders):             # ignore unknown types
+        if not (obj.type_ in cfg.folders):             # ignore unknown types
           continue
         if obj.shortcut in processed_files:           # ignore processed objects/files
           continue

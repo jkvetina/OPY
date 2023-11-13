@@ -15,7 +15,7 @@ def get_file_hash(file):
 
 def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj):
   obj = {
-    'type'        : object_type or '',
+    'type_'       : object_type or '',
     'name'        : object_name or '',
     'file'        : file or '',
     'patch_file'  : '',
@@ -25,11 +25,11 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
     'hash_new'    : ''
   }
   #
-  if not (obj['type'] in cfg.folders):   # unsupported object type
+  if not (obj['type_'] in cfg.folders):   # unsupported object type
     return {}
 
   # missing filename
-  obj_folder = cfg.folders[obj['type']]
+  obj_folder = cfg.folders[obj['type_']]
   if obj['file'] == '':
     obj['file'] = os.path.normpath(obj_folder[0] + obj['name'].lower() + obj_folder[1])
     #
@@ -42,8 +42,8 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
   obj['name'] = obj['name'].upper()
 
   # return from cache
-  if obj['type'] in cached_obj and obj['name'] in cached_obj[obj['type']]:
-    return cached_obj[obj['type']][obj['name']]
+  if obj['type_'] in cached_obj and obj['name'] in cached_obj[obj['type_']]:
+    return cached_obj[obj['type_']][obj['name']]
 
   # shorten file for logs
   obj['shortcut']   = get_file_shortcut(obj['file'], cfg)
@@ -67,11 +67,11 @@ def get_file_details(object_type, object_name, file, cfg, hashed_old, cached_obj
     obj['hash_new'] = get_file_hash(obj['file'])
 
   # cache object
-  if not (obj['type'] in cached_obj):
-    cached_obj[obj['type']] = {}
-  cached_obj[obj['type']][obj['name']] = collections.namedtuple('OBJ', obj.keys())(*obj.values())  # convert to named tuple
+  if not (obj['type_'] in cached_obj):
+    cached_obj[obj['type_']] = {}
+  cached_obj[obj['type_']][obj['name']] = collections.namedtuple('OBJ', obj.keys())(*obj.values())  # convert to named tuple
   #
-  return cached_obj[obj['type']][obj['name']]
+  return cached_obj[obj['type_']][obj['name']]
 
 
 
@@ -193,6 +193,14 @@ def fix_next_sequence(obj):
   obj = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), obj)
   #
   return obj
+
+
+
+def fix_csv_numbers(row):
+  return [
+    str(el).replace('.', ',') if isinstance(el, float) else el
+    for el in row
+  ]
 
 
 
