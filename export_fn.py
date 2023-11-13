@@ -658,28 +658,31 @@ def clean_apex_files(app_id, apex_replacements, default_authentication, cfg):
 def get_merge_from_csv(csv_file, conn, skip_insert, skip_update, skip_delete, where_filter):
   table_name  = os.path.basename(csv_file).split('.')[0].lower()
   columns     = []
-  csv_select  = []
-  all_rows    = []
+  csv_select  = {}
   update_cols = []
   csv_rows    = 0
+
+  batch_size  = 10000
+  batch_id    = 0
 
   # parse CSV file and create WITH table
   with open(csv_file, mode = 'r', encoding = 'utf-8') as csv_file:
     csv_reader = csv.DictReader(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
-    for row in csv_reader:
+    for idx, row in enumerate(csv_reader):
+      batch_id = idx // batch_size
       csv_rows += 1
-      all_rows.append(row)
-      #
       cols = []
       for col_name, col_value in row.items():
         if not isinstance(col_value, (int, float)):
           col_value = '\'{}\''.format(col_value.replace('\'', '\'\''))
         cols.append('{} AS {}'.format(col_value, col_name))
-      csv_select.append('SELECT {} FROM DUAL'.format(', '.join(cols)))
+      #
+      if not(batch_id in csv_select):
+        csv_select[batch_id] = []
+      csv_select[batch_id].append('SELECT {} FROM DUAL'.format(', '.join(cols)))
       #
       if not len(columns):
         columns = list(row.keys())
-  csv_select = ' UNION ALL\n    '.join(csv_select)
 
   # ignore empty files
   if csv_rows == 0:
@@ -704,23 +707,29 @@ def get_merge_from_csv(csv_file, conn, skip_insert, skip_update, skip_delete, wh
   #
   all_cols    = 't.' + ',\n        t.'.join(columns)
   all_values  = 's.' + ',\n        s.'.join(columns)
-  query       = template_csv_merge.lstrip().format (
-    table_name            = table_name,
-    primary_cols_set      = primary_cols_set,
-    csv_content_query     = csv_select,
-    non_primary_cols_set  = update_cols,
-    all_cols              = all_cols,
-    all_values            = all_values,
-    skip_insert           = skip_insert,
-    skip_update           = skip_update,
-    skip_delete           = skip_delete,
-    where_filter          = where_filter
-  )
 
-  # some fixes
-  query = query.replace('\'\' AS ', 'NULL AS ')
-  query = query.replace('.0 AS ', ' AS ')
-  query = query.replace('\n    )\n;\n', '\n    );\n')
+  # proceeed in batches
+  whole_query = ''
+  for batch_id, data in csv_select.items():
+    query = template_csv_merge.lstrip().format (
+      table_name            = table_name,
+      primary_cols_set      = primary_cols_set,
+      csv_content_query     = ' UNION ALL\n    '.join(data),
+      non_primary_cols_set  = update_cols,
+      all_cols              = all_cols,
+      all_values            = all_values,
+      skip_insert           = skip_insert,
+      skip_update           = skip_update,
+      skip_delete           = skip_delete if (batch_id == 0) else False,
+      where_filter          = where_filter
+    )
+
+    # some fixes
+    query = query.replace('\'\' AS ', 'NULL AS ')
+    query = query.replace('.0 AS ', ' AS ')
+    query = query.replace('\n    )\n;\n', '\n    );\n')
+    #
+    whole_query += query + 'COMMIT;\n'
   #
-  return query
+  return whole_query
 
