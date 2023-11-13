@@ -256,7 +256,7 @@ for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg
   if not os.path.exists(dir):
     os.makedirs(dir)
 #
-for (type, dir) in cfg.patch_folders.items():
+for (type_, dir) in cfg.patch_folders.items():
   if not os.path.exists(dir):
     os.makedirs(dir)
 
@@ -788,10 +788,10 @@ if args.recent != 0 and not args.patch and not args.rollout:
   #
   for owner, types in received_grants.items():
     content = [switch_schema.format(owner.lower())]
-    for type in types:
-      content.append('--\n-- {}\n--'.format(type))
-      for table_name in sorted(received_grants[owner][type]):
-        for query in sorted(received_grants[owner][type][table_name]):
+    for type_ in types:
+      content.append('--\n-- {}\n--'.format(type_))
+      for table_name in sorted(received_grants[owner][type_]):
+        for query in sorted(received_grants[owner][type_][table_name]):
           content.append(query)
       content.append('')
     content.append(switch_schema.format(curr_schema.lower()))
@@ -924,9 +924,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
       'GROUPS'  : query_apex_page_groups,
     }
     apex_replacements = {}
-    for (type, query) in apex_replacements_plan.items():
-      if not (type in apex_replacements):
-        apex_replacements[type] = {}
+    for (type_, query) in apex_replacements_plan.items():
+      if not (type_ in apex_replacements):
+        apex_replacements[type_] = {}
       #
       rows = conn.fetch(query, app_id = app_id)
       for data in rows:
@@ -1361,11 +1361,11 @@ if args.patch:
   # create list of files to process
   processed_files = []
   for target_dir in sorted(cfg.patch_folders.values()):
-    type    = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
+    type_   = next((type for type, dir in cfg.patch_folders.items() if dir == target_dir), None)
     files   = glob.glob(target_dir + '/**/*.sql', recursive = True)
 
     # sort data files into installable order
-    if type == 'data':
+    if type_ == 'data':
       tables_map = {}
       found_done = []
       found_todo = []
@@ -1397,7 +1397,7 @@ if args.patch:
       files = found_done  # overwrite with sorted files
 
     # remove processed files
-    if type in cfg.patch_tracked:
+    if type_ in cfg.patch_tracked:
       for file in ([] + files):  # to modify original list
         shortcut = get_file_shortcut(file, cfg)
         hash_old = hashed_old[shortcut] if shortcut in hashed_old else ''
@@ -1408,20 +1408,20 @@ if args.patch:
 
     # process files in patch folder first
     if len(files):
-      patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
+      patch_content.append('\n--\n-- {}\n--'.format(type_.upper()))
       for file in files:
         shortcut = get_file_shortcut(file, cfg)
         patch_content.append(cfg.patch_line.format(shortcut))
         processed_files.append(shortcut)
         #
-        if type in cfg.patch_tracked:
+        if type_ in cfg.patch_tracked:
           hashed_new[shortcut] = get_file_hash(file)
       #
-      if type == 'data':
+      if type_ == 'data':
         patch_content.append('--\nCOMMIT;')
 
     # add objects mapped to current patch folder
-    if type in cfg.patch_map:
+    if type_ in cfg.patch_map:
       header_printed = False
       for obj in processed_objects:
         if not (obj.type in cfg.patch_map[type]):     # ignore non related types
@@ -1436,7 +1436,7 @@ if args.patch:
           if len(files):
             patch_content.append('--')                # shorter splitter when there are files in patch folder
           else:
-            patch_content.append('\n--\n-- {}\n--'.format(type.upper()))
+            patch_content.append('\n--\n-- {}\n--'.format(type_.upper()))
         #
         patch_content.append(cfg.patch_line.format(obj.patch_file))
         processed_files.append(obj.shortcut)
