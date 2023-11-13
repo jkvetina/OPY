@@ -659,6 +659,8 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         print('{:74}REMOVED'.format(table_name))
       if os.path.exists(file):
         os.remove(file)
+      print(traceback.format_exc())
+      print(sys.exc_info()[2])
       continue
     #
     csv_file  = open(file, 'w', encoding = 'utf-8', newline = '\n')
