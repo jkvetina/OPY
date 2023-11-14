@@ -933,7 +933,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
       rows = conn.fetch(query, app_id = app_id)
       for data in rows:
         (component_id, component_name) = data
-        apex_replacements[type][component_id] = component_name
+        apex_replacements[type_][component_id] = component_name
 
     # overwrite default AuthN scheme for the application based on file
     default_authentication = conn.fetch_value(query_apex_authn_default_scheme, app_id = app_id)
