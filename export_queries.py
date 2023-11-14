@@ -122,6 +122,7 @@ FROM (
             OR t.index_name LIKE :object_name || '%' ESCAPE '\\'
         )
         AND t.index_name    NOT LIKE 'SYS%$$'
+        AND (t.last_analyzed >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
