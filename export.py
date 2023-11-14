@@ -1003,7 +1003,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
           w.write(request + '\nexit;')
 
       # run SQLcl and capture the output
-      command = 'cd ' + cfg.apex_dir + (' && ' if os.name == 'nt' else '; ') + process
+      command = 'cd "' + os.path.normpath(cfg.apex_dir) + '"' + (' && ' if os.name == 'nt' else '; ') + process
       result  = subprocess.run(command, shell = True, capture_output = True, text = True)
       output  = (result.stdout or '').strip()
 
