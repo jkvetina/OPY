@@ -251,7 +251,7 @@ if not os.path.exists(dir):
   shutil.copytree(os.path.normpath(conn_dir + '/../patches/'), dir, dirs_exist_ok = True)
 
 # create basic dirs
-for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg.patch_manually, cfg.rollout_log]:
+for dir in [cfg.git_target, cfg.patch_root, cfg.patch_done, cfg.patch_today, cfg.patch_manually, cfg.rollout_log, cfg.apex_tmp]:
   dir = os.path.dirname(dir)
   if not os.path.exists(dir):
     os.makedirs(dir)
@@ -940,7 +940,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # prepare requests (multiple exports)
     request_conn = ''
-    requests = ['cd {dir}']
+    requests = []
     if wallet_file != '' and 'wallet' in connection:
       request_conn += 'set cloudconfig {}.zip\n'.format(wallet_file.rstrip('.zip'))
       request_conn += 'connect {}/"{}"@{}\n'.format(*[
@@ -976,23 +976,23 @@ if apex_apps != {} and not args.patch and not args.rollout:
       requests = ['\n'.join(requests)]
 
     # export APEX stuff
-    apex_tmp      = cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id))  # allow to export multiple apps at the same time
+    apex_tmp      = os.path.normpath(cfg.apex_tmp.replace('#APP_ID#', '{}'.format(app_id)))  # allow to export multiple apps at the same time
     apex_full     = cfg.apex_full_file.replace('#APP_ID#', '{}'.format(app_id))
     apex_readable = cfg.apex_readable.replace('#APP_ID#', '{}'.format(app_id))
     changed = []
+    replace_list = {
+      #'dir'           : cfg.apex_dir,
+      #'dir_temp'      : cfg.apex_temp_dir,
+      #'dir_ws_files'  : cfg.apex_ws_files,
+      'app_id'        : app_id,
+      'since'         : req_today,
+      'changed'       : changed,
+      'apex_json'     : ',READABLE_JSON' if cfg.apex_readable_json else '',
+      'apex_yaml'     : ',READABLE_YAML' if cfg.apex_readable_yaml else '',
+      'apex_embed'    : ',EMBEDDED_CODE' if cfg.apex_embedded      else ''
+    }
     for (i, request) in enumerate(requests):
-      replace_list = {
-        'dir'           : cfg.apex_dir,
-        'dir_temp'      : cfg.apex_temp_dir,
-        'dir_ws_files'  : cfg.apex_ws_files,
-        'app_id'        : app_id,
-        'since'         : req_today,
-        'changed'       : changed,
-        'apex_json'     : ',READABLE_JSON' if cfg.apex_readable_json else '',
-        'apex_yaml'     : ',READABLE_YAML' if cfg.apex_readable_yaml else '',
-        'apex_embed'    : ',EMBEDDED_CODE' if cfg.apex_embedded      else ''
-      }
-      request = request.format(**replace_list)    # to allow not usual chars in passwords
+      request = request.format(**replace_list)  # keep this for pwd issues
       request = (request_conn + '\n' + request)
       process = 'sql /nolog <<EOF\n{}\nexit;\nEOF'.format(request)  # for normal platforms
 
@@ -1003,7 +1003,8 @@ if apex_apps != {} and not args.patch and not args.rollout:
           w.write(request + '\nexit;')
 
       # run SQLcl and capture the output
-      result  = subprocess.run(process, shell = True, capture_output = True, text = True)
+      command = 'cd ' + cfg.apex_dir + (' && ' if os.name == 'nt' else '; ') + process
+      result  = subprocess.run(command, shell = True, capture_output = True, text = True)
       output  = (result.stdout or '').strip()
 
       # for Windows remove temp file
