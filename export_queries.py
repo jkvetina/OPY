@@ -254,7 +254,7 @@ ORDER BY j.argument_position"""
 
 # template used to extract jobs
 job_template = """DECLARE
-    in_job_name             CONSTANT VARCHAR2(30)   := '{}';
+    in_job_name             CONSTANT VARCHAR2(128)  := '{}';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
 BEGIN
     DBMS_OUTPUT.PUT_LINE('--');
@@ -484,7 +484,7 @@ SELECT
     APEX_STRING.FORMAT (
         'GRANT %0 ON %1 TO %2%3;',
         t.privs,
-        RPAD(LOWER(t.table_name), 30),
+        LOWER(t.table_name),
         LOWER(t.grantee),
         CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
     ) AS sql
@@ -572,7 +572,7 @@ SELECT DISTINCT
     APEX_STRING.FORMAT (
         'GRANT %0 ON %1 TO %2%3;',
         p.privs,
-        RPAD(LOWER(t.table_name), 30),
+        LOWER(t.table_name),
         LOWER(g.grantee),
         CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
     ) AS sql
