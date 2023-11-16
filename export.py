@@ -785,7 +785,7 @@ if args.recent != 0 and not args.patch and not args.rollout:
     if not (row.table_name in received_grants[row.owner][row.type]):
       received_grants[row.owner][row.type][row.table_name] = []
     #
-    query = 'GRANT {:<17} ON {}.{:<30} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower())
+    query = 'GRANT {:<17} ON {}.{} TO {};'.format(row.privilege, row.owner.lower(), row.table_name.lower(), curr_schema.lower())
     received_grants[row.owner][row.type][row.table_name].append(query)
   #
   for owner, types in received_grants.items():
