@@ -1087,7 +1087,7 @@ if apex_apps != {} and not args.patch and not args.rollout:
         print('')
 
       # show progress
-      if args.debug:
+      if args.debug or ('Error' in output):
         print('--\n-- REQUEST:\n--\n' + process, request if not (request in process) else '')
         print('--\n-- RESULT:\n--\n'  + output)
       else:
