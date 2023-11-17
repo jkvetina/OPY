@@ -346,7 +346,7 @@ def clean_view(object_name, lines, schema, cfg):
   if len(lines) == 0:
     return []
   lines[0] = lines[0].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
-  lines[0] = lines[0].replace(' EDITIONABLE', '').replace(' NONEDITIONABLE', '')
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
   lines[0] = replace(lines[0], r'\s*\([^)]+\)\s*BEQUEATH', ' BEQUEATH')     # remove columns
   lines[0] = lines[0].replace(' ()  AS', ' AS')                             # fix some views
@@ -463,7 +463,7 @@ def clean_package_body(object_name, lines, schema, cfg):
 def clean_procedure(object_name, lines, schema, cfg):
   if len(lines):
     lines[0] = fix_simple_name(lines[0], schema)
-    lines[0] = lines[0].replace(' EDITIONABLE', '').replace(' NONEDITIONABLE', '')
+    lines[0] = lines[0].replace(' EDITIONABLE', '')
     lines[len(lines) - 1] += '\n/'
   return lines
 
@@ -508,7 +508,7 @@ def clean_trigger(object_name, lines, schema, cfg):
     return lines
   #
   lines[0] = fix_simple_name(lines[0], schema)
-  lines[0] = lines[0].replace(' EDITIONABLE', '').replace(' NONEDITIONABLE', '')
+  lines[0] = lines[0].replace(' EDITIONABLE', '')
 
   # fix enable/disable trigger
   found_slash = False
@@ -553,7 +553,7 @@ def clean_index(object_name, lines, schema, cfg):
 
 def clean_synonym(object_name, lines, schema, cfg):
   if len(lines):
-    lines[0] = lines[0].replace(' EDITIONABLE', '').replace(' NONEDITIONABLE', '')
+    lines[0] = lines[0].replace(' EDITIONABLE', '')
     lines[0] = fix_simple_name(lines[0], schema)
     lines[len(lines) - 1] += ';'
   #
