@@ -212,22 +212,37 @@ def clean_table(object_name, lines, schema, cfg):
 
   # throw away some distrators
   for (i, line) in enumerate(lines):
-    if line.startswith('  STORAGE') or\
-      line.startswith('  PCTINCREASE') or\
-      line.startswith('  BUFFER_POOL') or\
-      line.startswith('  USING'):
+    # remove some storage junk
+    if line.lstrip().startswith('NOCACHE') or\
+      line.lstrip().startswith('TABLESPACE') or\
+      line.lstrip().startswith('PCTFREE') or\
+      line.lstrip().startswith('PCTTHRESHOLD') or\
+      line.lstrip().startswith('PCTINCREASE') or\
+      line.lstrip().startswith('NOCOMPRESS LOGGING') or\
+      line.lstrip().startswith('NOCACHE LOGGING') or\
+      line.lstrip().startswith('CACHE') or\
+      line.lstrip().startswith('STORAGE') or\
+      line.lstrip().startswith('BUFFER_POOL') or\
+      line.lstrip().startswith('USING') or\
+      line.lstrip().startswith('LOB ("'):
       lines[i] = ''
-    else:
-      lines[i] = lines[i].replace(' ENABLE', '').strip()
-      lines[i] = lines[i].replace(' COLLATE "USING_NLS_COMP"', '')
-      lines[i] = lines[i].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
-      lines[i] = lines[i].replace(' SEGMENT CREATION IMMEDIATE', '')
-      lines[i] = lines[i].replace(' SEGMENT CREATION DEFERRED', '')
-      lines[i] = lines[i].replace('(PARTITION', '(\n    PARTITION')
-      lines[i] = lines[i].replace('" )', '"\n)')
-      lines[i] = lines[i].replace('TIMESTAMP\' ', 'TIMESTAMP \'')
+    #
+    if line.startswith(')  PCTFREE') or line.startswith(') PCTFREE'):
+      lines[i] = ')'
+    #
+    if line.startswith(')  DEFAULT COLLATION "USING_NLS_COMP" PCTFREE'):
+      lines[i] = ')'
+    #
+    lines[i] = lines[i].replace(' ENABLE', '').strip()
+    lines[i] = lines[i].replace(' COLLATE "USING_NLS_COMP"', '')
+    lines[i] = lines[i].replace(' DEFAULT COLLATION "USING_NLS_COMP"', '')
+    lines[i] = lines[i].replace(' SEGMENT CREATION IMMEDIATE', '')
+    lines[i] = lines[i].replace(' SEGMENT CREATION DEFERRED', '')
+    lines[i] = lines[i].replace('(PARTITION', '(\n    PARTITION')
+    lines[i] = lines[i].replace('" )', '"\n)')
+    lines[i] = lines[i].replace('TIMESTAMP\' ', 'TIMESTAMP \'')
 
-    # remove auto sequence
+    # fix auto sequence
     if ' AS IDENTITY' in lines[i]:
       lines[i] = lines[i].replace(' NOORDER', '')
       lines[i] = lines[i].replace(' NOCYCLE', '')
@@ -261,25 +276,6 @@ def clean_table(object_name, lines, schema, cfg):
     #
     if line.startswith('PARTITION'):
       lines[i] = fix_simple_name(lines[i], schema)
-    #
-    if line.startswith(')  PCTFREE') or line.startswith(') PCTFREE'):
-      lines[i] = ')'
-    #
-    if line.startswith(')  DEFAULT COLLATION "USING_NLS_COMP" PCTFREE'):
-      lines[i] = ')'
-    #
-    if line.startswith('NOCACHE'):
-      lines[i] = ''
-    #
-    if line.startswith('TABLESPACE') or\
-      line.startswith('PCTFREE') or\
-      line.startswith('PCTTHRESHOLD') or\
-      line.startswith('NOCOMPRESS LOGGING') or\
-      line.startswith('NOCACHE LOGGING') or\
-      line.startswith('CACHE') or\
-      line.startswith('STORAGE IN') or\
-      line.startswith('LOB ("'):
-      lines[i] = ''
     #
     if line.startswith('CONSTRAINT'):
       lines[i] = '    --\n    ' + fix_simple_name(lines[i], schema)
