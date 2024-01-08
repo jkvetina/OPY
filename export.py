@@ -637,87 +637,88 @@ if (args.csv or isinstance(args.csv, list)) and not args.patch and not args.roll
         tables_new.append(table_name)
 
   # proceed with data export
-  print()
-  print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
-  if args.verbose:
-    print('-------------------')
-    print('{:>8} | {:>3} | {:>3} | {:<30}   {:>6} | {:>8}'.format('INS', 'UPD', 'DEL', '', 'LINES', 'BYTES'))
-  #
-  for (i, table_name) in enumerate(sorted(tables)):
-    obj = get_file_details('DATA', table_name, '', cfg, hashed_old, cached_obj)
-
-    # create file for new tables
-    if not (table_name in table_files):
-      table_files[table_name] = obj.file
-    file = table_files[table_name]
-    #
-    try:
-      table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
-      table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
-    except Exception:
-      if args.verbose:
-        print('{:74}REMOVED'.format(table_name))
-      if os.path.exists(file):
-        os.remove(file)
-      print(traceback.format_exc())
-      print(sys.exc_info()[2])
-      continue
-    #
-    csv_file  = open(file, 'w', encoding = 'utf-8', newline = '\n')
-    writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
-    columns   = [col for col in conn.cols if not (col in cfg.ignore_columns)]
-    order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
-
-    # filter table rows if requested
-    where_filter = ''
-    if table_name.upper() in cfg.csv_export_filters:
-      where_filter = ' WHERE ' + cfg.csv_export_filters[table_name.upper()]
-
-    # fetch data from table
-    try:
-      query = 'SELECT {} FROM {}{} ORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
-      data  = conn.fetch(query)
-    except Exception:
-      print()
-      print('#')
-      print('# CSV_EXPORT_FAILED:', table_name)
-      print('#\n')
-      print(traceback.format_exc())
-      print(sys.exc_info()[2])
-      continue
-
-    # save as CSV
-    writer.writerow(conn.cols)  # headers
-    for row in data:
-      writer.writerow(row)
-    csv_file.close()
-
-    # add CSV file to the locked.log
-    if (len(locked_objects) or args.lock):
-      if not (obj.shortcut in locked_objects):
-        locked_objects.append(obj.shortcut)
-
-    # show progress
-    if args.verbose:
-      print('   {:1} {:>3} | {:>3} | {:>3} | {:30}   {:>6} | {:>8} {}'.format(*[
-        '*' if len(where_filter) else '',
-        ' Y ' if (cfg.merge_insert in file or cfg.merge_auto_insert) else '',
-        ' Y ' if (cfg.merge_update in file or cfg.merge_auto_update) else '',
-        ' Y ' if (cfg.merge_delete in file or cfg.merge_auto_delete) else '',
-        table_name.upper(),
-        len(data),                # lines
-        os.path.getsize(file),    # bytes
-        'NEW' if table_name in tables_new else ''
-      ]))
-    else:
-      perc = (i + 1) / len(tables)
-      dots = int(70 * perc)
-      sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-      sys.stdout.flush()
-  #
-  if not args.verbose:
+  if len(tables) > 0:
     print()
-  print()
+    print('EXPORT DATA TO CSV: ({})'.format(len(tables)))
+    if args.verbose:
+      print('-------------------')
+      print('{:>8} | {:>3} | {:>3} | {:<30}   {:>6} | {:>8}'.format('INS', 'UPD', 'DEL', '', 'LINES', 'BYTES'))
+    #
+    for (i, table_name) in enumerate(sorted(tables)):
+      obj = get_file_details('DATA', table_name, '', cfg, hashed_old, cached_obj)
+
+      # create file for new tables
+      if not (table_name in table_files):
+        table_files[table_name] = obj.file
+      file = table_files[table_name]
+      #
+      try:
+        table_cols    = conn.fetch_value(query_csv_columns, table_name = table_name)
+        table_exists  = conn.fetch('SELECT {} FROM {} WHERE ROWNUM = 1'.format(table_cols, table_name))
+      except Exception:
+        if args.verbose:
+          print('{:74}REMOVED'.format(table_name))
+        if os.path.exists(file):
+          os.remove(file)
+        print(traceback.format_exc())
+        print(sys.exc_info()[2])
+        continue
+      #
+      csv_file  = open(file, 'w', encoding = 'utf-8', newline = '\n')
+      writer    = csv.writer(csv_file, delimiter = ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+      columns   = [col for col in conn.cols if not (col in cfg.ignore_columns)]
+      order_by  = ', '.join([str(i) for i in range(1, min(len(columns), 5) + 1)])
+
+      # filter table rows if requested
+      where_filter = ''
+      if table_name.upper() in cfg.csv_export_filters:
+        where_filter = ' WHERE ' + cfg.csv_export_filters[table_name.upper()]
+
+      # fetch data from table
+      try:
+        query = 'SELECT {} FROM {}{} ORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
+        data  = conn.fetch(query)
+      except Exception:
+        print()
+        print('#')
+        print('# CSV_EXPORT_FAILED:', table_name)
+        print('#\n')
+        print(traceback.format_exc())
+        print(sys.exc_info()[2])
+        continue
+
+      # save as CSV
+      writer.writerow(conn.cols)  # headers
+      for row in data:
+        writer.writerow(row)
+      csv_file.close()
+
+      # add CSV file to the locked.log
+      if (len(locked_objects) or args.lock):
+        if not (obj.shortcut in locked_objects):
+          locked_objects.append(obj.shortcut)
+
+      # show progress
+      if args.verbose:
+        print('   {:1} {:>3} | {:>3} | {:>3} | {:30}   {:>6} | {:>8} {}'.format(*[
+          '*' if len(where_filter) else '',
+          ' Y ' if (cfg.merge_insert in file or cfg.merge_auto_insert) else '',
+          ' Y ' if (cfg.merge_update in file or cfg.merge_auto_update) else '',
+          ' Y ' if (cfg.merge_delete in file or cfg.merge_auto_delete) else '',
+          table_name.upper(),
+          len(data),                # lines
+          os.path.getsize(file),    # bytes
+          'NEW' if table_name in tables_new else ''
+        ]))
+      else:
+        perc = (i + 1) / len(tables)
+        dots = int(70 * perc)
+        sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+        sys.stdout.flush()
+    #
+    if not args.verbose:
+      print()
+    print()
 
   # convert all existing CSV files to MERGE statement files in patch/data/ folder
   all_data = ''
