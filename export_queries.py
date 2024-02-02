@@ -27,6 +27,7 @@ WITH a AS (
         WHERE (t.table_name     LIKE :object_name || '%' ESCAPE '\\'
             OR t.index_name     LIKE :object_name || '%' ESCAPE '\\')
             AND t.index_name    NOT LIKE 'SYS%$$'
+            AND t.generated     = 'N'
     ) a
 ),
 c AS (
@@ -122,6 +123,7 @@ FROM (
             OR t.index_name LIKE :object_name || '%' ESCAPE '\\'
         )
         AND t.index_name    NOT LIKE 'SYS%$$'
+        AND t.generated     = 'N'
         AND (t.last_analyzed >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
 )
 ORDER BY
