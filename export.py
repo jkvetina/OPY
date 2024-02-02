@@ -417,10 +417,6 @@ removed_files     = []
 adding_files      = []
 #
 if args.recent != 0 and not args.patch and not args.rollout:
-  print()
-  print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
-  print('-----------------                                      ------------')
-
   # retrieve objects in specific order
   sort = ''
   for (i, object_type) in enumerate(cfg.objects_sorted):
@@ -435,50 +431,56 @@ if args.recent != 0 and not args.patch and not args.rollout:
     print(binds)
   #
   data_objects = conn.fetch_assoc(query_objects.format(sort), **binds)
-  summary = {}
-  for row in data_objects:
-    obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
-    if obj == {}:
-      continue
-
-    # show just locked files
-    if (len(locked_objects) or args.lock):
-      if not (obj.shortcut in locked_objects):
-        if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
-          locked_objects.append(obj.shortcut)
-          adding_files.append(obj.shortcut)
-        elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
-          locked_objects.append(obj.shortcut)
-          adding_files.append(obj.shortcut)
-        elif len(cfg.auto_filter_prefix) > 0:
-          locked_objects.append(obj.shortcut)
-          adding_files.append(obj.shortcut)
-        else:
-          continue  # skip files not on the locked list
-    #
-    if row.object_type in cfg.folders:
-      if not (row.object_type) in summary:
-        summary[row.object_type] = 0
-      summary[row.object_type] += 1
-      count_objects += 1
   #
-  all_objects = conn.fetch_assoc(query_summary, object_name = binds['object_name'])
-  print('                       EXPORTING |   TOTAL')
-  for row in all_objects:
-    if row.object_count:
-      print('{:>20} | {:>9} | {:>7} {:<6} {:>12}{}{:>4}'.format(*[
-        row.object_type,
-        summary.get(row.object_type, ''),
-        row.object_count,
-        '' if row.object_type in cfg.folders else '[N/A]',
-        row.constraint_type or '',
-        ' | ' if row.constraint_type else '',
-        row.constraint_count or ''
-      ]))
-    else:
-      print('{:>62}{}{:>4}'.format(row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
-  print()
-  print()
+  if len(data_objects):
+    print()
+    print('OBJECTS OVERVIEW:                                      CONSTRAINTS:')
+    print('-----------------                                      ------------')
+    #
+    summary = {}
+    for row in data_objects:
+      obj = get_file_details(row.object_type, row.object_name, '', cfg, hashed_old, cached_obj)
+      if obj == {}:
+        continue
+
+      # show just locked files
+      if (len(locked_objects) or args.lock):
+        if not (obj.shortcut in locked_objects):
+          if args.add and len(args.add_like) > 0 and row.object_name.startswith(args.add_like):     # add new files to the locked list
+            locked_objects.append(obj.shortcut)
+            adding_files.append(obj.shortcut)
+          elif args.add and len(args.add_like) == 0 and (obj.hash_old == '' or row.object_name.startswith(args.add_like)):     # add new files to the locked list
+            locked_objects.append(obj.shortcut)
+            adding_files.append(obj.shortcut)
+          elif len(cfg.auto_filter_prefix) > 0:
+            locked_objects.append(obj.shortcut)
+            adding_files.append(obj.shortcut)
+          else:
+            continue  # skip files not on the locked list
+      #
+      if row.object_type in cfg.folders:
+        if not (row.object_type) in summary:
+          summary[row.object_type] = 0
+        summary[row.object_type] += 1
+        count_objects += 1
+    #
+    all_objects = conn.fetch_assoc(query_summary, object_name = binds['object_name'])
+    print('                       EXPORTING |   TOTAL')
+    for row in all_objects:
+      if row.object_count:
+        print('{:>20} | {:>9} | {:>7} {:<6} {:>12}{}{:>4}'.format(*[
+          row.object_type,
+          summary.get(row.object_type, ''),
+          row.object_count,
+          '' if row.object_type in cfg.folders else '[N/A]',
+          row.constraint_type or '',
+          ' | ' if row.constraint_type else '',
+          row.constraint_count or ''
+        ]))
+      else:
+        print('{:>62}{}{:>4}'.format(row.constraint_type or '', ' | ' if row.constraint_type else '', row.constraint_count or ''))
+    print()
+    print()
 
 
 
