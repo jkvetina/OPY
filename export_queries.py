@@ -24,10 +24,15 @@ WITH a AS (
             'INDEX'     AS object_type,
             COUNT(*)    AS object_count
         FROM user_indexes t
-        WHERE (t.table_name     LIKE :object_name || '%' ESCAPE '\\'
-            OR t.index_name     LIKE :object_name || '%' ESCAPE '\\')
-            AND t.index_name    NOT LIKE 'SYS%$$'
-            AND t.generated     = 'N'
+        --LEFT JOIN user_constraints c
+        --    ON c.table_name         = t.table_name
+        --    AND c.constraint_name   = t.index_name
+        --    AND c.constraint_type   IN ('P', 'U')
+        WHERE (t.table_name         LIKE :object_name || '%' ESCAPE '\\'
+            OR t.index_name         LIKE :object_name || '%' ESCAPE '\\')
+            AND t.index_name        NOT LIKE 'SYS%$$'
+            AND t.generated         = 'N'
+            AND t.constraint_index  = 'NO'
     ) a
 ),
 c AS (
@@ -118,13 +123,15 @@ FROM (
         'INDEX'             AS object_type,
         t.index_name        AS object_name
     FROM user_indexes t
-    WHERE (:object_type     LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)
-        AND (t.table_name   LIKE :object_name || '%' ESCAPE '\\'
-            OR t.index_name LIKE :object_name || '%' ESCAPE '\\'
+    WHERE 1 = 1
+        AND (:object_type       LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)
+        AND (t.table_name       LIKE :object_name || '%' ESCAPE '\\'
+            OR t.index_name     LIKE :object_name || '%' ESCAPE '\\'
         )
-        AND t.index_name    NOT LIKE 'SYS%$$'
-        AND t.generated     = 'N'
-        AND (t.last_analyzed >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
+        AND t.index_name        NOT LIKE 'SYS%$$'
+        AND t.generated         = 'N'
+        AND t.constraint_index  = 'NO'
+        AND (t.last_analyzed    >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
 )
 ORDER BY
     CASE object_type {}ELSE 999 END,
