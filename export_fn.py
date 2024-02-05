@@ -361,8 +361,12 @@ def clean_view(object_name, lines, schema, cfg):
         lines[i] = '    ' + line.lstrip()
         if '    SELECT ' in lines[i].upper():
           lines[i] = replace(lines[i], '    (SELECT) ', r'\1\n    ', re.I)  # fix SELECT t.* on same line
-  #
-  lines[len(lines) - 1] += ';'
+
+  # if view ends with comment, push ";" to the next line
+  if lines[len(lines) - 1].lstrip().startswith('--') or lines[len(lines) - 1].rstrip().endswith('*/'):
+    lines.append(';')
+  else:
+    lines[len(lines) - 1] += ';'
   #
   return lines
 
