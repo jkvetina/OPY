@@ -255,6 +255,12 @@ def clean_table(object_name, lines, schema, cfg):
 
   # fix column alignment
   lines = '\n'.join(lines).split('\n')
+
+  # skip partitions
+  for (i, line) in enumerate(lines):
+    if line.lstrip().startswith('PARTITION') and not line.lstrip().startswith('PARTITION BY ') and not ('(MAXVALUE)' in line):
+      lines[i] = ''
+
   for (i, line) in enumerate(lines):
     # fic column name
     if line.startswith('"'):
@@ -542,11 +548,28 @@ def clean_index(object_name, lines, schema, cfg):
     else:
       lines[i] = lines[i].lstrip()
       lines[i] = lines[i].replace('TABLESPACE', '    COMPUTE STATISTICS\n    TABLESPACE')
+
+    #elif line.startswith('  TABLESPACE') and not ('MATERIALIZED VIEW' in cfg.keep_tablespace):
+    #  lines[i] = ''
+
   #
   lines[0] = fix_simple_name(lines[0], schema).replace(' ON ', '\n    ON ')
   lines = list(filter(None, lines))
-  lines[len(lines) - 1] += ';'
+
+  # skip partitions
+  last_row = -999
+  for i, line in enumerate(lines):
+    if line.strip().startswith('PARTITION') or line.strip().startswith('(PARTITION'):
+      last_row = i
+      lines[i] = '' if '(' in line else ''
+    if i == last_row + 1 and 'COMPUTE STATISTICS' in line:
+      lines[i] = ''
+    if i == last_row + 2 and 'TABLESPACE' in line:
+      lines[i] = ');' if ');' in line[i] else ''
+
   #
+  lines = list(filter(None, lines))
+  lines[len(lines) - 1] += ';'
   return lines
 
 
