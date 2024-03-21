@@ -39,16 +39,9 @@ class Oracle:
       return
 
     # might need to adjust client for classic connections
-    if not self.client:
-      # find instant client
-      try:
-        self.client = subprocess.check_output('where oci.dll', shell = True).decode('utf-8').split()[0]
-      except:
-        pass
-    #
+    self.client = self.client or os.getenv('ORACLE_HOME')
     try:
-      oracledb.init_oracle_client(lib_dir = os.path.dirname(self.client))
-      print('CLIENT =', os.path.dirname(self.client))
+      oracledb.init_oracle_client(lib_dir = self.client)
     except:
       try:
         oracledb.init_oracle_client()  # for password issues
@@ -63,7 +56,6 @@ class Oracle:
       else:
         self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service'])
       #self.tns['dsn'] = '{}:{}/{}'.format(self.tns['host'], self.tns['port'], self.tns['sid'])
-    #self.conn = cx_Oracle.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'], encoding = 'utf8')
     self.conn = oracledb.connect(user = self.tns['user'], password = self.tns['pwd'], dsn = self.tns['dsn'])
 
 
