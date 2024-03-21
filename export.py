@@ -967,9 +967,9 @@ if apex_apps != {} and not args.patch and not args.rollout:
 
     # export full app in several formats
     if cfg.apex_splited:
-      requests.append('apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
+      requests.append('apex export -applicationid {app_id} -nochecksum -expComments -expTranslations -expType APPLICATION_SOURCE{apex_json}{apex_yaml}{apex_embed} -split')
     if cfg.apex_full:
-      requests.append('apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations')
+      requests.append('apex export -applicationid {app_id} -nochecksum -expComments -expTranslations')
 
     if cfg.apex_rest:
       requests.append('rest export')
