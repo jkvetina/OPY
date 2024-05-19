@@ -1,5 +1,19 @@
 # Oracle wrapper for Python
 
+## UPDATE
+
+This project is no longer enhanced. Checkout the [ADT - APEX Deployment Tool](https://github.com/jkvetina/ADT).
+At this point ADT does everything (and more) as OPY, except:
+
+- data exports
+- patching via hash files
+
+Both of these features will be available in ADT in next few weeks. At that point OPY will be obsolete.
+
+<br />
+
+## Description
+
 - this is the original name and original purpose of this tool
 - I have extend this to export database objects and APEX applications (on-premise and cloud too)
 - it can export just specified object types, object names (by LIKE pattern), recently modified objects (in days) or a combination
